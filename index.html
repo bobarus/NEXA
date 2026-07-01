@@ -506,6 +506,280 @@ input[type=date].rinput{-webkit-appearance:none;appearance:none}
 }
 .rd-photo-link svg{width:15px;height:15px;stroke:#1a3080;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 </style>
+
+<!-- ══ NEW DESIGN OVERRIDES ══ -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/dist/tabler-icons.min.css">
+<style>
+/* ── GLOBAL RESET TO LIGHT THEME ── */
+html{background:#f2f2f7}
+body{
+  background:#f2f2f7 !important;
+  background-attachment:initial !important;
+  color:#000;
+}
+
+/* ── NAV ── */
+.nav{
+  background:rgba(242,242,247,0.94) !important;
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:0.5px solid #d1d1d6 !important;
+}
+.nav-title{color:#000 !important;font-size:17px !important;font-weight:600 !important}
+.globe-btn{background:rgba(0,0,0,0.06) !important;border:none !important}
+.globe-btn svg{stroke:#636366 !important}
+#navExit svg{stroke:#636366 !important}
+
+/* ── PIN SCREEN ── */
+.pin-screen{background:transparent !important;padding-top:20px !important}
+.pin-logo{display:none !important}
+.pin-title{color:#000 !important;font-size:22px !important;font-weight:700 !important;margin-bottom:4px !important}
+.pin-sub{color:#8e8e93 !important;font-size:15px !important;margin-bottom:24px !important}
+.pin-dot{
+  width:48px !important;height:56px !important;border-radius:12px !important;
+  background:#fff !important;border:0.5px solid #d1d1d6 !important;
+  font-size:26px !important;font-weight:500 !important;color:#000 !important;
+  display:flex !important;align-items:center !important;justify-content:center !important;
+  transition:border-color .15s !important;
+}
+.pin-dot.filled{border-color:#0071e3 !important}
+.pin-key{
+  background:#fff !important;border:0.5px solid #e5e5ea !important;
+  border-radius:50% !important;color:#000 !important;
+  font-size:22px !important;font-weight:400 !important;
+  aspect-ratio:1 !important;
+}
+.pin-key:active{background:#e5e5ea !important;transform:scale(.95) !important}
+.pin-key.del{background:transparent !important;border:none !important;color:#636366 !important}
+.pin-key.empty{background:transparent !important;border:none !important}
+.pin-ok-btn{
+  background:#34c759 !important;border:none !important;
+  color:#fff !important;border-radius:14px !important;
+  font-size:16px !important;font-weight:600 !important;
+  box-shadow:none !important;
+}
+.pin-ok-btn:not(.ready){background:rgba(0,0,0,0.1) !important;color:rgba(0,0,0,0.3) !important}
+.pin-error{color:#c0392b !important}
+.pin-loading .spinner{border-color:rgba(0,0,0,.15) !important;border-top-color:#0071e3 !important}
+
+/* ── GREET SCREEN ── */
+.greet-screen{background:transparent !important}
+.greet-name{color:#000 !important}
+.greet-role{color:#8e8e93 !important}
+.pin-logo{display:none !important}
+
+/* ── SECTION LABELS ── */
+.slabel{
+  color:#8e8e93 !important;
+  font-size:12px !important;
+  padding:14px 16px 6px !important;
+}
+.req-badge{background:rgba(255,59,48,.12) !important;color:#c0392b !important}
+
+/* ── CARDS (glassmorphism → clean white) ── */
+.card{
+  background:#fff !important;
+  border:0.5px solid #e5e5ea !important;
+  border-radius:12px !important;
+  margin:0 16px !important;
+}
+.row{border-bottom:0.5px solid #f2f2f7 !important}
+.rlabel{color:#000 !important;font-size:15px !important}
+.rselect{color:#8e8e93 !important}
+.rselect.has-val{color:#000 !important}
+.rchev svg{stroke:#c7c7cc !important}
+.rinput{color:#000 !important}
+.rinput::placeholder{color:#c7c7cc !important}
+.rta{color:#000 !important}
+.rta::placeholder{color:#c7c7cc !important}
+.sub-label{color:#8e8e93 !important;font-size:11px !important}
+
+/* ── RBADGE ICONS ── */
+.rbadge{background:#f2f2f7 !important;border:0.5px solid #e5e5ea !important;border-radius:8px !important}
+.rbadge svg{stroke:#636366 !important}
+.b-blue{background:#e5f0ff !important;border-color:#e5f0ff !important}
+.b-blue svg{stroke:#0071e3 !important}
+.b-green{background:#e5f6eb !important;border-color:#e5f6eb !important}
+.b-green svg{stroke:#1c7c35 !important}
+.b-orange{background:#fff3e0 !important;border-color:#fff3e0 !important}
+.b-orange svg{stroke:#e65100 !important}
+.b-teal{background:#e5f6eb !important;border-color:#e5f6eb !important}
+.b-teal svg{stroke:#0f6e56 !important}
+
+/* ── MODE TOGGLE ── */
+.mode-toggle{background:rgba(0,0,0,.06) !important;border:none !important}
+.ct{color:#8e8e93 !important}
+.ct.on{background:#fff !important;color:#0071e3 !important}
+.mode-text-input{border-bottom-color:#d1d1d6 !important;color:#000 !important}
+.mode-text-input::placeholder{color:#c7c7cc !important}
+
+/* ── HORAS ── */
+.step-btn{background:#f2f2f7 !important;border:0.5px solid #e5e5ea !important;color:#000 !important}
+.horas-num{color:#000 !important}
+
+/* ── ERR FIELDS ── */
+.row.err-field,.mode-header.err-field{background:rgba(255,59,48,.06) !important}
+
+/* ── PHOTO BUTTONS ── */
+.photo-input-btn{
+  background:#e5f0ff !important;border:none !important;
+  color:#0071e3 !important;border-radius:20px !important;
+  box-shadow:none !important;
+}
+.photo-input-btn svg{stroke:#0071e3 !important}
+.photo-add-mini{background:#f2f2f7 !important;border:1.5px dashed #d1d1d6 !important}
+.photo-add-mini svg{stroke:#8e8e93 !important}
+.photo-thumb{border:0.5px solid #e5e5ea !important}
+.photo-hint{color:#8e8e93 !important}
+
+/* ── SAVE BUTTON ── */
+.btn-save{background:#34c759 !important;border:none !important;color:#fff !important;border-radius:14px !important;margin:16px 16px 4px !important;box-shadow:none !important}
+.btn-save:not(.ready){background:rgba(0,0,0,.1) !important;color:rgba(0,0,0,.3) !important}
+.btn-clear{color:#c0392b !important;opacity:.7}
+
+/* ── SPINNER ── */
+.spinner-inline{border-color:rgba(0,0,0,.12) !important;border-top-color:#0071e3 !important}
+
+/* ── TOAST ── */
+.toast{background:rgba(0,0,0,.82) !important}
+
+/* ── SUCCESS SCREEN ── */
+#successScreen{background:#f2f2f7 !important}
+.success-icon{background:#34c759 !important;box-shadow:none !important}
+.success-title{color:#000 !important}
+.success-sub{color:#8e8e93 !important}
+.success-details-card{background:#fff !important;border:0.5px solid #e5e5ea !important}
+.detail-row{border-bottom-color:#f2f2f7 !important}
+.detail-key{color:#8e8e93 !important}
+.detail-val{color:#000 !important}
+.btn-share{background:#f2f2f7 !important;border:0.5px solid #e5e5ea !important;color:#000 !important}
+.btn-share svg{stroke:#636366 !important}
+.btn-new{background:#34c759 !important;border:none !important;box-shadow:none !important}
+
+/* ── BOTTOM TABBAR ── */
+.bottom-tabbar{
+  background:rgba(242,242,247,.96) !important;
+  backdrop-filter:blur(20px) !important;
+  -webkit-backdrop-filter:blur(20px) !important;
+  border-top:0.5px solid #d1d1d6 !important;
+}
+.bottom-tab{color:#8e8e93 !important}
+.bottom-tab svg{stroke:#8e8e93 !important;fill:none !important;stroke-width:1.8 !important}
+.bottom-tab span{color:#8e8e93 !important;font-size:10px !important}
+.bottom-tab.active{color:#0071e3 !important}
+.bottom-tab.active svg{stroke:#0071e3 !important}
+.bottom-tab.active span{color:#0071e3 !important}
+
+/* Tabler иконки в таббаре */
+.bottom-tab i{font-size:24px;color:#8e8e93;line-height:1}
+.bottom-tab.active i{color:#0071e3}
+
+/* ── OP TABS (старые верхние — скрыты, но на всякий случай) ── */
+.op-tabs{display:none !important}
+
+/* ── MIS INFORMES CARDS ── */
+.mi-card{background:#fff !important;border:0.5px solid #e5e5ea !important;border-left-width:3px !important;border-radius:12px !important;margin:0 16px 8px !important}
+.mi-card.st-pending{border-left-color:#0071e3 !important}
+.mi-card.st-rejected{border-left-color:#c0392b !important}
+.mi-id{color:#000 !important;font-size:12px !important;font-weight:600 !important}
+.mi-badge{font-size:10px !important}
+.mi-badge.st-pending{background:#e5f0ff !important;color:#0071e3 !important}
+.mi-badge.st-rejected{background:#fde8e8 !important;color:#c0392b !important}
+.mi-obra{color:#000 !important}
+.mi-sub{color:#8e8e93 !important}
+.mi-comment{background:#fde8e8 !important;color:#c0392b !important;border-radius:8px !important}
+.mi-comment b{color:#c0392b !important}
+.mi-edit-btn{background:#0071e3 !important;border-radius:10px !important;box-shadow:none !important}
+.mi-empty{color:#8e8e93 !important}
+
+/* ── MANAGER CARDS ── */
+.mg-card{
+  background:#fff !important;border:0.5px solid #e5e5ea !important;
+  border-left:3px solid #0071e3 !important;border-radius:12px !important;
+  margin:0 16px 10px !important;box-shadow:none !important;
+}
+.mg-card-new{background:#fffbf0 !important;box-shadow:none !important}
+.mg-new-label{color:#e65100 !important}
+.mg-id{color:#8e8e93 !important}
+.mg-obra{color:#000 !important}
+.mg-cliente{color:#8e8e93 !important}
+.mg-operario{color:#8e8e93 !important}
+.mg-grid .mg-field b{color:#8e8e93 !important}
+.mg-grid .mg-field span{color:#000 !important}
+.mg-text{background:#f9f9fb !important;color:#000 !important;border-radius:8px !important}
+.mg-text b{color:#8e8e93 !important}
+.mg-photo-link{background:#f2f2f7 !important;border:0.5px solid #e5e5ea !important;color:#0071e3 !important;border-radius:10px !important}
+.mg-photo-link svg{stroke:#0071e3 !important}
+.mg-btn{border-radius:12px !important}
+.mg-btn-approve{background:#34c759 !important;box-shadow:none !important}
+.mg-btn-reject{background:#fde8e8 !important;color:#c0392b !important;border:0.5px solid #fbc8c8 !important}
+
+/* ── MODALS ── */
+.mg-modal-overlay{background:rgba(0,0,0,.35) !important}
+.mg-modal{background:#f2f2f7 !important;border-radius:20px 20px 0 0 !important}
+.mg-modal-title{color:#000 !important}
+.mg-modal-sub{color:#8e8e93 !important}
+.mg-modal-textarea{background:#fff !important;border:0.5px solid #d1d1d6 !important;color:#000 !important;border-radius:10px !important}
+.mg-modal-textarea.err{border-color:#c0392b !important}
+.mg-reject-hint{color:#c0392b !important}
+.mg-modal-cancel{background:#fff !important;color:#636366 !important;border:0.5px solid #e5e5ea !important;border-radius:12px !important}
+.mg-modal-confirm{background:#c0392b !important;border-radius:12px !important;box-shadow:none !important}
+.mg-modal-confirm:disabled{opacity:.35 !important}
+.mg-actions{gap:8px !important}
+
+/* ── DETAIL MODAL ── */
+.rd-grid{gap:8px !important}
+.rd-field{background:#fff !important;border:0.5px solid #e5e5ea !important;border-radius:10px !important;padding:10px 12px !important}
+.rd-field b{color:#8e8e93 !important;font-size:10px !important}
+.rd-field span{color:#000 !important;font-size:13px !important;font-weight:500 !important}
+.rd-text{background:#fff !important;border-radius:10px !important;border:0.5px solid #e5e5ea !important;padding:10px 12px !important}
+.rd-text b{color:#8e8e93 !important}
+.rd-photo-link{background:#f2f2f7 !important;border:0.5px solid #e5e5ea !important;color:#0071e3 !important;border-radius:10px !important}
+.rd-photo-link svg{stroke:#0071e3 !important}
+
+/* ── ADMIN CARDS ── */
+.ad-card{background:#fff !important;border:0.5px solid #e5e5ea !important;border-radius:12px !important;margin:0 16px 8px !important}
+.ad-card.st-pending{border-left:3px solid #0071e3 !important}
+.ad-card.st-approved{border-left:3px solid #34c759 !important}
+.ad-card.st-rejected{border-left:3px solid #c0392b !important}
+.ad-status-badge.st-pending{background:#e5f0ff !important;color:#0071e3 !important}
+.ad-status-badge.st-approved{background:#e5f6eb !important;color:#1c7c35 !important}
+.ad-status-badge.st-rejected{background:#fde8e8 !important;color:#c0392b !important}
+.ad-manager-line{color:#8e8e93 !important}
+.ad-manager-line.approved{color:#1c7c35 !important}
+.ad-manager-line.rejected{color:#c0392b !important}
+
+/* ── ADMIN SEARCH & FILTERS ── */
+#adSearch{background:#fff !important;border:0.5px solid #e5e5ea !important;color:#000 !important;border-radius:10px !important}
+#adSearch::placeholder{color:#c7c7cc !important}
+#adFilterToggle{background:#fff !important;border:0.5px solid #e5e5ea !important;color:#636366 !important;border-radius:10px !important}
+#adFilterToggle svg{stroke:#636366 !important}
+#adFilterToggle.has-filters{background:#e5f0ff !important;border-color:#0071e3 !important}
+#adFilterToggle.has-filters svg{stroke:#0071e3 !important}
+#adNewBtn{font-size:10px !important;border-radius:10px !important}
+#adFilterPanel{background:#fff !important;border:0.5px solid #e5e5ea !important;border-radius:12px !important;margin:8px 16px 4px !important}
+.ad-flt-btn{background:#f2f2f7 !important;border:none !important;color:#636366 !important}
+.ad-flt-btn.active{background:#e5f0ff !important;color:#0071e3 !important}
+#adFCliente,#adFObra,#adFOperario,#adFTipo,#adFCompania,#adFDateFrom,#adFDateTo{
+  background:#f2f2f7 !important;border:0.5px solid #e5e5ea !important;color:#000 !important;border-radius:10px !important;
+}
+
+/* ── ADMIN MONTH GROUPS ── */
+.ad-month-header{padding:8px 16px !important}
+.ad-month-header .month-hname{color:#000 !important}
+.ad-month-header .month-hname i{color:#8e8e93 !important}
+.ad-month-hnew{color:#e65100 !important}
+.month-hname{color:#000 !important}
+
+/* ── ANALYTICS ── */
+#anYear,#anMonthFrom,#anMonthTo{
+  background:#fff !important;border:0.5px solid #e5e5ea !important;color:#000 !important;border-radius:10px !important;
+}
+
+/* ── HISTORIAL CARDS ── */
+.mg-card[style*="approved"]{border-left:3px solid #34c759 !important}
+.mg-card[style*="rejected"]{border-left:3px solid #c0392b !important}
+</style>
 </head>
 <body>
 
@@ -935,11 +1209,11 @@ input[type=date].rinput{-webkit-appearance:none;appearance:none}
 <!-- BOTTOM TAB BAR: OPERARIO -->
 <div class="bottom-tabbar" id="tabbarOperario" style="display:none">
   <div class="bottom-tab active" id="tabOpNew" onclick="switchOpTab('new')">
-    <svg viewBox="0 0 24 24"><path d="M9 12h6M9 16h6M9 8h2"/><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <i class="ti ti-file-plus" aria-hidden="true"></i>
     <span>Nuevo</span>
   </div>
   <div class="bottom-tab" id="tabOpMine" onclick="switchOpTab('mine')">
-    <svg viewBox="0 0 24 24"><path d="M9 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L11 15l-4 1 1-4 8.5-8.5z"/></svg>
+    <i class="ti ti-files" aria-hidden="true"></i>
     <span>Mis informes</span>
   </div>
 </div>
@@ -947,11 +1221,11 @@ input[type=date].rinput{-webkit-appearance:none;appearance:none}
 <!-- BOTTOM TAB BAR: MANAGER -->
 <div class="bottom-tabbar" id="tabbarManager" style="display:none">
   <div class="bottom-tab active" id="tabMgPending" onclick="switchMgTab('pending')">
-    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><circle cx="12" cy="15" r="3"/><path d="M12 13.5v1.5l1 1"/></svg>
+    <i class="ti ti-clock-check" aria-hidden="true"></i>
     <span>Pendientes</span>
   </div>
   <div class="bottom-tab" id="tabMgHistory" onclick="switchMgTab('history')">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+    <i class="ti ti-history" aria-hidden="true"></i>
     <span>Historial</span>
   </div>
 </div>
@@ -959,11 +1233,11 @@ input[type=date].rinput{-webkit-appearance:none;appearance:none}
 <!-- BOTTOM TAB BAR: ADMIN -->
 <div class="bottom-tabbar" id="tabbarAdmin" style="display:none">
   <div class="bottom-tab active" id="tabAdJournal" onclick="switchAdTab('journal')">
-    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    <i class="ti ti-list-details" aria-hidden="true"></i>
     <span>Журнал</span>
   </div>
   <div class="bottom-tab" id="tabAdAnalisis" onclick="switchAdTab('analisis')">
-    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <i class="ti ti-chart-bar" aria-hidden="true"></i>
     <span>Análisis</span>
   </div>
 </div>
