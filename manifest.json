@@ -2,7 +2,7 @@
   "name": "Parte de Trabajo",
   "short_name": "PARTE",
   "description": "Gestión de partes de trabajo",
-  "start_url": "/NEXA/parte_app.html",
+  "start_url": "/NEXA/index.html",
   "scope": "/NEXA/",
   "display": "standalone",
   "orientation": "portrait",
