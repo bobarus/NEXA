@@ -19,6 +19,13 @@ const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwiBvSurSTwZi1Cb7RCU
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+/* Запрещаем выделение текста на системных элементах интерфейса */
+body{-webkit-user-select:none;-moz-user-select:none;user-select:none}
+/* Разрешаем выделение только там, где пользователь вводит/читает свой текст */
+input,textarea,.rta,.mode-text-input,.rd-text span,.mg-text span,.rd-field-full span,
+[contenteditable="true"]{
+  -webkit-user-select:text;-moz-user-select:text;user-select:text;
+}
 html,body{background:#f2f2f7;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
 
@@ -758,7 +765,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
     <span>Pendientes</span>
   </div>
   <div class="bottom-tab" id="tabMgHistory" onclick="switchMgTab('history')">
-    <div class="tab-icon"><i class="ti ti-check"></i></div>
+    <div class="tab-icon"><i class="ti ti-history"></i></div>
     <span>Historial</span>
   </div>
 </div>
@@ -1126,6 +1133,8 @@ function changeUser() {
   // Сбрасываем флаги кешей
   myReportsLoaded = false;
   mgHistorialLoaded = false;
+  mgPendingLoaded = false;
+  mgReportsCache = [];
   mgHistorialCache = [];
   currentUser = null;
   currentPin = '';
@@ -1188,7 +1197,7 @@ function showGreetThenRoute() {
   setTimeout(function() {
     document.getElementById('screenGreet').style.display = 'none';
     routeToRoleScreen();
-  }, 400);
+  }, 1100);
 }
 
 function routeToRoleScreen() {
@@ -1793,6 +1802,8 @@ var mgRejectingId = null;
 var mgSyncInterval = null;
 
 var mgReportsCache = [];
+var mgPendingLoaded = false;
+var mgPendingSyncing = false;
 
 function getSeenIds() {
   var key = 'parte_seen_' + currentPin;
@@ -1808,18 +1819,38 @@ function markAsSeen(id) {
 }
 
 function loadManagerQueue() {
+  if (!mgPendingLoaded) {
+    document.getElementById('mgList').innerHTML = '<div class="mi-empty"><span class="spinner-inline"></span> Cargando...</div>';
+  }
   fetch(WEBAPP_URL + '?action=getPending&codigo=' + encodeURIComponent(currentPin) + '&t=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(result){
+      mgPendingLoaded = true;
+      mgPendingSyncing = false;
       if (!result || result.status !== 'ok') {
-        document.getElementById('mgList').innerHTML = '<div class="mi-empty">Error al cargar las solicitudes</div>';
+        if (!mgReportsCache.length)
+          document.getElementById('mgList').innerHTML = '<div class="mi-empty">Error al cargar las solicitudes</div>';
         return;
       }
       renderManagerQueue(result.data || []);
     })
     .catch(function(){
-      document.getElementById('mgList').innerHTML = '<div class="mi-empty">Error de conexión</div>';
+      mgPendingSyncing = false;
+      if (!mgReportsCache.length)
+        document.getElementById('mgList').innerHTML = '<div class="mi-empty">Error de conexión</div>';
     });
+}
+
+function refreshPendingBackground() {
+  if (mgPendingSyncing) return;
+  mgPendingSyncing = true;
+  fetch(WEBAPP_URL + '?action=getPending&codigo=' + encodeURIComponent(currentPin) + '&t=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(result){
+      mgPendingSyncing = false;
+      if (result && result.status === 'ok') renderManagerQueue(result.data || []);
+    })
+    .catch(function(){ mgPendingSyncing = false; });
 }
 
 function renderManagerQueue(reports) {
@@ -2175,7 +2206,9 @@ function switchMgTab(tab) {
   document.getElementById('tabMgHistory').classList.toggle('active', tab === 'history');
   document.getElementById('mgPanelPending').style.display = tab === 'pending' ? 'block' : 'none';
   document.getElementById('mgPanelHistory').style.display = tab === 'history' ? 'block' : 'none';
-  if (tab === 'history') {
+  if (tab === 'pending') {
+    if (mgPendingLoaded) refreshPendingBackground(); // тихое обновление в фоне
+  } else if (tab === 'history') {
     if (!mgHistorialLoaded) {
       loadHistorial(); // первый раз — полная загрузка со спиннером
     } else {
