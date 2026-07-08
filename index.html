@@ -4,11 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="PARTE">
-<meta name="theme-color" content="#5a8ee8">
+<meta name="theme-color" content="#f2f2f7">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/dist/tabler-icons.min.css">
 <title>Parte de Trabajo</title>
 
 <script>
@@ -19,7 +20,7 @@ const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwiBvSurSTwZi1Cb7RCU
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:#f2f2f7;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 160px)}
+body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 180px)}
 
 /* NAV */
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;background:rgba(242,242,247,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid #d1d1d6}
@@ -269,13 +270,13 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 .rd-photo-link svg,.rd-photo-link i{width:15px;height:15px;font-size:15px;stroke:#007AFF;fill:none;stroke-width:2;stroke-linecap:round;color:#007AFF}
 
 /* TABBAR */
-.bottom-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:200;display:flex;padding-top:6px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 4px);background:#fff;border-top:.5px solid #d1d1d6}
-.bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;touch-action:manipulation;background:none;border:none;font-family:inherit;padding:4px 0;min-height:50px}
-.bottom-tab i.ti{font-size:26px;color:#8e8e93;line-height:1;display:block;font-style:normal;transition:color .12s,transform .12s}
-.bottom-tab span{font-size:10px;font-weight:500;color:#8e8e93;display:block;transition:color .12s;letter-spacing:.1px}
-.bottom-tab.active i.ti{color:#007AFF;transform:scale(1.05)}
+.bottom-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:200;display:flex;padding-top:8px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 6px);background:#fff;border-top:.5px solid #d1d1d6}
+.bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;touch-action:manipulation;background:none;border:none;font-family:inherit;padding:2px 0;min-height:48px}
+.bottom-tab i{font-size:26px;color:#8e8e93;line-height:1;display:block;font-style:normal}
+.bottom-tab span{font-size:10px;font-weight:500;color:#8e8e93;display:block}
+.bottom-tab.active i{color:#007AFF}
 .bottom-tab.active span{color:#007AFF;font-weight:600}
-.bottom-tab:active{opacity:.55}
+.bottom-tab:active{opacity:.6}
 
 /* PLACEHOLDER */
 .placeholder{padding:60px 24px;text-align:center;color:#8e8e93;font-size:15px}
@@ -704,11 +705,11 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 <!-- BOTTOM TAB BAR: OPERARIO -->
 <div class="bottom-tabbar" id="tabbarOperario" style="display:none">
   <div class="bottom-tab active" id="tabOpNew" onclick="switchOpTab('new')">
-    <i class="ti ti-file-plus" aria-hidden="true"></i>
+    <i class="ti ti-file-plus"></i>
     <span>Nuevo</span>
   </div>
   <div class="bottom-tab" id="tabOpMine" onclick="switchOpTab('mine')">
-    <i class="ti ti-files" aria-hidden="true"></i>
+    <i class="ti ti-file-text"></i>
     <span>Mis informes</span>
   </div>
 </div>
@@ -716,11 +717,11 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 <!-- BOTTOM TAB BAR: MANAGER -->
 <div class="bottom-tabbar" id="tabbarManager" style="display:none">
   <div class="bottom-tab active" id="tabMgPending" onclick="switchMgTab('pending')">
-    <i class="ti ti-clock-check" aria-hidden="true"></i>
+    <i class="ti ti-clock"></i>
     <span>Pendientes</span>
   </div>
   <div class="bottom-tab" id="tabMgHistory" onclick="switchMgTab('history')">
-    <i class="ti ti-history" aria-hidden="true"></i>
+    <i class="ti ti-check"></i>
     <span>Historial</span>
   </div>
 </div>
@@ -728,11 +729,11 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 <!-- BOTTOM TAB BAR: ADMIN -->
 <div class="bottom-tabbar" id="tabbarAdmin" style="display:none">
   <div class="bottom-tab active" id="tabAdJournal" onclick="switchAdTab('journal')">
-    <i class="ti ti-list-details" aria-hidden="true"></i>
+    <i class="ti ti-list"></i>
     <span>Журнал</span>
   </div>
   <div class="bottom-tab" id="tabAdAnalisis" onclick="switchAdTab('analisis')">
-    <i class="ti ti-chart-bar" aria-hidden="true"></i>
+    <i class="ti ti-chart-bar"></i>
     <span>Análisis</span>
   </div>
 </div>
