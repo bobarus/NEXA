@@ -1195,6 +1195,7 @@ function routeToRoleScreen() {
   // Показываем навбар и убираем pin-mode
   document.getElementById('mainNav').style.display = '';
   document.body.classList.remove('pin-mode');
+  document.getElementById('screenPin').style.display = 'none';
 
   document.getElementById('screenOperario').style.display = 'none';
   document.getElementById('screenManager').style.display = 'none';
@@ -2756,6 +2757,17 @@ function initAdminScreen() {
   document.getElementById('mainNav').style.display = 'none';
   document.body.classList.add('pin-mode');
 
+  var saved = getSavedPin();
+
+  // Если PIN не сохранён — роль ещё не выбрана. Мгновенно, синхронно
+  // прячем splash без анимации и показываем экран ввода PIN.
+  if (!saved) {
+    var s0 = document.getElementById('splashScreen');
+    if (s0) s0.style.display = 'none';
+    document.getElementById('screenPin').style.display = 'flex';
+    return;
+  }
+
   function hideSplash(delay) {
     setTimeout(function() {
       var s = document.getElementById('splashScreen');
@@ -2766,62 +2778,55 @@ function initAdminScreen() {
     }, delay || 0);
   }
 
-  var saved = getSavedPin();
-  if (saved) {
-    currentPin = saved;
+  currentPin = saved;
 
-    // Пробуем войти мгновенно из кеша — показываем splash пока грузимся
-    var cached = getUserCache(saved);
-    if (cached) {
-      // Есть кеш — входим мгновенно, splash держим пока не готово
-      currentUser = cached;
-      routeToRoleScreen();
-      hideSplash(600);
-      // Фоновая проверка актуальности
-      fetch(WEBAPP_URL + '?action=checkUser&codigo=' + encodeURIComponent(saved) + '&t=' + Date.now())
-        .then(function(r){ return r.json(); })
-        .then(function(result){
-          if (result && result.status === 'ok' && result.valid) {
-            currentUser = result;
-            saveUserCache(result);
-          } else {
-            try { localStorage.removeItem('parte_user_pin'); } catch(e) {}
-            changeUser();
-          }
-        })
-        .catch(function(){});
-      return;
-    }
-
-    // Нет кеша — отправляем сохранённый PIN на сервер (splash показывается пока ждём)
+  // Пробуем войти мгновенно из кеша — показываем splash пока грузимся
+  var cached = getUserCache(saved);
+  if (cached) {
+    // Есть кеш — входим мгновенно, splash держим пока не готово
+    currentUser = cached;
+    routeToRoleScreen();
+    hideSplash(600);
+    // Фоновая проверка актуальности
     fetch(WEBAPP_URL + '?action=checkUser&codigo=' + encodeURIComponent(saved) + '&t=' + Date.now())
       .then(function(r){ return r.json(); })
       .then(function(result){
         if (result && result.status === 'ok' && result.valid) {
           currentUser = result;
           saveUserCache(result);
-          currentPin = saved;
-          routeToRoleScreen();
-          hideSplash(300);
         } else {
-          // PIN больше не валиден
           try { localStorage.removeItem('parte_user_pin'); } catch(e) {}
-          currentPin = '';
-          hideSplash(300);
-          document.getElementById('screenPin').style.display = 'flex';
+          changeUser();
         }
       })
-      .catch(function(){
-        // Нет сети — показываем PIN для ввода вручную
-        hideSplash(300);
-        currentPin = '';
-        document.getElementById('screenPin').style.display = 'flex';
-      });
-  } else {
-    // Нет сохранённого PIN — скрываем splash, показываем экран ввода
-    hideSplash(400);
-    document.getElementById('screenPin').style.display = 'flex';
+      .catch(function(){});
+    return;
   }
+
+  // Нет кеша — отправляем сохранённый PIN на сервер (splash показывается пока ждём)
+  fetch(WEBAPP_URL + '?action=checkUser&codigo=' + encodeURIComponent(saved) + '&t=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(result){
+      if (result && result.status === 'ok' && result.valid) {
+        currentUser = result;
+        saveUserCache(result);
+        currentPin = saved;
+        routeToRoleScreen();
+        hideSplash(300);
+      } else {
+        // PIN больше не валиден
+        try { localStorage.removeItem('parte_user_pin'); } catch(e) {}
+        currentPin = '';
+        hideSplash(300);
+        document.getElementById('screenPin').style.display = 'flex';
+      }
+    })
+    .catch(function(){
+      // Нет сети — показываем PIN для ввода вручную
+      hideSplash(300);
+      currentPin = '';
+      document.getElementById('screenPin').style.display = 'flex';
+    });
 })();
 
 /* ════════ SWIPE TO CLOSE — для всех модалов ════════ */
