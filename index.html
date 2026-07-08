@@ -33,24 +33,24 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;background:rgba(242,242,247,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid #d1d1d6}
 .nav-center{flex:1;text-align:center}
 .nav-title{font-size:17px;font-weight:600;color:#000;letter-spacing:-.2px}
-.nav-side{width:44px;display:flex;justify-content:center;align-items:center}
-.globe-btn{width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.06);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;touch-action:manipulation}
-.globe-btn:active{background:rgba(0,0,0,.12)}
-.globe-btn svg,.globe-btn i{color:#636366;font-size:18px;stroke:#636366;width:18px;height:18px;fill:none;stroke-width:1.8;stroke-linecap:round}
+.nav-side{width:56px;display:flex;justify-content:center;align-items:center}
+.globe-btn{width:52px;height:44px;border-radius:15px;background:transparent;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;touch-action:manipulation;transition:background .15s}
+.globe-btn:active{background:#e8f0fe}
+.globe-btn:active svg,.globe-btn:active i{stroke:#007AFF;color:#007AFF}
+.globe-btn.pressed{background:#e8f0fe}
+.globe-btn.pressed svg,.globe-btn.pressed i{stroke:#007AFF;color:#007AFF}
+.globe-btn svg,.globe-btn i{color:#8e8e93;font-size:22px;stroke:#8e8e93;width:22px;height:22px;fill:none;stroke-width:1.8;stroke-linecap:round;transition:color .15s,stroke .15s}
 .lang-dropdown{display:none;position:absolute;top:42px;right:0;background:#fff;border-radius:14px;overflow:hidden;min-width:160px;border:.5px solid #d1d1d6;z-index:300;box-shadow:0 4px 20px rgba(0,0,0,.12)}
 .lang-dropdown.open{display:block}
 
 /* NOTIFICATION BELL */
-.notif-bell{transition:background .15s}
-.notif-bell.has-unread{background:#ff3b30}
-.notif-bell.has-unread i{color:#fff}
 .notif-bell .notif-dot{
-  position:absolute;top:-2px;right:-2px;
-  width:9px;height:9px;border-radius:50%;
-  background:#ff3b30;border:1.5px solid #fff;
+  position:absolute;top:4px;right:10px;
+  width:8px;height:8px;border-radius:50%;
+  background:#ff3b30;border:1.5px solid #f2f2f7;
   display:none;
 }
-.notif-bell.has-unread .notif-dot{display:block;background:#fff}
+.notif-bell.has-unread .notif-dot{display:block}
 
 /* Карточки уведомлений в полноэкранном модале */
 .notif-card{
@@ -359,14 +359,15 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 
 <nav class="nav" id="mainNav">
   <div class="nav-side" id="navExit" style="visibility:hidden">
-    <div onclick="changeUser()" style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.06);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation"><svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#636366;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
+    <div class="globe-btn" onclick="changeUser()"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
   </div>
   <div class="nav-center">
     <div class="nav-title" id="navTitle">AEDIS</div>
   </div>
   <div class="nav-side" style="justify-content:flex-end;position:relative;gap:8px;display:flex;align-items:center">
     <div class="globe-btn notif-bell" id="notifBellWrap" onclick="openNotifModal()">
-      <i class="ti ti-bell" style="font-size:18px"></i>
+      <i class="ti ti-bell"></i>
+      <span class="notif-dot"></span>
     </div>
     <div class="globe-btn" id="globeWrap" onclick="toggleLangDrop()">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
