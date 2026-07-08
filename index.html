@@ -37,7 +37,7 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
 .nav-side i{font-size:18px;color:#636366;cursor:pointer}
 
 /* SECTION LABELS */
-.slabel{font-size:12px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:.5px;padding:14px 16px 6px;display:flex;align-items:center;justify-content:space-between}
+.slabel{font-size:14px;font-weight:600;color:#000;letter-spacing:-.1px;padding:18px 16px 8px;display:flex;align-items:center;justify-content:space-between}
 .req-badge{font-size:9px;font-weight:600;color:#ff3b30;background:rgba(255,59,48,.1);padding:2px 8px;border-radius:10px;text-transform:none;letter-spacing:0}
 
 /* CARDS */
@@ -142,20 +142,20 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
 .btn-new{width:100%;background:#34c759;color:#fff;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation}
 
 /* PIN */
-.pin-screen{display:flex;flex-direction:column;align-items:center;padding:28px 24px;text-align:center}
+.pin-screen{display:flex;flex-direction:column;align-items:center;padding:28px 20px;text-align:center;width:100%}
 .pin-logo{display:none}
 .pin-title{font-size:22px;font-weight:700;color:#000;margin-bottom:4px}
 .pin-sub{font-size:14px;color:#8e8e93;font-weight:400;margin-bottom:24px}
-.pin-dots{display:flex;gap:12px;margin-bottom:28px}
-.pin-dot{width:44px;height:52px;border-radius:12px;border:.5px solid #e5e5ea;background:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:500;color:#000;transition:border-color .15s;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.pin-dots{display:flex;gap:14px;margin-bottom:28px;width:100%;max-width:340px;justify-content:center}
+.pin-dot{flex:1;height:56px;border-radius:12px;border:.5px solid #e5e5ea;background:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:500;color:#000;transition:border-color .15s;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .pin-dot.filled{border-color:#007AFF}
-.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:340px}
 .pin-key{aspect-ratio:1;border-radius:50%;border:none;background:#fff;font-size:22px;font-weight:400;color:#000;font-family:inherit;cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.1)}
 .pin-key:active{background:#e5e5ea;transform:scale(.95)}
 .pin-key.empty{background:transparent;box-shadow:none;cursor:default}
 .pin-key.del{background:transparent;box-shadow:none;color:#636366;font-size:16px}
 .pin-key.del i{font-size:20px}
-.pin-ok-btn{width:100%;max-width:280px;margin-top:14px;background:#c7c7cc;border:none;color:#fff;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:inherit;cursor:not-allowed;transition:background .2s;touch-action:manipulation}
+.pin-ok-btn{width:100%;max-width:340px;margin-top:14px;background:#c7c7cc;border:none;color:#fff;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:inherit;cursor:not-allowed;transition:background .2s;touch-action:manipulation}
 .pin-ok-btn.ready{background:#34c759;cursor:pointer}
 .pin-ok-btn.ready:active{opacity:.9}
 .pin-error{font-size:13px;font-weight:500;color:#ff3b30;margin-top:14px;min-height:18px;opacity:0;transition:opacity .2s}
@@ -254,13 +254,17 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
 #adFilterToggle.has-filters i,#adFilterToggle.has-filters svg{color:#007AFF;stroke:#007AFF}
 
 /* DETAIL MODAL CONTENT */
+.det-group{background:#fff;border-radius:12px;border:.5px solid #e5e5ea;margin-bottom:10px;overflow:hidden;padding:12px}
+.det-group-title{font-size:13px;font-weight:600;color:#000;margin-bottom:10px;letter-spacing:-.1px}
+.det-group-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 .rd-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .rd-field{background:#f9f9f9;border-radius:10px;padding:9px 12px}
 .rd-field b{display:block;color:#8e8e93;font-weight:600;text-transform:uppercase;font-size:9px;letter-spacing:.3px;margin-bottom:2px}
 .rd-field span{color:#000;font-weight:500;font-size:13px}
+.rd-field-full{background:#f9f9f9;border-radius:10px;padding:10px 12px;margin-bottom:8px}
 .rd-text{background:#f9f9f9;border-radius:10px;padding:10px 12px;font-size:13px;color:#000;line-height:1.5;margin-bottom:8px}
 .rd-text b{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;margin-bottom:3px;font-weight:700}
-.rd-photo-link{display:flex;align-items:center;justify-content:center;gap:6px;background:#f2f2f7;border:.5px solid #e5e5ea;border-radius:10px;padding:10px;font-size:13px;font-weight:500;color:#007AFF;text-decoration:none;margin-bottom:8px}
+.rd-photo-link{display:flex;align-items:center;justify-content:center;gap:6px;background:#f2f2f7;border:.5px solid #e5e5ea;border-radius:10px;padding:10px;font-size:13px;font-weight:500;color:#007AFF;text-decoration:none;margin-top:6px}
 .rd-photo-link svg,.rd-photo-link i{width:15px;height:15px;font-size:15px;stroke:#007AFF;fill:none;stroke-width:2;stroke-linecap:round;color:#007AFF}
 
 /* TABBAR */
@@ -472,12 +476,12 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
       <div class="row" style="min-height:60px">
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
           <span style="font-size:20px;font-weight:700;color:#1a3a80;line-height:1">€</span>
-          <span class="rlabel">Precio</span>
+          <span class="rlabel" style="font-weight:700">Precio</span>
         </div>
         <div style="display:flex;align-items:baseline;gap:3px;margin-left:auto">
           <input type="number" id="precio" min="0" step="0.01" inputmode="decimal" placeholder="0.00"
             style="border:none;outline:none;background:transparent;font-family:inherit;font-size:20px;font-weight:700;color:#000;text-align:right;width:100px">
-          <span style="font-size:14px;color:#8e8e93;flex-shrink:0;font-weight:600">€</span>
+          <span style="font-size:14px;color:#8e8e93;flex-shrink:0">€</span>
         </div>
       </div>
       <div class="photo-row">
@@ -552,29 +556,26 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
 
 <!-- MODAL: DETALLE DE INFORME (Mis informes) -->
 <div class="mg-modal-overlay" id="reportDetailModal" onclick="if(event.target===this)closeReportDetail()">
-  <div class="mg-modal" style="max-height:80vh;overflow-y:auto">
+  <div class="mg-modal" style="max-height:85vh;overflow-y:auto">
+    <div class="modal-handle" style="width:36px;height:4px;background:#c7c7cc;border-radius:2px;margin:0 auto 16px"></div>
     <div class="mg-modal-title" id="rdTitle">—</div>
     <div class="mg-modal-sub" id="rdSub">—</div>
     <div id="rdBody" style="margin:14px 0"></div>
-    <div style="display:flex;gap:10px">
-      <button class="mg-modal-cancel" style="flex:1" onclick="closeReportDetail()">Cerrar</button>
-      <button class="mg-modal-cancel" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px" onclick="shareReportDetailFromModal()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-        Compartir
-      </button>
-    </div>
+    <button class="mg-modal-cancel" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px" onclick="shareReportDetailFromModal()">
+      <i class="ti ti-share" style="font-size:16px"></i> Compartir
+    </button>
   </div>
 </div>
 
 <!-- MODAL: DETALLE Y DECISIÓN (Manager) -->
 <div class="mg-modal-overlay" id="mgDetailModal" onclick="if(event.target===this)closeManagerDetail()">
   <div class="mg-modal" style="max-height:85vh;overflow-y:auto">
+    <div class="modal-handle" style="width:36px;height:4px;background:#c7c7cc;border-radius:2px;margin:0 auto 16px"></div>
     <div class="mg-modal-title" id="mgdTitle">—</div>
     <div class="mg-modal-sub" id="mgdSub">—</div>
     <div id="mgdBody" style="margin:14px 0"></div>
-    <button class="mg-modal-cancel" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:10px" onclick="shareManagerDetail()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-      Compartir
+    <button class="mg-modal-cancel" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px" onclick="shareManagerDetail()">
+      <i class="ti ti-share" style="font-size:16px"></i> Compartir
     </button>
     <div class="mg-actions">
       <button class="mg-btn mg-btn-reject" onclick="rejectFromDetail()">Rechazar</button>
@@ -975,12 +976,33 @@ function buildAllSelects() {
 }
 
 /* ════════ OPERARIO: TABS ════════ */
+var myReportsLoaded = false;
+var myReportsSyncing = false;
+
 function switchOpTab(tab) {
   document.getElementById('tabOpNew').classList.toggle('active', tab === 'new');
   document.getElementById('tabOpMine').classList.toggle('active', tab === 'mine');
   document.getElementById('opPanelNew').style.display = tab === 'new' ? 'block' : 'none';
   document.getElementById('opPanelMine').style.display = tab === 'mine' ? 'block' : 'none';
-  if (tab === 'mine') loadMyReports();
+  if (tab === 'mine') {
+    if (!myReportsLoaded) {
+      loadMyReports(); // первый раз — показываем спиннер
+    } else {
+      refreshMyReportsBackground(); // уже загружено — обновляем тихо в фоне
+    }
+  }
+}
+
+function refreshMyReportsBackground() {
+  if (myReportsSyncing) return;
+  myReportsSyncing = true;
+  fetch(WEBAPP_URL + '?action=getMyReports&operario=' + encodeURIComponent(currentUser.nombre) + '&t=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(result){
+      myReportsSyncing = false;
+      if (result && result.status === 'ok') renderMyReports(result.data || []);
+    })
+    .catch(function(){ myReportsSyncing = false; });
 }
 
 /* ════════ OPERARIO: MODES (tipo / compania) ════════ */
@@ -1290,10 +1312,11 @@ function clearForm(skip) {
 var editingReportId = null;
 
 function loadMyReports() {
-  document.getElementById('miList').innerHTML = '<div class="mi-empty"><span class="spinner-inline" style="border-top-color:#1a3080;border-color:rgba(20,40,100,0.2)"></span>Cargando...</div>';
+  document.getElementById('miList').innerHTML = '<div class="mi-empty"><span class="spinner-inline"></span> Cargando...</div>';
   fetch(WEBAPP_URL + '?action=getMyReports&operario=' + encodeURIComponent(currentUser.nombre) + '&t=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(result){
+      myReportsLoaded = true;
       if (!result || result.status !== 'ok') { document.getElementById('miList').innerHTML = '<div class="mi-empty">Error al cargar</div>'; return; }
       renderMyReports(result.data || []);
     })
@@ -1311,7 +1334,6 @@ function shareReportDetailFromModal() {
 
 function renderMyReports(reports) {
   myReportsCache = reports;
-  // approved desaparece de la vista del operario — solo se muestran pending y rejected
   var visible = reports.filter(function(r){ return r.STATUS === 'pending' || r.STATUS === 'rejected'; });
   var listEl = document.getElementById('miList');
 
@@ -1324,12 +1346,20 @@ function renderMyReports(reports) {
     var statusLabel = r.STATUS === 'pending' ? 'Pendiente' : 'Rechazado';
     var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
     var html = '<div class="mi-card st-'+r.STATUS+'" onclick="openReportDetail(\''+r.ID+'\')">';
-    html += '<div class="mi-head"><span class="mi-id">'+r.ID+'</span><span class="mi-badge st-'+r.STATUS+'">'+statusLabel+'</span></div>';
-    html += '<div class="mi-obra">'+r.CLIENTE+' · '+r.OBRA+'</div>';
-    html += '<div class="mi-sub">'+fecha+' · '+r.HORAS+' h</div>';
+    // Единый стиль карточки: дата + статус
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">';
+    html += '<span style="font-size:11px;color:#8e8e93">'+fecha+'</span>';
+    html += '<span class="mi-badge st-'+r.STATUS+'">'+statusLabel+'</span>';
+    html += '</div>';
+    // Рабочий мелко
+    html += '<div style="font-size:11px;color:#8e8e93;margin-bottom:8px">'+r.OPERARIO+'</div>';
+    // PT-номер крупно
+    html += '<div style="font-size:20px;font-weight:700;color:#000;letter-spacing:-.3px;margin-bottom:3px">'+r.ID+'</div>';
+    // Клиент · объект
+    html += '<div style="font-size:12px;color:#8e8e93">'+r.CLIENTE+' · '+r.OBRA+'</div>';
     if (r.STATUS === 'rejected' && r.COMENTARIO_MANAGER) {
-      html += '<div class="mi-comment"><b>Comentario del manager</b>'+r.COMENTARIO_MANAGER+'</div>';
-      html += '<button class="mi-edit-btn" onclick="event.stopPropagation();openEditReport(\''+r.ID+'\')">Editar y reenviar</button>';
+      html += '<div class="mi-comment" style="margin-top:8px"><b>Comentario</b>'+r.COMENTARIO_MANAGER+'</div>';
+      html += '<button class="mi-edit-btn" style="margin-top:8px" onclick="event.stopPropagation();openEditReport(\''+r.ID+'\')">Editar y reenviar</button>';
     }
     html += '</div>';
     return html;
@@ -1345,7 +1375,7 @@ function openReportDetail(id) {
   var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
 
   document.getElementById('rdTitle').textContent = (r.OBRA || r.ID);
-  document.getElementById('rdSub').textContent = (r.CLIENTE ? r.CLIENTE + ' · ' : '') + statusLabel + ' · ' + fecha;
+  document.getElementById('rdSub').textContent = (r.ID ? r.ID + ' · ' : '') + (r.CLIENTE ? r.CLIENTE + ' · ' : '') + statusLabel + ' · ' + fecha;
 
   var html = buildDetailHtml(r, false); // рабочий не видит Total
   if (r.STATUS === 'rejected' && r.COMENTARIO_MANAGER) {
@@ -1526,56 +1556,67 @@ var mgDetailId = null;
 
 /* ── Универсальная функция построения деталей отчёта (только заполненные поля) ── */
 function buildDetailHtml(r, showTotal) {
-  var html = '';
   var PRECIO_HORA = 28;
+  var html = '';
+  var svgCam = '<i class="ti ti-camera" style="font-size:15px;color:#007AFF;margin-right:5px"></i>';
 
-  // Сетка: только заполненные пары (Total убран отсюда — показываем ниже отдельно)
-  var gridFields = [
-    { k:'Operario', v: r.OPERARIO },
-    { k:'Ayudante', v: r.AYUDANTE },
-    { k:'Vehículo', v: r['VEHÍCULO'] },
-    { k:'Tipo',     v: r['TIPO DE TRABAJO'] },
-    { k:'Compañía', v: r['COMPAÑÍA'] },
-    { k:'Precio materiales', v: r['PRECIO (EUR)'] ? r['PRECIO (EUR)'] + ' €' : '' }
-  ];
+  // ── БЛОК 1: TRABAJO ──
+  var trabajoFields = [];
+  if (r.OPERARIO) trabajoFields.push({k:'Operario', v: r.OPERARIO});
+  if (r.AYUDANTE && r.AYUDANTE.trim()) trabajoFields.push({k:'Ayudante', v: r.AYUDANTE});
+  if (r['TIPO DE TRABAJO']) trabajoFields.push({k:'Tipo', v: r['TIPO DE TRABAJO']});
 
-  var filledGrid = gridFields.filter(function(f){ return f.v && String(f.v).trim() !== '' && String(f.v).trim() !== '0'; });
-  if (filledGrid.length) {
-    html += '<div class="rd-grid">';
-    filledGrid.forEach(function(f){
-      html += '<div class="rd-field"><b>'+f.k+'</b><span>'+f.v+'</span></div>';
-    });
+  var trabajos = r['TRABAJOS REALIZADOS'] || '';
+  var fotosObra = r['FOTOS DE OBRA'] || '';
+  var horas = parseInt(r.HORAS) || 0;
+
+  var hasTrabajo = trabajoFields.length || trabajos || fotosObra || horas > 0;
+  if (hasTrabajo) {
+    html += '<div class="det-group">';
+    html += '<div class="det-group-title">Trabajo</div>';
+    if (trabajoFields.length) {
+      html += '<div class="det-group-grid">';
+      trabajoFields.forEach(function(f){
+        html += '<div class="rd-field"><b>'+f.k+'</b><span>'+f.v+'</span></div>';
+      });
+      html += '</div>';
+    }
+    if (horas > 0) {
+      html += '<div class="rd-field-full" style="display:flex;justify-content:space-between;align-items:center">';
+      html += '<div><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:2px">Horas trabajadas</b>';
+      html += '<span style="font-size:20px;font-weight:700;color:#000">'+horas+' h</span></div>';
+      if (showTotal) html += '<span style="font-size:12px;color:#8e8e93">'+PRECIO_HORA+' €/h</span>';
+      html += '</div>';
+    }
+    if (trabajos) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:4px">Trabajos realizados</b><span style="font-size:13px;color:#000;line-height:1.5">'+trabajos+'</span></div>';
+    if (fotosObra) html += '<a class="rd-photo-link" href="'+fotosObra+'" target="_blank">'+svgCam+'Fotos de obra</a>';
     html += '</div>';
   }
 
-  // Блок часов с подсказкой стоимости
-  if (r.HORAS && parseInt(r.HORAS) > 0) {
-    var horas = parseInt(r.HORAS);
-    var costoHoras = horas * PRECIO_HORA;
-    html += '<div class="rd-text" style="display:flex;justify-content:space-between;align-items:center">'
-      + '<div><b>Horas trabajadas</b><span style="font-size:16px;font-weight:700;color:#1a2a4a">'+horas+' h</span></div>'
-      + (showTotal ? '<div style="text-align:right"><b style="font-size:13px;color:rgba(40,60,120,0.5)">'+PRECIO_HORA+' €/h</b></div>' : '')
-      + '</div>';
-  }
-
-  // TOTAL — по центру, крупный, жирный — только для менеджера/админа
-  if (showTotal && r.TOTAL && parseFloat(r.TOTAL) > 0) {
-    html += '<div style="text-align:center;margin:14px 0 6px;padding:16px;background:rgba(255,255,255,0.55);border-radius:14px;border:1px solid rgba(255,255,255,0.8)">'
-      + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:6px">Total</div>'
-      + '<div style="font-size:30px;font-weight:700;color:#0d2260;letter-spacing:-0.5px">'+r.TOTAL+' €</div>'
-      + '</div>';
-  }
-
-  var trabajos = r['TRABAJOS REALIZADOS'] || '';
+  // ── БЛОК 2: MATERIALES ──
+  var compania = r['COMPAÑÍA'] || '';
   var materiales = r['MATERIALES UTILIZADOS'] || '';
-  if (trabajos) html += '<div class="rd-text"><b>Trabajos realizados</b>'+trabajos+'</div>';
-  if (materiales) html += '<div class="rd-text"><b>Materiales</b>'+materiales+'</div>';
+  var precio = r['PRECIO (EUR)'] ? parseFloat(r['PRECIO (EUR)']) : 0;
+  var fotosMat = r['FOTO MATERIALES / RECIBO'] || '';
 
-  var fotosObra = r['FOTOS DE OBRA'] || '';
-  var fotosMat  = r['FOTO MATERIALES / RECIBO'] || '';
-  var svgCam = '<svg viewBox="0 0 24 24"><path d="M5 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2l-2-3H7L5 7z"/><circle cx="10" cy="13" r="3"/></svg>';
-  if (fotosObra) html += '<a class="rd-photo-link" href="'+fotosObra+'" target="_blank">'+svgCam+'Fotos de obra</a>';
-  if (fotosMat)  html += '<a class="rd-photo-link" href="'+fotosMat+'"  target="_blank">'+svgCam+'Fotos de materiales</a>';
+  var hasMateriales = compania || materiales || precio > 0 || fotosMat;
+  if (hasMateriales) {
+    html += '<div class="det-group">';
+    html += '<div class="det-group-title">Materiales</div>';
+    if (compania) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:2px">Compañía</b><span style="font-size:14px;font-weight:500;color:#000">'+compania+'</span></div>';
+    if (materiales) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:4px">Descripción</b><span style="font-size:13px;color:#000;line-height:1.5">'+materiales+'</span></div>';
+    if (precio > 0) html += '<div class="rd-field-full" style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93">Coste materiales</b><span style="font-size:17px;font-weight:600;color:#000">'+precio.toFixed(2)+' €</span></div>';
+    if (fotosMat) html += '<a class="rd-photo-link" href="'+fotosMat+'" target="_blank">'+svgCam+'Fotos de materiales</a>';
+    html += '</div>';
+  }
+
+  // ── TOTAL ── (только для менеджера/админа)
+  if (showTotal && r.TOTAL && parseFloat(r.TOTAL) > 0) {
+    html += '<div style="text-align:center;margin:12px 0 4px;background:#f9f9f9;border-radius:12px;padding:16px 12px;border:.5px solid #e5e5ea">'
+      + '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#8e8e93;margin-bottom:6px">Total</div>'
+      + '<div style="font-size:32px;font-weight:700;color:#000;letter-spacing:-.5px">'+parseFloat(r.TOTAL).toFixed(2)+' €</div>'
+      + '</div>';
+  }
 
   return html || '<div class="mi-empty" style="padding:16px 0">Sin datos adicionales</div>';
 }
