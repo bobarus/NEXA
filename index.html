@@ -142,22 +142,21 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
 .btn-new{width:100%;background:#34c759;color:#fff;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation}
 
 /* PIN */
-.pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-height:100dvh;padding:0 20px calc(env(safe-area-inset-bottom,0px) + 60px);text-align:center;width:100%}
-/* Когда PIN экран активен — body без отступа сверху */
-body.pin-mode{padding-top:0 !important}
+.pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:0 24px;text-align:center;width:100%;gap:0;overflow:hidden}
+body.pin-mode{padding-top:0 !important;overflow:hidden}
 .pin-logo{display:none}
 .pin-title{font-size:22px;font-weight:700;color:#000;margin-bottom:4px}
-.pin-sub{font-size:14px;color:#8e8e93;font-weight:400;margin-bottom:24px}
-.pin-dots{display:flex;gap:14px;margin-bottom:28px;width:100%;max-width:340px;justify-content:center}
+.pin-sub{font-size:14px;color:#8e8e93;font-weight:400;margin-bottom:28px}
+.pin-dots{display:flex;gap:14px;margin-bottom:32px;width:100%;max-width:340px;justify-content:center}
 .pin-dot{flex:1;height:56px;border-radius:12px;border:.5px solid #e5e5ea;background:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:500;color:#000;transition:border-color .15s;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .pin-dot.filled{border-color:#007AFF}
-.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:340px}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%;max-width:340px;margin-bottom:16px}
 .pin-key{aspect-ratio:1;border-radius:50%;border:none;background:#fff;font-size:22px;font-weight:400;color:#000;font-family:inherit;cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.1)}
 .pin-key:active{background:#e5e5ea;transform:scale(.95)}
 .pin-key.empty{background:transparent;box-shadow:none;cursor:default}
 .pin-key.del{background:transparent;box-shadow:none;color:#636366;font-size:16px}
-.pin-key.del i{font-size:20px}
-.pin-ok-btn{width:100%;max-width:340px;margin-top:14px;background:#c7c7cc;border:none;color:#fff;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:inherit;cursor:not-allowed;transition:background .2s;touch-action:manipulation}
+.pin-key.del i{font-size:22px}
+.pin-ok-btn{width:100%;max-width:340px;margin-top:4px;background:#c7c7cc;border:none;color:#fff;border-radius:14px;padding:16px;font-size:17px;font-weight:600;font-family:inherit;cursor:not-allowed;transition:background .2s;touch-action:manipulation}
 .pin-ok-btn.ready{background:#34c759;cursor:pointer}
 .pin-ok-btn.ready:active{opacity:.9}
 .pin-error{font-size:13px;font-weight:500;color:#ff3b30;margin-top:14px;min-height:18px;opacity:0;transition:opacity .2s}
