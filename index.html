@@ -19,7 +19,7 @@ const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwiBvSurSTwZi1Cb7RCU
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:#f2f2f7;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 130px)}
+body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 160px)}
 
 /* NAV */
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;background:rgba(242,242,247,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid #d1d1d6}
@@ -114,7 +114,7 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
 .btn-save{display:block;width:calc(100% - 32px);margin:16px 16px 6px;background:#8e8e93;border:none;color:#fff;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:inherit;cursor:not-allowed;transition:background .2s;touch-action:manipulation}
 .btn-save.ready{background:#34c759;cursor:pointer}
 .btn-save.ready:active{opacity:.88}
-.btn-clear{display:block;width:calc(100% - 32px);margin:0 16px 24px;text-align:center;font-size:14px;font-weight:400;color:#8e8e93;background:none;border:none;cursor:pointer;padding:8px;font-family:inherit;touch-action:manipulation}
+.btn-clear{display:block;width:calc(100% - 32px);margin:0 16px 32px;text-align:center;font-size:14px;font-weight:500;color:#ff3b30;background:none;border:none;cursor:pointer;padding:10px;font-family:inherit;touch-action:manipulation}
 .spinner-inline{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,.12);border-top-color:#007AFF;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -142,7 +142,7 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
 .btn-new{width:100%;background:#34c759;color:#fff;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation}
 
 /* PIN */
-.pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:20px 20px;text-align:center;width:100%}
+.pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-height:100dvh;padding:0 20px calc(env(safe-area-inset-bottom,0px) + 60px);text-align:center;width:100%}
 /* Когда PIN экран активен — body без отступа сверху */
 body.pin-mode{padding-top:0 !important}
 .pin-logo{display:none}
@@ -270,13 +270,13 @@ body.pin-mode{padding-top:0 !important}
 .rd-photo-link svg,.rd-photo-link i{width:15px;height:15px;font-size:15px;stroke:#007AFF;fill:none;stroke-width:2;stroke-linecap:round;color:#007AFF}
 
 /* TABBAR */
-.bottom-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:200;display:flex;padding-top:10px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 8px);background:rgba(242,242,247,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:.5px solid #d1d1d6}
-.bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;touch-action:manipulation;color:#8e8e93;background:none;border:none;font-family:inherit;padding:2px 0}
-.bottom-tab i.ti{font-size:28px;color:#8e8e93;line-height:1;display:block;font-style:normal;transition:color .15s}
-.bottom-tab span{font-size:11px;font-weight:500;color:#8e8e93;display:block;transition:color .15s}
-.bottom-tab.active i.ti{color:#007AFF}
+.bottom-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:200;display:flex;padding-top:6px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 4px);background:#fff;border-top:.5px solid #d1d1d6}
+.bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;touch-action:manipulation;background:none;border:none;font-family:inherit;padding:4px 0;min-height:50px}
+.bottom-tab i.ti{font-size:26px;color:#8e8e93;line-height:1;display:block;font-style:normal;transition:color .12s,transform .12s}
+.bottom-tab span{font-size:10px;font-weight:500;color:#8e8e93;display:block;transition:color .12s;letter-spacing:.1px}
+.bottom-tab.active i.ti{color:#007AFF;transform:scale(1.05)}
 .bottom-tab.active span{color:#007AFF;font-weight:600}
-.bottom-tab:active{opacity:.6}
+.bottom-tab:active{opacity:.55}
 
 /* PLACEHOLDER */
 .placeholder{padding:60px 24px;text-align:center;color:#8e8e93;font-size:15px}
@@ -287,7 +287,7 @@ body.pin-mode{padding-top:0 !important}
 
 <nav class="nav" id="mainNav">
   <div class="nav-side" id="navExit" style="visibility:hidden">
-    <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;cursor:pointer" onclick="changeUser()"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    <div onclick="changeUser()" style="width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.06);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#636366;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
   </div>
   <div class="nav-center">
     <div class="nav-title" id="navTitle">Parte de Trabajo</div>
@@ -408,8 +408,8 @@ body.pin-mode{padding-top:0 !important}
         <div class="rbadge b-orange"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
         <span class="rlabel"><span id="lbl-tipo">Tipo</span> <span class="req-dot"></span></span>
         <div class="mode-toggle">
-          <button class="ct on" id="ctTL" onclick="setTipoMode('list')">Lista</button>
-          <button class="ct" id="ctTN" onclick="setTipoMode('new')">Otro</button>
+          <button class="ct on" id="ctTL" onclick="setTipoMode('list')"><span id="ct-tl-lbl">Lista</span></button>
+          <button class="ct" id="ctTN" onclick="setTipoMode('new')"><span id="ct-tn-lbl">Otro</span></button>
         </div>
       </div>
       <div class="mode-list-row" id="tipoListRow">
@@ -444,7 +444,7 @@ body.pin-mode{padding-top:0 !important}
           <span class="rlabel" id="lbl-foto-obra" style="font-size:13px">Fotos de obra</span>
         </div>
         <div class="photo-hint" id="hint-obra">Añade fotos del estado de la obra</div>
-        <label class="photo-input-btn" id="addBtnObra" style="display:flex;margin:10px auto 16px;width:fit-content">
+        <label class="photo-input-btn" id="addBtnObra" style="display:flex;margin:14px auto 20px;width:fit-content">
           <svg viewBox="0 0 24 24"><path d="M5 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2l-2-3H7L5 7z"/><circle cx="10" cy="13" r="3"/></svg>
           Añadir
           <input type="file" accept="image/*" multiple style="display:none" id="inputPhotosObra" onchange="handlePhotoSelect(this,'obra')">
@@ -459,8 +459,8 @@ body.pin-mode{padding-top:0 !important}
         <div class="rbadge b-teal"><svg viewBox="0 0 24 24"><path d="M3 9l1-5h16l1 5"/><path d="M3 9a4 4 0 0 0 8 0 4 4 0 0 0 8 0"/><path d="M5 21V9m14 12V9M9 21v-6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6"/></svg></div>
         <span class="rlabel" id="lbl-compania">Compañía</span>
         <div class="mode-toggle">
-          <button class="ct on" id="ctCL" onclick="setCompMode('list')">Lista</button>
-          <button class="ct" id="ctCN" onclick="setCompMode('new')">Nueva</button>
+          <button class="ct on" id="ctCL" onclick="setCompMode('list')"><span id="ct-cl-lbl">Lista</span></button>
+          <button class="ct" id="ctCN" onclick="setCompMode('new')"><span id="ct-cn-lbl">Nueva</span></button>
         </div>
       </div>
       <div class="mode-list-row" id="compListRow">
@@ -488,7 +488,7 @@ body.pin-mode{padding-top:0 !important}
           <span class="rlabel" id="lbl-foto-mat" style="font-size:13px">Materiales / recibo</span>
         </div>
         <div class="photo-hint" id="hint-mat">Añade fotos del recibo o albarán de materiales</div>
-        <label class="photo-input-btn" id="addBtnMat" style="display:flex;margin:10px auto 16px;width:fit-content">
+        <label class="photo-input-btn" id="addBtnMat" style="display:flex;margin:14px auto 20px;width:fit-content">
           <svg viewBox="0 0 24 24"><path d="M5 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2l-2-3H7L5 7z"/><circle cx="10" cy="13" r="3"/></svg>
           Añadir
           <input type="file" accept="image/*" multiple style="display:none" id="inputPhotosMat" onchange="handlePhotoSelect(this,'materiales')">
@@ -611,18 +611,18 @@ body.pin-mode{padding-top:0 !important}
 
       <!-- Статус -->
       <div style="margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px">Estado</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px"><span id="flt-estado-lbl">Estado</span></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="ad-flt-btn active" data-ftype="status" data-val="" onclick="setFilterBtn(this,'status')">Todos</button>
-          <button class="ad-flt-btn" data-ftype="status" data-val="pending" onclick="setFilterBtn(this,'status')">Pendiente</button>
-          <button class="ad-flt-btn" data-ftype="status" data-val="approved" onclick="setFilterBtn(this,'status')">Aprobado</button>
-          <button class="ad-flt-btn" data-ftype="status" data-val="rejected" onclick="setFilterBtn(this,'status')">Rechazado</button>
+          <button class="ad-flt-btn active" data-ftype="status" data-val="" onclick="setFilterBtn(this,'status')" id="flt-st-all">Todos</button>
+          <button class="ad-flt-btn" data-ftype="status" data-val="pending" onclick="setFilterBtn(this,'status')" id="flt-st-pending">Pendiente</button>
+          <button class="ad-flt-btn" data-ftype="status" data-val="approved" onclick="setFilterBtn(this,'status')" id="flt-st-approved">Aprobado</button>
+          <button class="ad-flt-btn" data-ftype="status" data-val="rejected" onclick="setFilterBtn(this,'status')" id="flt-st-rejected">Rechazado</button>
         </div>
       </div>
 
       <!-- Клиент -->
       <div style="margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px">Cliente</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px"><span id="flt-lbl-cliente">Cliente</span></div>
         <input type="text" id="adFCliente" list="adFClienteList" id="adFClientePlaceholder" placeholder="Todos los clientes" oninput="applyAdminFilters()"
           style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.5);font-family:inherit;font-size:13px;color:#1a2a4a;outline:none">
         <datalist id="adFClienteList"></datalist>
@@ -630,7 +630,7 @@ body.pin-mode{padding-top:0 !important}
 
       <!-- Obra -->
       <div style="margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px">Obra</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px"><span id="flt-lbl-obra">Obra</span></div>
         <input type="text" id="adFObra" list="adFObraList" id="adFObraPlaceholder" placeholder="Todas las obras" oninput="applyAdminFilters()"
           style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.5);font-family:inherit;font-size:13px;color:#1a2a4a;outline:none">
         <datalist id="adFObraList"></datalist>
@@ -638,7 +638,7 @@ body.pin-mode{padding-top:0 !important}
 
       <!-- Rабочий -->
       <div style="margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px">Operario</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px"><span id="flt-lbl-operario">Operario</span></div>
         <input type="text" id="adFOperario" list="adFOperarioList" id="adFOperarioPlaceholder" placeholder="Todos los operarios" oninput="applyAdminFilters()"
           style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.5);font-family:inherit;font-size:13px;color:#1a2a4a;outline:none">
         <datalist id="adFOperarioList"></datalist>
@@ -646,7 +646,7 @@ body.pin-mode{padding-top:0 !important}
 
       <!-- Тип работы -->
       <div style="margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px">Tipo de trabajo</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px"><span id="flt-lbl-tipo">Tipo de trabajo</span></div>
         <input type="text" id="adFTipo" list="adFTipoList" id="adFTipoPlaceholder" placeholder="Todos los tipos" oninput="applyAdminFilters()"
           style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.5);font-family:inherit;font-size:13px;color:#1a2a4a;outline:none">
         <datalist id="adFTipoList"></datalist>
@@ -654,7 +654,7 @@ body.pin-mode{padding-top:0 !important}
 
       <!-- Компания -->
       <div style="margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px">Compañía</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px"><span id="flt-lbl-compania">Compañía</span></div>
         <input type="text" id="adFCompania" list="adFCompaniaList" id="adFCompaniaPlaceholder" placeholder="Todas las compañías" oninput="applyAdminFilters()"
           style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.5);font-family:inherit;font-size:13px;color:#1a2a4a;outline:none">
         <datalist id="adFCompaniaList"></datalist>
@@ -662,7 +662,7 @@ body.pin-mode{padding-top:0 !important}
 
       <!-- Интервал дат -->
       <div style="margin-bottom:4px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px">Período</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px"><span id="flt-lbl-periodo">Período</span></div>
         <div style="display:flex;gap:8px;align-items:center">
           <input type="date" id="adFDateFrom" oninput="applyAdminFilters()"
             style="flex:1;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.5);font-family:inherit;font-size:13px;color:#1a2a4a;outline:none">
@@ -784,6 +784,8 @@ var LANGS = {
     no_pending:'No hay informes pendientes', no_mine:'No tienes informes pendientes', loading:'Cargando...',
     status_pending:'Pendiente', status_approved:'Aprobado', status_rejected:'Rechazado',
     greet_worker:'Operario', greet_manager:'Manager', greet_admin:'Administrador',
+    ph_select:'Seleccione', ph_no_assistant:'Sin ayudante', lbl_periodo:'Período',
+    ct_lista:'Lista', ct_otro:'Otro', ct_nueva:'Nueva',
   },
   ru: {
     pin_title:'Введите код', pin_sub:'PIN из 4 цифр', pin_ok:'OK', pin_error:'Неверный код',
@@ -809,6 +811,8 @@ var LANGS = {
     no_pending:'Нет ожидающих отчётов', no_mine:'У вас нет ожидающих отчётов', loading:'Загрузка...',
     status_pending:'Ожидает', status_approved:'Одобрено', status_rejected:'Отклонено',
     greet_worker:'Рабочий', greet_manager:'Менеджер', greet_admin:'Администратор',
+    ph_select:'Выбрать', ph_no_assistant:'Без помощника', lbl_periodo:'Период',
+    ct_lista:'Список', ct_otro:'Другой', ct_nueva:'Новая',
   },
   en: {
     pin_title:'Enter your code', pin_sub:'4-digit PIN', pin_ok:'OK', pin_error:'Incorrect code',
@@ -834,6 +838,8 @@ var LANGS = {
     no_pending:'No pending reports', no_mine:'You have no pending reports', loading:'Loading...',
     status_pending:'Pending', status_approved:'Approved', status_rejected:'Rejected',
     greet_worker:'Worker', greet_manager:'Manager', greet_admin:'Administrator',
+    ph_select:'Select', ph_no_assistant:'No assistant', lbl_periodo:'Period',
+    ct_lista:'List', ct_otro:'Other', ct_nueva:'New',
   }
 };
 
@@ -956,6 +962,36 @@ function applyLang() {
   // Filter status pills
   var pills = document.querySelectorAll('.ad-flt-btn[data-val=""]');
   pills.forEach(function(p){ p.textContent = t('flt_todos'); });
+
+  // Кнопки Lista / Otro / Nueva
+  setEl('ct-tl-lbl', t('ct_lista'));
+  setEl('ct-tn-lbl', t('ct_otro'));
+  setEl('ct-cl-lbl', t('ct_lista'));
+  setEl('ct-cn-lbl', t('ct_nueva'));
+
+  // Лейблы фильтров (раскрывающаяся панель)
+  setEl('flt-estado-lbl',   t('flt_label_estado'));
+  setEl('flt-lbl-cliente',  t('lbl_cliente'));
+  setEl('flt-lbl-obra',     t('lbl_obra'));
+  setEl('flt-lbl-operario', t('lbl_operario'));
+  setEl('flt-lbl-tipo',     t('lbl_tipo'));
+  setEl('flt-lbl-compania', t('lbl_compania'));
+  setEl('flt-lbl-periodo',  t('lbl_periodo'));
+
+  // Статус-пилюли
+  setEl('flt-st-all',      t('flt_todos'));
+  setEl('flt-st-pending',  t('status_pending'));
+  setEl('flt-st-approved', t('status_approved'));
+  setEl('flt-st-rejected', t('status_rejected'));
+
+  // Перестраиваем select'ы с новым placeholder
+  if (typeof LISTS !== 'undefined' && LISTS.clientes) {
+    buildSelect('cliente',  LISTS.clientes,  t('ph_select'));
+    buildSelect('obra',     LISTS.obras,     t('ph_select'));
+    buildSelect('tipo',     LISTS.tipos,     t('ph_select'));
+    buildSelect('compania', LISTS.companias, t('ph_select'));
+    buildSelect('ayudante', LISTS.operarios.filter(function(n){ return n !== (currentUser && currentUser.nombre); }), t('ph_no_assistant'));
+  }
 }
 
 function setLang(lang) {
@@ -1173,11 +1209,11 @@ function buildSelect(id, items, placeholder) {
 }
 
 function buildAllSelects() {
-  buildSelect('cliente', LISTS.clientes, 'Seleccione');
-  buildSelect('obra', LISTS.obras, 'Seleccione');
-  buildSelect('ayudante', LISTS.operarios.filter(function(n){ return n !== (currentUser && currentUser.nombre); }), 'Sin ayudante');
-  buildSelect('tipo', LISTS.tipos, 'Seleccione');
-  buildSelect('compania', LISTS.companias, 'Seleccione');
+  buildSelect('cliente', LISTS.clientes, t('ph_select'));
+  buildSelect('obra', LISTS.obras, t('ph_select'));
+  buildSelect('ayudante', LISTS.operarios.filter(function(n){ return n !== (currentUser && currentUser.nombre); }), t('ph_no_assistant'));
+  buildSelect('tipo', LISTS.tipos, t('ph_select'));
+  buildSelect('compania', LISTS.companias, t('ph_select'));
 }
 
 /* ════════ OPERARIO: TABS ════════ */
@@ -1548,7 +1584,7 @@ function renderMyReports(reports) {
   }
 
   listEl.innerHTML = visible.map(function(r){
-    var statusLabel = r.STATUS === 'pending' ? 'Pendiente' : 'Rechazado';
+    var statusLabel = r.STATUS === 'pending' ? t('status_pending') : t('status_rejected');
     var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
     var html = '<div class="mi-card st-'+r.STATUS+'" onclick="openReportDetail(\''+r.ID+'\')">';
     // Единый стиль карточки: дата + статус
@@ -1576,7 +1612,7 @@ function openReportDetail(id) {
   if (!r) return;
   rdCurrentId = id;
 
-  var statusLabel = r.STATUS === 'pending' ? 'Pendiente' : (r.STATUS === 'rejected' ? 'Rechazado' : r.STATUS);
+  var statusLabel = r.STATUS === 'pending' ? t('status_pending') : (r.STATUS === 'rejected' ? t('status_rejected') : r.STATUS);
   var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
 
   document.getElementById('rdTitle').textContent = (r.OBRA || r.ID);
@@ -1787,10 +1823,10 @@ function buildDetailHtml(r, showTotal) {
       html += '</div>';
     }
     if (horas > 0) {
-      html += '<div class="rd-field-full" style="display:flex;justify-content:space-between;align-items:center">';
-      html += '<div><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:2px">Horas trabajadas</b>';
-      html += '<span style="font-size:20px;font-weight:700;color:#000">'+horas+' h</span></div>';
-      if (showTotal) html += '<span style="font-size:12px;color:#8e8e93">'+PRECIO_HORA+' €/h</span>';
+      html += '<div class="rd-field-full" style="text-align:center;padding:12px">';
+      html += '<b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:6px">Horas trabajadas</b>';
+      html += '<span style="font-size:28px;font-weight:700;color:#000;letter-spacing:-.5px">'+horas+' h</span>';
+      if (showTotal) html += '<span style="display:block;font-size:11px;color:#8e8e93;margin-top:4px">'+PRECIO_HORA+' €/h</span>';
       html += '</div>';
     }
     if (trabajos) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:4px">Trabajos realizados</b><span style="font-size:13px;color:#000;line-height:1.5">'+trabajos+'</span></div>';
@@ -1810,7 +1846,12 @@ function buildDetailHtml(r, showTotal) {
     html += '<div class="det-group-title">Materiales</div>';
     if (compania) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:2px">Compañía</b><span style="font-size:14px;font-weight:500;color:#000">'+compania+'</span></div>';
     if (materiales) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:4px">Descripción</b><span style="font-size:13px;color:#000;line-height:1.5">'+materiales+'</span></div>';
-    if (precio > 0) html += '<div class="rd-field-full" style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93">Coste materiales</b><span style="font-size:17px;font-weight:600;color:#000">'+precio.toFixed(2)+' €</span></div>';
+    if (precio > 0) {
+      html += '<div class="rd-field-full" style="text-align:center;padding:12px">';
+      html += '<b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:6px">Coste materiales</b>';
+      html += '<span style="font-size:28px;font-weight:700;color:#000;letter-spacing:-.5px">'+precio.toFixed(2)+' €</span>';
+      html += '</div>';
+    }
     if (fotosMat) html += '<a class="rd-photo-link" href="'+fotosMat+'" target="_blank">'+svgCam+'Fotos de materiales</a>';
     html += '</div>';
   }
@@ -2006,7 +2047,7 @@ function renderHistorial(reports) {
     var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
     var isApproved = r.STATUS === 'approved';
     var statusColor = isApproved ? '#2a9a55' : '#e0433a';
-    var statusLabel = isApproved ? '✓ Aprobado' : '✗ Rechazado';
+    var statusLabel = isApproved ? '✓ ' + t('status_approved') : '✗ ' + t('status_rejected');
     return '<div class="mg-card" style="border-left-color:'+statusColor+';cursor:pointer" data-hid="'+r.ID+'" onclick="openHistorialDetail(\''+r.ID+'\')">'
       + '<div class="mg-head"><span class="mg-id">'+r.ID+'</span><span class="mg-id" style="color:'+statusColor+';font-weight:700">'+statusLabel+'</span></div>'
       + '<div class="mg-obra">'+r.OBRA+'</div>'
@@ -2229,7 +2270,7 @@ function renderAdminJournal() {
     return;
   }
 
-  var statusLabels = { pending:'Pendiente', approved:'Aprobado', rejected:'Rechazado' };
+  var statusLabels = { pending:t('status_pending'), approved:t('status_approved'), rejected:t('status_rejected') };
   var seen = getSeenIds();
   var now = new Date();
   var curYear = now.getFullYear(), curMonth = now.getMonth();
@@ -2286,7 +2327,7 @@ function renderAdminJournal() {
       if (!isNew) {
         // Статус-бейдж показываем снизу только у просмотренных (у новых он уже сверху справа)
         if (st === 'pending') {
-          html += '<span class="ad-status-badge st-pending" style="margin-bottom:'+(r.MANAGER_NOMBRE?'8px':'0')+'">Pendiente</span>';
+          html += '<span class="ad-status-badge st-pending" style="margin-bottom:'+(r.MANAGER_NOMBRE?'8px':'0')+'">' + t('status_pending') + '</span>';
         }
       }
       if ((st === 'approved' || st === 'rejected') && r.MANAGER_NOMBRE) {
@@ -2340,7 +2381,7 @@ function renderAdminInforme() {
       + '<div style="font-size:12px;color:rgba(40,60,120,0.55);font-weight:600;margin-bottom:10px">'+(r.OPERARIO||'')+'</div>'
       + '<div style="font-size:22px;font-weight:700;color:#1a2a4a;letter-spacing:-0.3px;margin-bottom:5px">'+(r.ID||'—')+'</div>'
       + '<div style="font-size:13px;font-weight:600;color:rgba(40,60,120,0.7);margin-bottom:8px">'+(r.CLIENTE||'')+'·'+(r.OBRA||'')+'</div>'
-      + '<span class="ad-status-badge st-approved">Aprobado</span>'
+      + '<span class="ad-status-badge st-approved">' + t('status_approved') + '</span>'
       + (r.MANAGER_NOMBRE ? '<div class="ad-manager-line approved">Aprobó: '+r.MANAGER_NOMBRE+'</div>' : '')
       + '</div>';
   }).join('');
@@ -2359,7 +2400,7 @@ function openAdminDetail(id) {
     if (newLabel && newLabel.textContent.includes('NUEVO')) {
       // Заменяем NUEVO на статус-бейдж
       var st = r.STATUS || 'pending';
-      var statusLabels = { pending:'Pendiente', approved:'Aprobado', rejected:'Rechazado' };
+      var statusLabels = { pending:t('status_pending'), approved:t('status_approved'), rejected:t('status_rejected') };
       newLabel.className = 'ad-status-badge st-'+st;
       newLabel.style = 'margin-bottom:0';
       newLabel.textContent = statusLabels[st];
@@ -2367,7 +2408,7 @@ function openAdminDetail(id) {
   }
   var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
   var st = r.STATUS || 'pending';
-  var statusLabels = { pending:'Pendiente', approved:'Aprobado', rejected:'Rechazado' };
+  var statusLabels = { pending:t('status_pending'), approved:t('status_approved'), rejected:t('status_rejected') };
   document.getElementById('mgdTitle').textContent = r.OBRA || '—';
   document.getElementById('mgdSub').textContent = r.CLIENTE + ' · ' + r.ID + ' · ' + fecha + ' · ' + statusLabels[st];
   var html = buildDetailHtml(r, true);
