@@ -20,7 +20,7 @@ const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwiBvSurSTwZi1Cb7RCU
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:#f2f2f7;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 180px)}
+body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
 
 /* NAV */
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;background:rgba(242,242,247,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid #d1d1d6}
@@ -112,11 +112,10 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
 .photo-add-mini:active{background:#e5e5ea}
 
 /* SAVE BTN — фиксированы над таббаром */
-.btn-save-wrap{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 62px);left:0;right:0;padding:0 16px 0;background:linear-gradient(to bottom,rgba(242,242,247,0) 0%,rgba(242,242,247,1) 20%);padding-top:20px;z-index:150;pointer-events:none}
-.btn-save{display:block;width:100%;background:#8e8e93;border:none;color:#fff;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:inherit;cursor:not-allowed;transition:background .2s;touch-action:manipulation;pointer-events:all}
+.btn-save{display:block;width:calc(100% - 32px);margin:20px 16px 8px;background:#8e8e93;border:none;color:#fff;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:inherit;cursor:not-allowed;transition:background .2s;touch-action:manipulation}
 .btn-save.ready{background:#34c759;cursor:pointer}
 .btn-save.ready:active{opacity:.88}
-.btn-clear{display:block;width:100%;margin-top:6px;text-align:center;font-size:14px;font-weight:500;color:#ff3b30;background:none;border:none;cursor:pointer;padding:8px;font-family:inherit;touch-action:manipulation;pointer-events:all}
+.btn-clear{display:block;width:calc(100% - 32px);margin:0 16px 24px;text-align:center;font-size:14px;font-weight:500;color:#ff3b30;background:none;border:none;cursor:pointer;padding:10px;font-family:inherit;touch-action:manipulation}
 .spinner-inline{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,.12);border-top-color:#007AFF;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -499,8 +498,8 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
         <div class="photo-thumbs" id="thumbsMat"></div>
       </div>
     </div>
-    <!-- Спейсер чтобы контент не скрывался за фиксированными кнопками -->
-    <div style="height:130px"></div>
+    <button class="btn-save" id="btnSave" onclick="saveRecord()">Guardar registro</button>
+    <button class="btn-clear" onclick="clearForm()">Borrar todo</button>
   </div>
 
   <!-- ── SUBPANTALLA: MIS INFORMES ── -->
@@ -510,11 +509,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 
 </div>
 
-<!-- ФИКСИРОВАННЫЕ КНОПКИ НАД ТАБBAРОМ — только для рабочего -->
-<div class="btn-save-wrap" id="btnSaveWrap" style="display:none">
-  <button class="btn-save" id="btnSave" onclick="saveRecord()">Guardar registro</button>
-  <button class="btn-clear" onclick="clearForm()">Borrar todo</button>
-</div>
+
 
 <!-- SUCCESS SCREEN -->
 <div id="successScreen">
@@ -1023,6 +1018,17 @@ function saveUserToDevice(codigo) {
 function getSavedPin() {
   try { return localStorage.getItem('parte_user_pin'); } catch(e) { return null; }
 }
+function saveUserCache(data) {
+  try { localStorage.setItem('parte_user_cache', JSON.stringify({ts: Date.now(), data: data})); } catch(e) {}
+}
+function getUserCache(pin) {
+  try {
+    var c = JSON.parse(localStorage.getItem('parte_user_cache') || 'null');
+    // Кеш пользователя живёт 24 часа
+    if (c && c.data && c.data.codigo === pin && (Date.now() - c.ts) < 24*60*60*1000) return c.data;
+  } catch(e) {}
+  return null;
+}
 
 /* ════════ PIN KEYPAD ════════ */
 function renderPinDots() {
@@ -1086,8 +1092,7 @@ function changeUser() {
   document.getElementById('tabbarOperario').style.display = 'none';
   document.getElementById('tabbarManager').style.display = 'none';
   document.getElementById('tabbarAdmin').style.display = 'none';
-  var wrap = document.getElementById('btnSaveWrap');
-  if (wrap) wrap.style.display = 'none';
+
   document.getElementById('navExit').style.visibility = 'hidden';
   document.getElementById('navTitle').textContent = 'Parte de Trabajo';
   document.getElementById('mainNav').style.display = 'none';
@@ -1114,6 +1119,7 @@ function submitPin() {
       if (result && result.status === 'ok' && result.valid) {
         currentUser = result;
         saveUserToDevice(pinToCheck);
+        saveUserCache(result);
         showGreetThenRoute();
       } else {
         showPinError('Código incorrecto');
@@ -1177,24 +1183,37 @@ function routeToRoleScreen() {
 var LISTS = { clientes:[], obras:[], operarios:[], tipos:[], companias:[] };
 var listsyncInterval = null;
 
+var LISTS_CACHE_KEY = 'parte_lists_cache';
+var LISTS_CACHE_TTL = 30 * 60 * 1000; // 30 минут
+
 function loadLists() {
+  // Сначала загружаем из кеша — мгновенно
+  try {
+    var cached = JSON.parse(localStorage.getItem(LISTS_CACHE_KEY) || 'null');
+    if (cached && cached.ts && (Date.now() - cached.ts) < LISTS_CACHE_TTL && cached.data) {
+      LISTS = cached.data;
+      buildAllSelects();
+    }
+  } catch(e) {}
+
+  // Затем фоновое обновление с сервера
   fetch(WEBAPP_URL + '?action=getLists&t=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(result){
       if (result && result.status === 'ok' && result.data) {
         LISTS = result.data;
         buildAllSelects();
+        // Сохраняем в кеш
+        try { localStorage.setItem(LISTS_CACHE_KEY, JSON.stringify({ts: Date.now(), data: LISTS})); } catch(e) {}
       }
     })
     .catch(function(){});
 }
 
-// Sincroniza la lista (clientes/obras/operarios/tipos/companías) en segundo plano
-// mientras la pantalla de operario esté abierta, para reflejar cambios hechos
-// en la hoja "servicio" sin necesidad de volver a entrar con el PIN.
+// Sincroniza la lista cada 7 minutos
 function startListSync() {
-  if (listsyncInterval) return; // ya está corriendo, no duplicar
-  listsyncInterval = setInterval(loadLists, 7 * 60 * 1000); // cada 7 minutos
+  if (listsyncInterval) return;
+  listsyncInterval = setInterval(loadLists, 7 * 60 * 1000);
 }
 function stopListSync() {
   if (listsyncInterval) { clearInterval(listsyncInterval); listsyncInterval = null; }
@@ -1235,8 +1254,7 @@ function switchOpTab(tab) {
   document.getElementById('opPanelNew').style.display = tab === 'new' ? 'block' : 'none';
   document.getElementById('opPanelMine').style.display = tab === 'mine' ? 'block' : 'none';
   // Кнопки фиксированные — показываем только на вкладке Nuevo
-  var wrap = document.getElementById('btnSaveWrap');
-  if (wrap) wrap.style.display = tab === 'new' ? 'block' : 'none';
+
   if (tab === 'mine') {
     if (!myReportsLoaded) {
       loadMyReports(); // первый раз — показываем спиннер
@@ -1729,9 +1747,7 @@ function initOperarioScreen() {
   loadLists();
   startListSync();
   updateBtn();
-  // Показываем фиксированные кнопки
-  var wrap = document.getElementById('btnSaveWrap');
-  if (wrap) wrap.style.display = 'block';
+
 }
 
 /* ════════ MANAGER: SOLICITUDES ════════ */
@@ -2669,22 +2685,45 @@ function initAdminScreen() {
 }
 
 (function initApp(){
-  // По умолчанию — PIN режим (nav скрыт)
   document.getElementById('mainNav').style.display = 'none';
   document.body.classList.add('pin-mode');
 
   var saved = getSavedPin();
   if (saved) {
     currentPin = saved;
+
+    // Пробуем войти мгновенно из кеша
+    var cached = getUserCache(saved);
+    if (cached) {
+      currentUser = cached;
+      routeToRoleScreen();
+      // Фоновая проверка актуальности — если PIN деактивирован, выбросим
+      fetch(WEBAPP_URL + '?action=checkUser&codigo=' + encodeURIComponent(saved) + '&t=' + Date.now())
+        .then(function(r){ return r.json(); })
+        .then(function(result){
+          if (result && result.status === 'ok' && result.valid) {
+            currentUser = result;
+            saveUserCache(result); // обновляем кеш
+          } else {
+            // PIN деактивирован — выходим
+            try { localStorage.removeItem('parte_user_pin'); } catch(e) {}
+            changeUser();
+          }
+        })
+        .catch(function(){}); // нет сети — остаёмся с кешем
+      return;
+    }
+
+    // Кеша нет — показываем спиннер и ждём сервер
     document.getElementById('screenPin').style.display = 'none';
     document.getElementById('pinLoading').classList.add('show');
-    var dataUrl = WEBAPP_URL + '?action=checkUser&codigo=' + encodeURIComponent(saved) + '&t=' + Date.now();
-    fetch(dataUrl)
+    fetch(WEBAPP_URL + '?action=checkUser&codigo=' + encodeURIComponent(saved) + '&t=' + Date.now())
       .then(function(r){ return r.json(); })
       .then(function(result){
         if (result && result.status === 'ok' && result.valid) {
           currentUser = result;
-          routeToRoleScreen(); // покажет nav внутри
+          saveUserCache(result);
+          routeToRoleScreen();
         } else {
           try { localStorage.removeItem('parte_user_pin'); } catch(e) {}
           currentPin = '';
@@ -2702,9 +2741,14 @@ function initAdminScreen() {
 
 <script>
 if ('serviceWorker' in navigator) {
+  // Сначала удаляем все старые SW
+  navigator.serviceWorker.getRegistrations().then(function(regs) {
+    regs.forEach(function(reg) { reg.unregister(); });
+  });
+  // Регистрируем новый
   window.addEventListener('load', function() {
-    navigator.serviceWorker.register('./sw.js').catch(function(e) {
-      console.log('SW registration failed:', e);
+    navigator.serviceWorker.register('./sw.js?v=4').catch(function(e) {
+      console.log('SW error:', e);
     });
   });
 }
