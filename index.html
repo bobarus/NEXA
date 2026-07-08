@@ -19,7 +19,7 @@ const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwiBvSurSTwZi1Cb7RCU
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:#f2f2f7;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 78px)}
+body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
 
 /* NAV */
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;background:rgba(242,242,247,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid #d1d1d6}
@@ -143,6 +143,8 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
 
 /* PIN */
 .pin-screen{display:flex;flex-direction:column;align-items:center;padding:28px 20px;text-align:center;width:100%}
+/* Когда PIN экран активен — body без отступа сверху */
+body.pin-mode{padding-top:0 !important}
 .pin-logo{display:none}
 .pin-title{font-size:22px;font-weight:700;color:#000;margin-bottom:4px}
 .pin-sub{font-size:14px;color:#8e8e93;font-weight:400;margin-bottom:24px}
@@ -269,10 +271,10 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
 
 /* TABBAR */
 .bottom-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:200;display:flex;padding-top:8px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 6px);background:rgba(242,242,247,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:.5px solid #d1d1d6}
-.bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;touch-action:manipulation;color:#8e8e93;background:none;border:none;font-family:inherit}
-.bottom-tab i{font-size:24px;color:#8e8e93;line-height:1}
-.bottom-tab span{font-size:10px;font-weight:500;color:#8e8e93}
-.bottom-tab.active i{color:#007AFF}
+.bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;touch-action:manipulation;color:#8e8e93;background:none;border:none;font-family:inherit;padding:2px 0}
+.bottom-tab i.ti{font-size:24px;color:#8e8e93;line-height:1;display:block;font-style:normal}
+.bottom-tab span{font-size:10px;font-weight:500;color:#8e8e93;display:block}
+.bottom-tab.active i.ti{color:#007AFF}
 .bottom-tab.active span{color:#007AFF}
 .bottom-tab:active{opacity:.7}
 
@@ -283,7 +285,7 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
 </head>
 <body>
 
-<nav class="nav">
+<nav class="nav" id="mainNav">
   <div class="nav-side" id="navExit" style="visibility:hidden">
     <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;cursor:pointer" onclick="changeUser()"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
   </div>
@@ -329,7 +331,7 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
     <button class="pin-key" data-key="9">9</button>
     <div class="pin-key empty"></div>
     <button class="pin-key" data-key="0">0</button>
-    <button class="pin-key del" data-key="del"><svg viewBox="0 0 24 24"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg></button>
+    <button class="pin-key del" data-key="del"><i class="ti ti-backspace" style="font-size:22px;color:#636366"></i></button>
   </div>
 
   <button class="pin-ok-btn" id="pinOkBtn">OK</button>
@@ -353,7 +355,7 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
   <!-- ── SUBPANTALLA: NUEVO INFORME ── -->
   <div id="opPanelNew">
 
-    <div class="slabel"><span>Identificación</span><span class="req-badge">• obligatorio</span></div>
+    <div class="slabel"><span id="sl-ident">Identificación</span><span class="req-badge">• obligatorio</span></div>
     <div class="card">
       <div class="row" id="rCliente">
         <div class="rbadge b-blue"><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></div>
@@ -378,7 +380,7 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
       </div>
     </div>
 
-    <div class="slabel"><span>Personal</span></div>
+    <div class="slabel"><span id="sl-personal">Personal</span></div>
     <div class="card">
       <div class="row">
         <div class="rbadge b-green"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M6.168 18.849A4 4 0 0 1 10 16h4a4 4 0 0 1 3.834 2.855"/></svg></div>
@@ -400,7 +402,7 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
       </div>
     </div>
 
-    <div class="slabel"><span>Trabajo</span></div>
+    <div class="slabel"><span id="sl-trabajo">Trabajo</span></div>
     <div class="card">
       <div class="mode-header" id="rTipo">
         <div class="rbadge b-orange"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
@@ -440,18 +442,18 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
       <div class="photo-row">
         <div class="photo-row-head">
           <span class="rlabel" style="font-size:13px">Fotos de obra</span>
-          <label class="photo-input-btn" id="addBtnObra">
-            <svg viewBox="0 0 24 24"><path d="M5 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2l-2-3H7L5 7z"/><circle cx="10" cy="13" r="3"/></svg>
-            Añadir
-            <input type="file" accept="image/*" multiple style="display:none" id="inputPhotosObra" onchange="handlePhotoSelect(this,'obra')">
-          </label>
         </div>
-        <div class="photo-hint">Añade fotos del estado de la obra</div>
+        <div class="photo-hint" id="hint-obra">Añade fotos del estado de la obra</div>
+        <label class="photo-input-btn" id="addBtnObra" style="display:flex;margin:8px auto 4px;width:fit-content">
+          <svg viewBox="0 0 24 24"><path d="M5 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2l-2-3H7L5 7z"/><circle cx="10" cy="13" r="3"/></svg>
+          Añadir
+          <input type="file" accept="image/*" multiple style="display:none" id="inputPhotosObra" onchange="handlePhotoSelect(this,'obra')">
+        </label>
         <div class="photo-thumbs" id="thumbsObra"></div>
       </div>
     </div>
 
-    <div class="slabel"><span>Materiales</span></div>
+    <div class="slabel"><span id="sl-materiales">Materiales</span></div>
     <div class="card">
       <div class="mode-header">
         <div class="rbadge b-teal"><svg viewBox="0 0 24 24"><path d="M3 9l1-5h16l1 5"/><path d="M3 9a4 4 0 0 0 8 0 4 4 0 0 0 8 0"/><path d="M5 21V9m14 12V9M9 21v-6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6"/></svg></div>
@@ -474,10 +476,7 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
         <textarea class="rta" id="materiales" placeholder="Listar materiales..."></textarea>
       </div>
       <div class="row" style="min-height:60px">
-        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-          <span style="font-size:20px;font-weight:700;color:#1a3a80;line-height:1">€</span>
-          <span class="rlabel" style="font-weight:700">Precio</span>
-        </div>
+        <span class="rlabel" style="font-weight:700">Precio</span>
         <div style="display:flex;align-items:baseline;gap:3px;margin-left:auto">
           <input type="number" id="precio" min="0" step="0.01" inputmode="decimal" placeholder="0.00"
             style="border:none;outline:none;background:transparent;font-family:inherit;font-size:20px;font-weight:700;color:#000;text-align:right;width:100px">
@@ -487,13 +486,13 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
       <div class="photo-row">
         <div class="photo-row-head">
           <span class="rlabel" style="font-size:13px">Materiales / recibo</span>
-          <label class="photo-input-btn" id="addBtnMat">
-            <svg viewBox="0 0 24 24"><path d="M5 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2l-2-3H7L5 7z"/><circle cx="10" cy="13" r="3"/></svg>
-            Añadir
-            <input type="file" accept="image/*" multiple style="display:none" id="inputPhotosMat" onchange="handlePhotoSelect(this,'materiales')">
-          </label>
         </div>
-        <div class="photo-hint">Añade fotos del recibo o albarán de materiales</div>
+        <div class="photo-hint" id="hint-mat">Añade fotos del recibo o albarán de materiales</div>
+        <label class="photo-input-btn" id="addBtnMat" style="display:flex;margin:8px auto 4px;width:fit-content">
+          <svg viewBox="0 0 24 24"><path d="M5 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2l-2-3H7L5 7z"/><circle cx="10" cy="13" r="3"/></svg>
+          Añadir
+          <input type="file" accept="image/*" multiple style="display:none" id="inputPhotosMat" onchange="handlePhotoSelect(this,'materiales')">
+        </label>
         <div class="photo-thumbs" id="thumbsMat"></div>
       </div>
     </div>
@@ -760,12 +759,152 @@ function fmtDate(val) {
 function toggleLangDrop() {
   document.getElementById('langDrop').classList.toggle('open');
 }
+var LANGS = {
+  es: {
+    pin_title: 'Introduce tu código', pin_sub: 'PIN de 4 dígitos', pin_ok: 'OK',
+    pin_error: 'Código incorrecto',
+    nav_new: 'PARTE DE TRABAJO', nav_manager: 'Aprobaciones', nav_admin: 'Panel admin',
+    tab_nuevo: 'Nuevo', tab_mis: 'Mis informes', tab_pending: 'Pendientes', tab_hist: 'Historial',
+    tab_journal: 'Журнал', tab_analisis: 'Análisis',
+    grp_ident: 'Identificación', grp_personal: 'Personal', grp_trabajo: 'Trabajo', grp_materiales: 'Materiales',
+    lbl_cliente: 'Cliente', lbl_obra: 'Obra', lbl_fecha: 'Fecha', lbl_operario: 'Operario',
+    lbl_ayudante: 'Ayudante', lbl_vehiculo: 'Vehículo', lbl_tipo: 'Tipo de trabajo',
+    lbl_horas: 'Horas', lbl_trabajos: 'Trabajos realizados', lbl_compania: 'Compañía',
+    lbl_materiales: 'Materiales', lbl_precio: 'Precio', lbl_foto_obra: 'Fotos de obra',
+    lbl_foto_mat: 'Materiales / recibo', btn_guardar: 'Guardar registro', btn_clear: 'Borrar formulario',
+    btn_aprobar: 'Aprobar', btn_rechazar: 'Rechazar', btn_compartir: 'Compartir',
+    btn_anadir: 'Añadir', hint_obra: 'Añade fotos del estado de la obra',
+    hint_mat: 'Añade fotos del recibo o albarán de materiales',
+    status_pending: 'Pendiente', status_approved: 'Aprobado', status_rejected: 'Rechazado',
+    search_placeholder: 'Buscar...', no_pending: 'No hay informes pendientes',
+    no_mine: 'No tienes informes pendientes', loading: 'Cargando...',
+  },
+  ru: {
+    pin_title: 'Введите код', pin_sub: 'PIN из 4 цифр', pin_ok: 'OK',
+    pin_error: 'Неверный код',
+    nav_new: 'ЧАСТЬ РАБОТЫ', nav_manager: 'Согласования', nav_admin: 'Панель админа',
+    tab_nuevo: 'Новый', tab_mis: 'Мои отчёты', tab_pending: 'На согласовании', tab_hist: 'История',
+    tab_journal: 'Журнал', tab_analisis: 'Аналитика',
+    grp_ident: 'Идентификация', grp_personal: 'Персонал', grp_trabajo: 'Работа', grp_materiales: 'Материалы',
+    lbl_cliente: 'Клиент', lbl_obra: 'Объект', lbl_fecha: 'Дата', lbl_operario: 'Рабочий',
+    lbl_ayudante: 'Помощник', lbl_vehiculo: 'Транспорт', lbl_tipo: 'Тип работы',
+    lbl_horas: 'Часы', lbl_trabajos: 'Выполненные работы', lbl_compania: 'Компания',
+    lbl_materiales: 'Материалы', lbl_precio: 'Цена', lbl_foto_obra: 'Фото работ',
+    lbl_foto_mat: 'Материалы / чек', btn_guardar: 'Сохранить запись', btn_clear: 'Очистить форму',
+    btn_aprobar: 'Одобрить', btn_rechazar: 'Отклонить', btn_compartir: 'Поделиться',
+    btn_anadir: 'Добавить', hint_obra: 'Добавьте фото хода работ',
+    hint_mat: 'Добавьте фото чека или накладной материалов',
+    status_pending: 'Ожидает', status_approved: 'Одобрено', status_rejected: 'Отклонено',
+    search_placeholder: 'Поиск...', no_pending: 'Нет ожидающих отчётов',
+    no_mine: 'У вас нет ожидающих отчётов', loading: 'Загрузка...',
+  },
+  en: {
+    pin_title: 'Enter your code', pin_sub: '4-digit PIN', pin_ok: 'OK',
+    pin_error: 'Incorrect code',
+    nav_new: 'WORK REPORT', nav_manager: 'Approvals', nav_admin: 'Admin panel',
+    tab_nuevo: 'New', tab_mis: 'My reports', tab_pending: 'Pending', tab_hist: 'History',
+    tab_journal: 'Journal', tab_analisis: 'Analytics',
+    grp_ident: 'Identification', grp_personal: 'Personnel', grp_trabajo: 'Work', grp_materiales: 'Materials',
+    lbl_cliente: 'Client', lbl_obra: 'Site', lbl_fecha: 'Date', lbl_operario: 'Worker',
+    lbl_ayudante: 'Assistant', lbl_vehiculo: 'Vehicle', lbl_tipo: 'Work type',
+    lbl_horas: 'Hours', lbl_trabajos: 'Work done', lbl_compania: 'Company',
+    lbl_materiales: 'Materials', lbl_precio: 'Price', lbl_foto_obra: 'Site photos',
+    lbl_foto_mat: 'Materials / receipt', btn_guardar: 'Save record', btn_clear: 'Clear form',
+    btn_aprobar: 'Approve', btn_rechazar: 'Reject', btn_compartir: 'Share',
+    btn_anadir: 'Add', hint_obra: 'Add photos of the work progress',
+    hint_mat: 'Add photos of the receipt or delivery note',
+    status_pending: 'Pending', status_approved: 'Approved', status_rejected: 'Rejected',
+    search_placeholder: 'Search...', no_pending: 'No pending reports',
+    no_mine: 'You have no pending reports', loading: 'Loading...',
+  }
+};
+
+function t(key) {
+  var lang = LANGS[currentLang] || LANGS.es;
+  return lang[key] || LANGS.es[key] || key;
+}
+
+function applyLang() {
+  // PIN screen
+  var pinTitle = document.querySelector('.pin-title');
+  var pinSub = document.querySelector('.pin-sub');
+  var pinOk = document.getElementById('pinOkBtn');
+  if (pinTitle) pinTitle.textContent = t('pin_title');
+  if (pinSub) pinSub.textContent = t('pin_sub');
+  if (pinOk) pinOk.textContent = t('pin_ok');
+
+  // Nav title
+  if (currentUser) {
+    var roleKey = {operario:'nav_new', manager:'nav_manager', admin:'nav_admin'};
+    var titleEl = document.getElementById('navTitle');
+    if (titleEl && roleKey[currentUser.rol]) titleEl.textContent = t(roleKey[currentUser.rol]);
+  }
+
+  // Tabbar labels
+  var tabLabels = {
+    tabOpNew: 'tab_nuevo', tabOpMine: 'tab_mis',
+    tabMgPending: 'tab_pending', tabMgHistory: 'tab_hist',
+    tabAdJournal: 'tab_journal', tabAdAnalisis: 'tab_analisis'
+  };
+  Object.keys(tabLabels).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { var span = el.querySelector('span'); if (span) span.textContent = t(tabLabels[id]); }
+  });
+
+  // Form labels
+  var labels = {
+    'lbl-cliente': 'lbl_cliente', 'lbl-obra': 'lbl_obra', 'lbl-fecha': 'lbl_fecha',
+    'lbl-operario': 'lbl_operario', 'lbl-ayudante': 'lbl_ayudante', 'lbl-vehiculo': 'lbl_vehiculo',
+    'lbl-tipo': 'lbl_tipo', 'lbl-horas': 'lbl_horas', 'lbl-compania': 'lbl_compania',
+    'lbl-precio': 'lbl_precio'
+  };
+  Object.keys(labels).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = t(labels[id]);
+  });
+
+  // slabels
+  var slabels = {'sl-ident':'grp_ident','sl-personal':'grp_personal','sl-trabajo':'grp_trabajo','sl-materiales':'grp_materiales'};
+  Object.keys(slabels).forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.textContent = t(slabels[id]);
+  });
+
+  // Buttons
+  var btnSave = document.getElementById('btnSave');
+  if (btnSave) btnSave.textContent = t('btn_guardar');
+  var btnClear = document.getElementById('btnClear');
+  if (btnClear) btnClear.textContent = t('btn_clear');
+
+  // Hints
+  var hintObra = document.getElementById('hint-obra');
+  var hintMat = document.getElementById('hint-mat');
+  if (hintObra) hintObra.textContent = t('hint_obra');
+  if (hintMat) hintMat.textContent = t('hint_mat');
+
+  // Photo buttons
+  document.querySelectorAll('.photo-input-btn').forEach(function(btn) {
+    var input = btn.querySelector('input');
+    btn.childNodes.forEach(function(n){ if(n.nodeType===3) n.textContent = ' '+t('btn_anadir'); });
+  });
+
+  // Search
+  var search = document.getElementById('adSearch');
+  if (search) search.placeholder = t('search_placeholder');
+
+  // Manager buttons in modal
+  var btnAp = document.querySelector('.mg-btn-approve');
+  var btnRe = document.querySelector('.mg-btn-reject');
+  if (btnAp) btnAp.textContent = t('btn_aprobar');
+  if (btnRe) btnRe.textContent = t('btn_rechazar');
+}
+
 function setLang(lang) {
   currentLang = lang;
   document.querySelectorAll('#langDrop .lang-opt').forEach(function(opt){ opt.classList.remove('active'); });
-  event.target.classList.add('active');
+  if (event && event.target) event.target.classList.add('active');
   document.getElementById('langDrop').classList.remove('open');
-  // TODO: aplicar diccionario de traducciones a todas las pantallas (paso final)
+  applyLang();
 }
 document.addEventListener('click', function(e) {
   if (!e.target.closest('#globeWrap')) {
@@ -846,6 +985,9 @@ function changeUser() {
   document.getElementById('tabbarAdmin').style.display = 'none';
   document.getElementById('navExit').style.visibility = 'hidden';
   document.getElementById('navTitle').textContent = 'Parte de Trabajo';
+  // Скрываем навбар на PIN-экране
+  document.getElementById('mainNav').style.display = 'none';
+  document.body.classList.add('pin-mode');
   renderPinDots();
   document.getElementById('screenPin').style.display = 'flex';
 }
@@ -893,10 +1035,14 @@ function showGreetThenRoute() {
   setTimeout(function() {
     document.getElementById('screenGreet').style.display = 'none';
     routeToRoleScreen();
-  }, 900);
+  }, 400);
 }
 
 function routeToRoleScreen() {
+  // Показываем навбар и убираем pin-mode
+  document.getElementById('mainNav').style.display = '';
+  document.body.classList.remove('pin-mode');
+
   document.getElementById('screenOperario').style.display = 'none';
   document.getElementById('screenManager').style.display = 'none';
   document.getElementById('screenAdmin').style.display = 'none';
@@ -2408,6 +2554,10 @@ function initAdminScreen() {
 }
 
 (function initApp(){
+  // По умолчанию — PIN режим (nav скрыт)
+  document.getElementById('mainNav').style.display = 'none';
+  document.body.classList.add('pin-mode');
+
   var saved = getSavedPin();
   if (saved) {
     currentPin = saved;
@@ -2419,9 +2569,8 @@ function initAdminScreen() {
       .then(function(result){
         if (result && result.status === 'ok' && result.valid) {
           currentUser = result;
-          routeToRoleScreen();
+          routeToRoleScreen(); // покажет nav внутри
         } else {
-          // сохранённый PIN больше не валиден — показываем экран ввода заново
           try { localStorage.removeItem('parte_user_pin'); } catch(e) {}
           currentPin = '';
           document.getElementById('screenPin').style.display = 'flex';
