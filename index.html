@@ -94,10 +94,10 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
 .err-field .req-dot{animation:pulse 1.2s ease infinite}
 
 /* PHOTO */
-.photo-row{padding:12px 14px 14px;border-bottom:.5px solid #f2f2f7}
+.photo-row{padding:16px 14px 20px;border-bottom:none}
 .photo-row:last-child{border-bottom:none}
-.photo-row-head{display:flex;align-items:center;margin-bottom:8px}
-.photo-hint{font-size:12px;color:#8e8e93;margin-bottom:10px}
+.photo-row-head{display:flex;align-items:center;margin-bottom:3px}
+.photo-hint{font-size:12px;color:#8e8e93;margin-bottom:14px}
 .photo-input-btn{display:inline-flex;align-items:center;gap:8px;background:#007AFF;border:none;border-radius:22px;padding:11px 22px 11px 16px;font-size:15px;font-weight:600;color:#fff;cursor:pointer;touch-action:manipulation;margin-left:auto;transition:opacity .12s}
 .photo-input-btn:active{opacity:.8}
 .photo-input-btn svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round}
@@ -111,11 +111,12 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
 .photo-add-mini svg{width:20px;height:20px;stroke:#8e8e93;fill:none;stroke-width:2;stroke-linecap:round}
 .photo-add-mini:active{background:#e5e5ea}
 
-/* SAVE BTN */
-.btn-save{display:block;width:calc(100% - 32px);margin:16px 16px 6px;background:#8e8e93;border:none;color:#fff;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:inherit;cursor:not-allowed;transition:background .2s;touch-action:manipulation}
+/* SAVE BTN — фиксированы над таббаром */
+.btn-save-wrap{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 62px);left:0;right:0;padding:0 16px 0;background:linear-gradient(to bottom,rgba(242,242,247,0) 0%,rgba(242,242,247,1) 20%);padding-top:20px;z-index:150;pointer-events:none}
+.btn-save{display:block;width:100%;background:#8e8e93;border:none;color:#fff;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:inherit;cursor:not-allowed;transition:background .2s;touch-action:manipulation;pointer-events:all}
 .btn-save.ready{background:#34c759;cursor:pointer}
 .btn-save.ready:active{opacity:.88}
-.btn-clear{display:block;width:calc(100% - 32px);margin:0 16px 32px;text-align:center;font-size:14px;font-weight:500;color:#ff3b30;background:none;border:none;cursor:pointer;padding:10px;font-family:inherit;touch-action:manipulation}
+.btn-clear{display:block;width:100%;margin-top:6px;text-align:center;font-size:14px;font-weight:500;color:#ff3b30;background:none;border:none;cursor:pointer;padding:8px;font-family:inherit;touch-action:manipulation;pointer-events:all}
 .spinner-inline{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,.12);border-top-color:#007AFF;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -269,11 +270,13 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 .rd-photo-link{display:flex;align-items:center;justify-content:center;gap:6px;background:#f2f2f7;border:.5px solid #e5e5ea;border-radius:10px;padding:10px;font-size:13px;font-weight:500;color:#007AFF;text-decoration:none;margin-top:6px}
 .rd-photo-link svg,.rd-photo-link i{width:15px;height:15px;font-size:15px;stroke:#007AFF;fill:none;stroke-width:2;stroke-linecap:round;color:#007AFF}
 
-/* TABBAR */
-.bottom-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:200;display:flex;padding-top:8px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 6px);background:#fff;border-top:.5px solid #d1d1d6}
-.bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;touch-action:manipulation;background:none;border:none;font-family:inherit;padding:2px 0;min-height:48px}
-.bottom-tab i{font-size:26px;color:#8e8e93;line-height:1;display:block;font-style:normal}
-.bottom-tab span{font-size:10px;font-weight:500;color:#8e8e93;display:block}
+/* TABBAR — стиль Telegram */
+.bottom-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:200;display:flex;padding:8px 8px calc(env(safe-area-inset-bottom,0px) + 6px);background:#fff;border-top:.5px solid #d1d1d6}
+.bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;touch-action:manipulation;background:none;border:none;font-family:inherit;padding:2px 4px;min-height:48px}
+.bottom-tab .tab-icon{width:48px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.bottom-tab i{font-size:24px;color:#8e8e93;line-height:1;display:block;font-style:normal;transition:color .15s}
+.bottom-tab span{font-size:10px;font-weight:500;color:#8e8e93;display:block;transition:color .15s}
+.bottom-tab.active .tab-icon{background:#e8f0fe}
 .bottom-tab.active i{color:#007AFF}
 .bottom-tab.active span{color:#007AFF;font-weight:600}
 .bottom-tab:active{opacity:.6}
@@ -444,7 +447,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
           <span class="rlabel" id="lbl-foto-obra" style="font-size:13px">Fotos de obra</span>
         </div>
         <div class="photo-hint" id="hint-obra">Añade fotos del estado de la obra</div>
-        <label class="photo-input-btn" id="addBtnObra" style="display:flex;margin:14px auto 20px;width:fit-content">
+        <label class="photo-input-btn" id="addBtnObra" style="display:flex;margin:0 auto 4px;width:fit-content">
           <svg viewBox="0 0 24 24"><path d="M5 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2l-2-3H7L5 7z"/><circle cx="10" cy="13" r="3"/></svg>
           Añadir
           <input type="file" accept="image/*" multiple style="display:none" id="inputPhotosObra" onchange="handlePhotoSelect(this,'obra')">
@@ -488,7 +491,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
           <span class="rlabel" id="lbl-foto-mat" style="font-size:13px">Materiales / recibo</span>
         </div>
         <div class="photo-hint" id="hint-mat">Añade fotos del recibo o albarán de materiales</div>
-        <label class="photo-input-btn" id="addBtnMat" style="display:flex;margin:14px auto 20px;width:fit-content">
+        <label class="photo-input-btn" id="addBtnMat" style="display:flex;margin:0 auto 4px;width:fit-content">
           <svg viewBox="0 0 24 24"><path d="M5 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2l-2-3H7L5 7z"/><circle cx="10" cy="13" r="3"/></svg>
           Añadir
           <input type="file" accept="image/*" multiple style="display:none" id="inputPhotosMat" onchange="handlePhotoSelect(this,'materiales')">
@@ -496,9 +499,8 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
         <div class="photo-thumbs" id="thumbsMat"></div>
       </div>
     </div>
-
-    <button class="btn-save" id="btnSave" onclick="saveRecord()">Guardar registro</button>
-    <button class="btn-clear" onclick="clearForm()">Borrar todo</button>
+    <!-- Спейсер чтобы контент не скрывался за фиксированными кнопками -->
+    <div style="height:130px"></div>
   </div>
 
   <!-- ── SUBPANTALLA: MIS INFORMES ── -->
@@ -506,6 +508,12 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
     <div id="miList"></div>
   </div>
 
+</div>
+
+<!-- ФИКСИРОВАННЫЕ КНОПКИ НАД ТАБBAРОМ — только для рабочего -->
+<div class="btn-save-wrap" id="btnSaveWrap" style="display:none">
+  <button class="btn-save" id="btnSave" onclick="saveRecord()">Guardar registro</button>
+  <button class="btn-clear" onclick="clearForm()">Borrar todo</button>
 </div>
 
 <!-- SUCCESS SCREEN -->
@@ -705,11 +713,11 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 <!-- BOTTOM TAB BAR: OPERARIO -->
 <div class="bottom-tabbar" id="tabbarOperario" style="display:none">
   <div class="bottom-tab active" id="tabOpNew" onclick="switchOpTab('new')">
-    <i class="ti ti-file-plus"></i>
+    <div class="tab-icon"><i class="ti ti-file-plus"></i></div>
     <span>Nuevo</span>
   </div>
   <div class="bottom-tab" id="tabOpMine" onclick="switchOpTab('mine')">
-    <i class="ti ti-file-text"></i>
+    <div class="tab-icon"><i class="ti ti-file-text"></i></div>
     <span>Mis informes</span>
   </div>
 </div>
@@ -717,11 +725,11 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 <!-- BOTTOM TAB BAR: MANAGER -->
 <div class="bottom-tabbar" id="tabbarManager" style="display:none">
   <div class="bottom-tab active" id="tabMgPending" onclick="switchMgTab('pending')">
-    <i class="ti ti-clock"></i>
+    <div class="tab-icon"><i class="ti ti-clock"></i></div>
     <span>Pendientes</span>
   </div>
   <div class="bottom-tab" id="tabMgHistory" onclick="switchMgTab('history')">
-    <i class="ti ti-check"></i>
+    <div class="tab-icon"><i class="ti ti-check"></i></div>
     <span>Historial</span>
   </div>
 </div>
@@ -729,11 +737,11 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 <!-- BOTTOM TAB BAR: ADMIN -->
 <div class="bottom-tabbar" id="tabbarAdmin" style="display:none">
   <div class="bottom-tab active" id="tabAdJournal" onclick="switchAdTab('journal')">
-    <i class="ti ti-list"></i>
+    <div class="tab-icon"><i class="ti ti-list"></i></div>
     <span>Журнал</span>
   </div>
   <div class="bottom-tab" id="tabAdAnalisis" onclick="switchAdTab('analisis')">
-    <i class="ti ti-chart-bar"></i>
+    <div class="tab-icon"><i class="ti ti-chart-bar"></i></div>
     <span>Análisis</span>
   </div>
 </div>
@@ -1078,9 +1086,10 @@ function changeUser() {
   document.getElementById('tabbarOperario').style.display = 'none';
   document.getElementById('tabbarManager').style.display = 'none';
   document.getElementById('tabbarAdmin').style.display = 'none';
+  var wrap = document.getElementById('btnSaveWrap');
+  if (wrap) wrap.style.display = 'none';
   document.getElementById('navExit').style.visibility = 'hidden';
   document.getElementById('navTitle').textContent = 'Parte de Trabajo';
-  // Скрываем навбар на PIN-экране
   document.getElementById('mainNav').style.display = 'none';
   document.body.classList.add('pin-mode');
   renderPinDots();
@@ -1225,6 +1234,9 @@ function switchOpTab(tab) {
   document.getElementById('tabOpMine').classList.toggle('active', tab === 'mine');
   document.getElementById('opPanelNew').style.display = tab === 'new' ? 'block' : 'none';
   document.getElementById('opPanelMine').style.display = tab === 'mine' ? 'block' : 'none';
+  // Кнопки фиксированные — показываем только на вкладке Nuevo
+  var wrap = document.getElementById('btnSaveWrap');
+  if (wrap) wrap.style.display = tab === 'new' ? 'block' : 'none';
   if (tab === 'mine') {
     if (!myReportsLoaded) {
       loadMyReports(); // первый раз — показываем спиннер
@@ -1717,6 +1729,9 @@ function initOperarioScreen() {
   loadLists();
   startListSync();
   updateBtn();
+  // Показываем фиксированные кнопки
+  var wrap = document.getElementById('btnSaveWrap');
+  if (wrap) wrap.style.display = 'block';
 }
 
 /* ════════ MANAGER: SOLICITUDES ════════ */
