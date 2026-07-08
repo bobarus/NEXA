@@ -905,7 +905,7 @@ function routeToRoleScreen() {
   document.getElementById('tabbarAdmin').style.display = 'none';
   document.getElementById('navExit').style.visibility = 'visible';
 
-  var titles = { operario: 'Parte de trabajo', manager: 'Aprobaciones', admin: 'Panel admin' };
+  var titles = { operario: 'PARTE DE TRABAJO', manager: 'Aprobaciones', admin: 'Panel admin' };
   document.getElementById('navTitle').textContent = titles[currentUser.rol] || 'Parte de Trabajo';
 
   if (currentUser.rol === 'operario') {
