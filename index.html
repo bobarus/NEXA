@@ -38,6 +38,36 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
 .globe-btn svg,.globe-btn i{color:#636366;font-size:16px;stroke:#636366;width:16px;height:16px;fill:none;stroke-width:1.8;stroke-linecap:round}
 .lang-dropdown{display:none;position:absolute;top:42px;right:0;background:#fff;border-radius:14px;overflow:hidden;min-width:160px;border:.5px solid #d1d1d6;z-index:300;box-shadow:0 4px 20px rgba(0,0,0,.12)}
 .lang-dropdown.open{display:block}
+
+/* NOTIFICATION BELL */
+.notif-bell{transition:background .15s}
+.notif-bell.has-unread{background:#ff3b30}
+.notif-bell.has-unread i{color:#fff}
+.notif-bell .notif-dot{
+  position:absolute;top:-2px;right:-2px;
+  width:9px;height:9px;border-radius:50%;
+  background:#ff3b30;border:1.5px solid #fff;
+  display:none;
+}
+.notif-bell.has-unread .notif-dot{display:block;background:#fff}
+.notif-dropdown{
+  min-width:280px;max-width:320px;max-height:60vh;overflow-y:auto;
+  left:auto;right:0;
+}
+.notif-header{
+  padding:12px 16px 8px;font-size:13px;font-weight:700;color:#000;
+  border-bottom:.5px solid #f2f2f7;
+}
+.notif-item{
+  display:flex;flex-direction:column;gap:2px;
+  padding:11px 16px;border-bottom:.5px solid #f2f2f7;
+  text-align:left;
+}
+.notif-item:last-child{border-bottom:none}
+.notif-item .ni-title{font-size:13px;font-weight:600;color:#000}
+.notif-item .ni-body{font-size:12px;color:#636366;line-height:1.4}
+.notif-item .ni-time{font-size:10px;color:#c7c7cc;margin-top:1px}
+.notif-empty{padding:24px 16px;text-align:center;font-size:13px;color:#8e8e93}
 .lang-opt{display:flex;align-items:center;gap:10px;padding:12px 16px;font-size:15px;color:#000;cursor:pointer;font-weight:400;width:100%;text-align:left;background:none;border:none;border-bottom:.5px solid #f2f2f7;font-family:inherit}
 .lang-opt:last-child{border-bottom:none}
 .lang-opt.active{font-weight:600;color:#007AFF}
@@ -341,7 +371,14 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
   <div class="nav-center">
     <div class="nav-title" id="navTitle">AEDIS</div>
   </div>
-  <div class="nav-side" style="justify-content:flex-end;position:relative">
+  <div class="nav-side" style="justify-content:flex-end;position:relative;gap:8px;display:flex;align-items:center">
+    <div class="globe-btn notif-bell" id="notifBellWrap" onclick="toggleNotifDrop()">
+      <i class="ti ti-bell" style="font-size:16px"></i>
+      <div class="lang-dropdown notif-dropdown" id="notifDrop">
+        <div class="notif-header">Notificaciones</div>
+        <div id="notifList"></div>
+      </div>
+    </div>
     <div class="globe-btn" id="globeWrap" onclick="toggleLangDrop()">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
       <div class="lang-dropdown" id="langDrop">
@@ -1247,6 +1284,7 @@ function routeToRoleScreen() {
   }
   startNotifyPoll();
   ensureNotifyPermission();
+  updateBellUI();
 }
 
 /* ════════ OPERARIO: LISTAS (servicio) ════════ */
@@ -2889,7 +2927,101 @@ function showPermissionBanner() {
 }
 
 // Dispara la alerta completa: sonido + vibración + notificación de sistema (si backgrounded) + toast (si visible)
-function fireNotification(title, body) {
+/* ════════ CENTRO DE NOTIFICACIONES — persistente por usuario (PIN), nunca repite ════════ */
+
+function getNotifLog() {
+  if (!currentPin) return [];
+  try { return JSON.parse(localStorage.getItem('parte_notif_log_' + currentPin) || '[]'); } catch(e) { return []; }
+}
+function saveNotifLog(log) {
+  if (!currentPin) return;
+  try { localStorage.setItem('parte_notif_log_' + currentPin, JSON.stringify(log.slice(-50))); } catch(e) {}
+}
+function getSeenNotifIds() {
+  if (!currentPin) return [];
+  try { return JSON.parse(localStorage.getItem('parte_notif_seen_ever_' + currentPin) || '[]'); } catch(e) { return []; }
+}
+function markNotifIdSeenForever(id) {
+  if (!currentPin) return;
+  var seen = getSeenNotifIds();
+  if (seen.indexOf(id) === -1) {
+    seen.push(id);
+    try { localStorage.setItem('parte_notif_seen_ever_' + currentPin, JSON.stringify(seen.slice(-500))); } catch(e) {}
+  }
+}
+
+// notifId debe ser único y estable para el mismo evento (p.ej. "PT-0005_approved")
+// Si ese id ya fue mostrado alguna vez (aunque se cerró sesión), nunca se vuelve a mostrar.
+function addNotification(notifId, title, body) {
+  var everSeen = getSeenNotifIds();
+  if (everSeen.indexOf(notifId) !== -1) return false; // ya se mostró una vez — nunca más
+
+  var log = getNotifLog();
+  log.push({ id: notifId, title: title, body: body, ts: Date.now(), read: false });
+  saveNotifLog(log);
+  markNotifIdSeenForever(notifId); // se marca YA como "mostrado alguna vez" — no reaparecerá
+  updateBellUI();
+  return true;
+}
+
+function updateBellUI() {
+  var bell = document.getElementById('notifBellWrap');
+  if (!bell) return;
+  var log = getNotifLog();
+  var unread = log.filter(function(n){ return !n.read; }).length;
+  bell.classList.toggle('has-unread', unread > 0);
+}
+
+function renderNotifList() {
+  var log = getNotifLog().slice().reverse(); // más recientes primero
+  var listEl = document.getElementById('notifList');
+  if (!log.length) {
+    listEl.innerHTML = '<div class="notif-empty">Sin notificaciones</div>';
+    return;
+  }
+  listEl.innerHTML = log.map(function(n){
+    var d = new Date(n.ts);
+    var timeStr = ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+' · '+('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2);
+    return '<div class="notif-item">' +
+      '<span class="ni-title">'+n.title+'</span>' +
+      '<span class="ni-body">'+n.body+'</span>' +
+      '<span class="ni-time">'+timeStr+'</span>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleNotifDrop() {
+  var drop = document.getElementById('notifDrop');
+  var wasOpen = drop.classList.contains('open');
+  // Cerramos el dropdown de idioma si estaba abierto
+  var langDrop = document.getElementById('langDrop');
+  if (langDrop) langDrop.classList.remove('open');
+
+  if (wasOpen) {
+    drop.classList.remove('open');
+    return;
+  }
+  renderNotifList();
+  drop.classList.add('open');
+
+  // Al abrir, marcamos TODAS como leídas — el punto rojo desaparece y no reaparece
+  var log = getNotifLog();
+  var changed = false;
+  log.forEach(function(n){ if (!n.read) { n.read = true; changed = true; } });
+  if (changed) { saveNotifLog(log); updateBellUI(); }
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#notifBellWrap')) {
+    var d = document.getElementById('notifDrop');
+    if (d) d.classList.remove('open');
+  }
+});
+
+function fireNotification(notifId, title, body) {
+  var isNew = addNotification(notifId, title, body);
+  if (!isNew) return; // ya se mostró alguna vez — no repetir sonido/vibración/OS-notif
+
   playNotifySound();
   vibrateDevice();
 
@@ -2904,7 +3036,7 @@ function fireNotification(title, body) {
             icon: 'icon-192.png',
             badge: 'icon-192.png',
             vibrate: [120, 60, 120],
-            tag: 'parte-notify'
+            tag: 'parte-notify-' + notifId
           });
         });
       } else {
@@ -2960,10 +3092,12 @@ function checkWorkerNotifications() {
 
       if (changed.length === 1) {
         var r = changed[0];
-        if (r.STATUS === 'approved') fireNotification('AEDIS', r.ID + ' ' + t('status_approved').toLowerCase());
-        else fireNotification('AEDIS', r.ID + ' ' + t('status_rejected').toLowerCase());
+        if (r.STATUS === 'approved') fireNotification(r.ID + '_approved', 'AEDIS', r.ID + ' ' + t('status_approved').toLowerCase());
+        else fireNotification(r.ID + '_rejected', 'AEDIS', r.ID + ' ' + t('status_rejected').toLowerCase());
       } else if (changed.length > 1) {
-        fireNotification('AEDIS', changed.length + ' informes actualizados');
+        changed.forEach(function(r){
+          fireNotification(r.ID + '_' + r.STATUS, 'AEDIS', r.ID + ' ' + t('status_' + (r.STATUS === 'approved' ? 'approved' : 'rejected')).toLowerCase());
+        });
       }
 
       // Badge en "Mis informes": nº de rechazados (requieren acción)
@@ -2991,10 +3125,10 @@ function checkManagerNotifications() {
       var knownIds = mgReportsCache.map(function(r){ return r.ID; });
       var brandNew = reports.filter(function(r){ return knownIds.indexOf(r.ID) === -1; });
 
-      if (mgPendingLoaded && brandNew.length === 1) {
-        fireNotification('Nuevo informe', brandNew[0].ID + ' · ' + brandNew[0].OPERARIO);
-      } else if (mgPendingLoaded && brandNew.length > 1) {
-        fireNotification('Nuevos informes', brandNew.length + ' informes nuevos');
+      if (mgPendingLoaded && brandNew.length) {
+        brandNew.forEach(function(r){
+          fireNotification(r.ID + '_new_mg', 'Nuevo informe', r.ID + ' · ' + r.OPERARIO);
+        });
       }
 
       setBadge('badgeMgPending', unseenReports.length);
@@ -3019,10 +3153,10 @@ function checkAdminNotifications() {
       var knownIds = adAllRecords.map(function(r){ return r.ID; });
       var brandNew = reports.filter(function(r){ return knownIds.indexOf(r.ID) === -1; });
 
-      if (adAllRecords.length && brandNew.length === 1) {
-        fireNotification('Nuevo informe', brandNew[0].ID);
-      } else if (adAllRecords.length && brandNew.length > 1) {
-        fireNotification('Nuevos informes', brandNew.length + ' informes nuevos');
+      if (adAllRecords.length && brandNew.length) {
+        brandNew.forEach(function(r){
+          fireNotification(r.ID + '_new_ad', 'Nuevo informe', r.ID);
+        });
       }
 
       setBadge('badgeAdJournal', pendingUnseen.length);
