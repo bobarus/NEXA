@@ -1,15 +1,27 @@
-const CACHE_NAME = 'parte-v2';
+// v3 — принудительный сброс старого кеша
+const CACHE_NAME = 'parte-v3';
+
 self.addEventListener('install', function(e) {
-  e.waitUntil(caches.open(CACHE_NAME).then(function(c) { return c.addAll(['./index.html']); }));
-  self.skipWaiting();
+  self.skipWaiting(); // активируемся немедленно
 });
+
 self.addEventListener('activate', function(e) {
-  e.waitUntil(caches.keys().then(function(keys) {
-    return Promise.all(keys.filter(function(k){return k!==CACHE_NAME;}).map(function(k){return caches.delete(k);}));
-  }));
-  self.clients.claim();
+  e.waitUntil(
+    caches.keys().then(function(keys) {
+      return Promise.all(keys.map(function(k) {
+        return caches.delete(k); // удаляем ВСЕ старые кеши
+      }));
+    }).then(function() {
+      return self.clients.claim();
+    })
+  );
 });
+
+// Сеть всегда в приоритете, кеш не используем
 self.addEventListener('fetch', function(e) {
-  if (e.request.url.includes('script.google.com')) { e.respondWith(fetch(e.request)); return; }
-  e.respondWith(fetch(e.request).catch(function() { return caches.match(e.request); }));
+  e.respondWith(
+    fetch(e.request).catch(function() {
+      return new Response('Offline', {status: 503});
+    })
+  );
 });
