@@ -10,6 +10,21 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/dist/tabler-icons.min.css">
+
+<!-- OneSignal Web Push SDK -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "9a409dcc-a927-47e6-a37b-7955d5ef84f2",
+      allowLocalhostAsSecureOrigin: true,
+      serviceWorkerParam: { scope: "/AEDIS_APP/" },
+      serviceWorkerPath: "sw.js",
+    });
+    window.__oneSignalReady = true;
+  });
+</script>
 <title>AEDIS</title>
 
 <script>
@@ -27,13 +42,14 @@ input,textarea,.rta,.mode-text-input,.rd-text span,.mg-text span,.rd-field-full 
   -webkit-user-select:text;-moz-user-select:text;user-select:text;
 }
 html,body{background:#f2f2f7;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
+body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 110px)}
 
 /* NAV */
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;background:rgba(242,242,247,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid #d1d1d6}
 .nav-center{flex:1;text-align:center}
 .nav-title{font-size:17px;font-weight:600;color:#000;letter-spacing:-.2px}
-.nav-side{width:56px;display:flex;justify-content:center;align-items:center}
+.nav-side{width:112px;display:flex;justify-content:center;align-items:center}
+.nav-side.right{justify-content:flex-end;gap:4px}
 .globe-btn{width:52px;height:44px;border-radius:15px;background:transparent;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;touch-action:manipulation;transition:background .15s}
 .globe-btn:active{background:#e8f0fe}
 .globe-btn:active svg,.globe-btn:active i{stroke:#007AFF;color:#007AFF}
@@ -44,13 +60,16 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);pad
 .lang-dropdown.open{display:block}
 
 /* NOTIFICATION BELL */
-.notif-bell .notif-dot{
-  position:absolute;top:4px;right:10px;
-  width:8px;height:8px;border-radius:50%;
-  background:#ff3b30;border:1.5px solid #f2f2f7;
-  display:none;
+.notif-bell{position:relative}
+.notif-bell .notif-badge{
+  position:absolute;top:2px;right:6px;
+  min-width:16px;height:16px;padding:0 4px;
+  background:#ff3b30;border-radius:9px;
+  display:none;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;color:#fff;line-height:1;
+  border:1.5px solid #f2f2f7;
 }
-.notif-bell.has-unread .notif-dot{display:block}
+.notif-bell.has-unread .notif-badge{display:flex}
 
 /* Карточки уведомлений в полноэкранном модале */
 .notif-card{
@@ -199,7 +218,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(0,0,0,.12);border-top-color:#007AFF;border-radius:50%;animation:spin .7s linear infinite}
 
 /* GREET */
-.greet-screen{display:flex;flex-direction:column;align-items:center;padding:60px 24px;text-align:center;background:#f2f2f7}
+.greet-screen{position:fixed;inset:0;z-index:7000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;background:#f2f2f7}
 .greet-name{font-size:20px;font-weight:700;color:#000;margin-top:14px}
 .greet-role{font-size:14px;color:#8e8e93;font-weight:400;margin-top:4px}
 
@@ -224,7 +243,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 /* MANAGER CARDS */
 .mg-card{position:relative;background:#fff;border:.5px solid #e5e5ea;border-radius:12px;margin:0 16px 10px;padding:14px;border-left:3px solid #007AFF;cursor:pointer;touch-action:manipulation}
 .mg-card:active{background:#f9f9f9}
-.mg-card-new{background:#fffdf7}
+.mg-card-new{background:#fff;box-shadow:0 0 0 2px #007AFF,0 4px 14px rgba(0,122,255,.18);border-color:transparent}
 .mg-new-label{font-size:9px;font-weight:800;color:#ff9500;letter-spacing:.4px;text-transform:uppercase;flex-shrink:0}
 .mg-operario{font-size:11px;color:#8e8e93;margin-bottom:10px;margin-top:2px;font-weight:500}
 .mg-cliente{font-size:12px;color:#8e8e93;margin-bottom:0}
@@ -296,7 +315,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 .rd-field-full{background:#f9f9f9;border-radius:10px;padding:10px 12px;margin-bottom:8px}
 .rd-text{background:#f9f9f9;border-radius:10px;padding:10px 12px;font-size:13px;color:#000;line-height:1.5;margin-bottom:8px}
 .rd-text b{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;margin-bottom:3px;font-weight:700}
-.rd-photo-link{display:flex;align-items:center;justify-content:center;gap:6px;background:#f2f2f7;border:.5px solid #e5e5ea;border-radius:10px;padding:10px;font-size:13px;font-weight:500;color:#007AFF;text-decoration:none;margin-top:6px}
+.rd-photo-link{display:flex;align-items:center;justify-content:center;gap:6px;background:#f2f2f7;border:.5px solid #e5e5ea;border-radius:10px;padding:10px;font-size:13px;font-weight:500;color:#007AFF;text-decoration:none;margin-top:6px;width:100%;font-family:inherit;cursor:pointer;touch-action:manipulation}
 .rd-photo-link svg,.rd-photo-link i{width:15px;height:15px;font-size:15px;stroke:#007AFF;fill:none;stroke-width:2;stroke-linecap:round;color:#007AFF}
 
 /* TABBAR — стиль Telegram */
@@ -364,10 +383,10 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
   <div class="nav-center">
     <div class="nav-title" id="navTitle">AEDIS</div>
   </div>
-  <div class="nav-side" style="justify-content:flex-end;position:relative;gap:8px;display:flex;align-items:center">
+  <div class="nav-side right" style="position:relative">
     <div class="globe-btn notif-bell" id="notifBellWrap" onclick="openNotifModal()">
       <i class="ti ti-bell"></i>
-      <span class="notif-dot"></span>
+      <span class="notif-badge" id="notifBadge"></span>
     </div>
     <div class="globe-btn" id="globeWrap" onclick="toggleLangDrop()">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
@@ -390,6 +409,27 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
     </div>
   </div>
   <div id="notifFullList" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 0 24px"></div>
+</div>
+
+<!-- ═══ MODAL: GALERÍA DE FOTOS (visor tipo iOS Photos) ═══ -->
+<div id="photoGalleryModal" style="display:none;position:fixed;inset:0;z-index:9500;background:#000;flex-direction:column">
+  <!-- Barra superior: contador + cerrar -->
+  <div id="pgTopBar" style="position:absolute;top:0;left:0;right:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 40px;background:linear-gradient(to bottom,rgba(0,0,0,.55),rgba(0,0,0,0));transition:opacity .25s">
+    <div id="pgCounter" style="font-size:13px;font-weight:600;color:#fff">1 / 1</div>
+    <div onclick="closePhotoGallery()" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation">
+      <i class="ti ti-x" style="font-size:18px;color:#fff"></i>
+    </div>
+  </div>
+
+  <!-- Track deslizable -->
+  <div id="pgTrack" style="flex:1;display:flex;height:100%;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;position:relative"></div>
+
+  <!-- Barra inferior: compartir -->
+  <div id="pgBottomBar" style="position:absolute;bottom:0;left:0;right:0;z-index:2;display:flex;align-items:center;justify-content:center;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 16px);background:linear-gradient(to top,rgba(0,0,0,.55),rgba(0,0,0,0));transition:opacity .25s">
+    <button type="button" onclick="sharePhotoGalleryCurrent()" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);border:none;border-radius:20px;padding:10px 20px;color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation">
+      <i class="ti ti-send" style="font-size:16px"></i> Compartir
+    </button>
+  </div>
 </div>
 
 <!-- ═══ PANTALLA: PIN ENTRY ═══ -->
@@ -805,7 +845,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
     <span>Nuevo</span>
   </div>
   <div class="bottom-tab" id="tabOpMine" onclick="switchOpTab('mine')">
-    <div class="tab-icon"><i class="ti ti-file-text"></i><span class="tab-badge" id="badgeOpMine" style="display:none"></span></div>
+    <div class="tab-icon"><i class="ti ti-file-text"></i></div>
     <span>Mis informes</span>
   </div>
 </div>
@@ -813,7 +853,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 <!-- BOTTOM TAB BAR: MANAGER -->
 <div class="bottom-tabbar" id="tabbarManager" style="display:none">
   <div class="bottom-tab active" id="tabMgPending" onclick="switchMgTab('pending')">
-    <div class="tab-icon"><i class="ti ti-clock"></i><span class="tab-badge" id="badgeMgPending" style="display:none"></span></div>
+    <div class="tab-icon"><i class="ti ti-clock"></i></div>
     <span>Pendientes</span>
   </div>
   <div class="bottom-tab" id="tabMgHistory" onclick="switchMgTab('history')">
@@ -825,7 +865,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 <!-- BOTTOM TAB BAR: ADMIN -->
 <div class="bottom-tabbar" id="tabbarAdmin" style="display:none">
   <div class="bottom-tab active" id="tabAdJournal" onclick="switchAdTab('journal')">
-    <div class="tab-icon"><i class="ti ti-list"></i><span class="tab-badge" id="badgeAdJournal" style="display:none"></span></div>
+    <div class="tab-icon"><i class="ti ti-list"></i></div>
     <span>Журнал</span>
   </div>
   <div class="bottom-tab" id="tabAdAnalisis" onclick="switchAdTab('analisis')">
@@ -1184,6 +1224,7 @@ function changeUser() {
   stopManagerSync();
   stopNotifyPoll();
   updateAppIconBadge(0);
+  unlinkOneSignalUser();
   // Сбрасываем флаги кешей
   myReportsLoaded = false;
   mgHistorialLoaded = false;
@@ -1248,10 +1289,26 @@ function showGreetThenRoute() {
   document.getElementById('greetName').textContent = currentUser.nombre;
   document.getElementById('greetRole').textContent = roleLabels[currentUser.rol] || currentUser.rol;
 
-  setTimeout(function() {
+  // routeToRoleScreen ya empieza a cargar los datos AHORA MISMO, en paralelo
+  // con la animación de bienvenida — no esperamos a que termine la animación
+  // para empezar a pedir la lista al servidor.
+  var dataPromise = routeToRoleScreen();
+
+  var minDelay = 500; // tiempo mínimo para que el saludo sea legible
+  var done = false;
+  var finish = function() {
+    if (done) return;
+    done = true;
     document.getElementById('screenGreet').style.display = 'none';
-    routeToRoleScreen();
-  }, 1100);
+  };
+
+  Promise.all([
+    dataPromise,
+    new Promise(function(resolve){ setTimeout(resolve, minDelay); })
+  ]).then(finish).catch(finish);
+
+  // Tope de seguridad — nunca dejamos al usuario más de 2.5s en el saludo
+  setTimeout(finish, 2500);
 }
 
 function routeToRoleScreen() {
@@ -1271,22 +1328,25 @@ function routeToRoleScreen() {
   var titles = { operario: 'PARTE DE TRABAJO', manager: 'Aprobaciones', admin: 'Panel admin' };
   document.getElementById('navTitle').textContent = titles[currentUser.rol] || 'AEDIS';
 
+  var initPromise = Promise.resolve();
   if (currentUser.rol === 'operario') {
     document.getElementById('screenOperario').style.display = 'block';
     document.getElementById('tabbarOperario').style.display = 'flex';
-    initOperarioScreen();
+    initPromise = initOperarioScreen();
   } else if (currentUser.rol === 'manager') {
     document.getElementById('screenManager').style.display = 'block';
     document.getElementById('tabbarManager').style.display = 'flex';
-    initManagerScreen();
+    initPromise = initManagerScreen();
   } else if (currentUser.rol === 'admin') {
     document.getElementById('screenAdmin').style.display = 'block';
     document.getElementById('tabbarAdmin').style.display = 'flex';
-    initAdminScreen();
+    initPromise = initAdminScreen();
   }
   startNotifyPoll();
   ensureNotifyPermission();
   updateBellUI();
+  linkOneSignalUser();
+  return initPromise || Promise.resolve();
 }
 
 /* ════════ OPERARIO: LISTAS (servicio) ════════ */
@@ -1296,8 +1356,15 @@ var listsyncInterval = null;
 var LISTS_CACHE_KEY = 'parte_lists_cache';
 var LISTS_CACHE_TTL = 30 * 60 * 1000; // 30 минут
 
+// Límite global de registros en memoria/caché por lista — evita que la app
+// se ralentice con el tiempo a medida que se acumulan informes históricos.
+var MAX_CACHED_REPORTS = 100;
+function capReports(arr) {
+  return (arr || []).slice(0, MAX_CACHED_REPORTS);
+}
+
 function loadLists() {
-  // Сначала загружаем из кеша — мгновенно
+  // Сначала загружаем из кеша — мгновенно (для мгновенного отображения при переключении вкладок)
   try {
     var cached = JSON.parse(localStorage.getItem(LISTS_CACHE_KEY) || 'null');
     if (cached && cached.ts && (Date.now() - cached.ts) < LISTS_CACHE_TTL && cached.data) {
@@ -1306,14 +1373,13 @@ function loadLists() {
     }
   } catch(e) {}
 
-  // Затем фоновое обновление с сервера
-  fetch(WEBAPP_URL + '?action=getLists&t=' + Date.now())
+  // Возвращаем Promise чтобы вызывающий код мог дождаться свежих данных
+  return fetch(WEBAPP_URL + '?action=getLists&t=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(result){
       if (result && result.status === 'ok' && result.data) {
         LISTS = result.data;
         buildAllSelects();
-        // Сохраняем в кеш
         try { localStorage.setItem(LISTS_CACHE_KEY, JSON.stringify({ts: Date.now(), data: LISTS})); } catch(e) {}
       }
     })
@@ -1708,7 +1774,8 @@ function shareReportDetailFromModal() {
 }
 
 function renderMyReports(reports) {
-  myReportsCache = reports;
+  myReportsCache = capReports(reports);
+  reports = myReportsCache;
   var visible = reports.filter(function(r){ return r.STATUS === 'pending' || r.STATUS === 'rejected'; });
   var listEl = document.getElementById('miList');
 
@@ -1848,10 +1915,10 @@ function initOperarioScreen() {
   document.getElementById('operarioDisplay').textContent = currentUser.nombre;
   var d = new Date();
   document.getElementById('fecha').value = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  loadLists();
+  var p = loadLists();
   startListSync();
   updateBtn();
-
+  return p;
 }
 
 /* ════════ MANAGER: SOLICITUDES ════════ */
@@ -1873,13 +1940,23 @@ function markAsSeen(id) {
     var key = 'parte_seen_' + currentPin;
     try { localStorage.setItem(key, JSON.stringify(seen)); } catch(e) {}
   }
+  // Sincronizamos con el centro de notificaciones: cualquier notif
+  // relacionada con este mismo informe se marca como leída también.
+  try {
+    var log = getNotifLog();
+    var changed = false;
+    log.forEach(function(n){
+      if (!n.read && n.id.indexOf(id + '_') === 0) { n.read = true; changed = true; }
+    });
+    if (changed) { saveNotifLog(log); updateBellUI(); }
+  } catch(e) {}
 }
 
 function loadManagerQueue() {
   if (!mgPendingLoaded) {
     document.getElementById('mgList').innerHTML = '<div class="mi-empty"><span class="spinner-inline"></span> Cargando...</div>';
   }
-  fetch(WEBAPP_URL + '?action=getPending&codigo=' + encodeURIComponent(currentPin) + '&t=' + Date.now())
+  return fetch(WEBAPP_URL + '?action=getPending&codigo=' + encodeURIComponent(currentPin) + '&t=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(result){
       mgPendingLoaded = true;
@@ -1911,7 +1988,8 @@ function refreshPendingBackground() {
 }
 
 function renderManagerQueue(reports) {
-  mgReportsCache = reports;
+  mgReportsCache = capReports(reports);
+  reports = mgReportsCache;
   var listEl = document.getElementById('mgList');
   if (!reports.length) {
     listEl.innerHTML = '<div class="mi-empty">No hay informes pendientes de aprobación</div>';
@@ -1987,7 +2065,7 @@ function buildDetailHtml(r, showTotal) {
       html += '</div>';
     }
     if (trabajos) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:4px">Trabajos realizados</b><span style="font-size:13px;color:#000;line-height:1.5">'+trabajos+'</span></div>';
-    if (fotosObra) html += '<a class="rd-photo-link" href="'+fotosObra+'" target="_blank">'+svgCam+'Fotos de obra</a>';
+    if (fotosObra) html += '<button type="button" class="rd-photo-link" onclick="openPhotoGallery(this)" data-photos=\''+encodeURIComponent(fotosObra)+'\'>'+svgCam+'Fotos de obra</button>';
     html += '</div>';
   }
 
@@ -2009,7 +2087,7 @@ function buildDetailHtml(r, showTotal) {
       html += '<span style="font-size:28px;font-weight:700;color:#000;letter-spacing:-.5px">'+precio.toFixed(2)+' €</span>';
       html += '</div>';
     }
-    if (fotosMat) html += '<a class="rd-photo-link" href="'+fotosMat+'" target="_blank">'+svgCam+'Fotos de materiales</a>';
+    if (fotosMat) html += '<button type="button" class="rd-photo-link" onclick="openPhotoGallery(this)" data-photos=\''+encodeURIComponent(fotosMat)+'\'>'+svgCam+'Fotos de materiales</button>';
     html += '</div>';
   }
 
@@ -2029,7 +2107,6 @@ function openManagerDetail(id) {
   if (!r) return;
   mgDetailId = id;
   markAsSeen(id);
-  setBadge('badgeMgPending', mgReportsCache.filter(function(x){ return getSeenIds().indexOf(x.ID) === -1; }).length);
 
   // После открытия убираем подсветку "новое" с карточки в ленте
   var card = document.querySelector('.mg-card[data-id="'+id+'"]');
@@ -2195,7 +2272,7 @@ function loadHistorial() {
           document.getElementById('mgHistorialList').innerHTML = '<div class="mi-empty">Error al cargar el historial</div>';
         return;
       }
-      mgHistorialCache = result.data || [];
+      mgHistorialCache = capReports(result.data || []);
       renderHistorial(mgHistorialCache);
     })
     .catch(function(){
@@ -2213,7 +2290,7 @@ function refreshHistorialBackground() {
     .then(function(result){
       mgHistorialSyncing = false;
       if (result && result.status === 'ok') {
-        mgHistorialCache = result.data || [];
+        mgHistorialCache = capReports(result.data || []);
         renderHistorial(mgHistorialCache);
       }
     })
@@ -2266,7 +2343,6 @@ function switchMgTab(tab) {
   document.getElementById('mgPanelHistory').style.display = tab === 'history' ? 'block' : 'none';
   if (tab === 'pending') {
     if (mgPendingLoaded) refreshPendingBackground(); // тихое обновление в фоне
-    setBadge('badgeMgPending', mgReportsCache.filter(function(r){ return getSeenIds().indexOf(r.ID) === -1; }).length);
   } else if (tab === 'history') {
     if (!mgHistorialLoaded) {
       loadHistorial(); // первый раз — полная загрузка со спиннером
@@ -2277,8 +2353,9 @@ function switchMgTab(tab) {
 }
 
 function initManagerScreen() {
-  loadManagerQueue();
+  var p = loadManagerQueue();
   startManagerSync();
+  return p;
 }
 
 /* ════════ ADMIN: ЖУРНАЛ + INFORME ════════ */
@@ -2289,16 +2366,16 @@ var adDetailCurrentId = null;
 
 function loadAdminData() {
   document.getElementById('adList').innerHTML = '<div class="mi-empty"><span class="spinner-inline" style="border-top-color:#1a3080;border-color:rgba(20,40,100,0.2)"></span> Cargando...</div>';
-  fetch(WEBAPP_URL + '?action=getAdminStats&codigo=' + encodeURIComponent(currentPin) + '&t=' + Date.now())
+  return fetch(WEBAPP_URL + '?action=getAdminStats&codigo=' + encodeURIComponent(currentPin) + '&t=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(result){
       if (!result || result.status !== 'ok') {
         document.getElementById('adList').innerHTML = '<div class="mi-empty">Error al cargar</div>';
         return;
       }
-      adAllRecords = (result.data || []).sort(function(a,b){
+      adAllRecords = capReports((result.data || []).sort(function(a,b){
         return new Date(b.TIMESTAMP||0) - new Date(a.TIMESTAMP||0);
-      });
+      }));
       buildAdminDatalistOptions();
       applyAdminFilters();
     })
@@ -2316,9 +2393,9 @@ function loadAdminInforme() {
         document.getElementById('adInformeList').innerHTML = '<div class="mi-empty">Error al cargar</div>';
         return;
       }
-      adInformeRecords = (result.data || []).sort(function(a,b){
+      adInformeRecords = capReports((result.data || []).sort(function(a,b){
         return new Date(b.TIMESTAMP||0) - new Date(a.TIMESTAMP||0);
-      });
+      }));
       renderAdminInforme();
     })
     .catch(function(){
@@ -2506,7 +2583,7 @@ function renderAdminJournal() {
       var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
       var st = r.STATUS || 'pending';
       var isNew = seen.indexOf(r.ID) === -1;
-      html += '<div class="ad-card st-'+st+(isNew?' mg-card-new':'')+'" onclick="openAdminDetail(\''+r.ID+'\')">';
+      html += '<div class="ad-card st-'+st+(isNew?' mg-card-new':'')+'" data-id="'+r.ID+'" onclick="openAdminDetail(\''+r.ID+'\')">';
       html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">';
       html += '<span style="font-size:12px;color:rgba(40,60,120,0.55);font-weight:600">'+fecha+'</span>';
       var rightEl = isNew
@@ -2584,7 +2661,6 @@ function openAdminDetail(id) {
   if (!r) return;
   adDetailCurrentId = id;
   markAsSeen(id); // помечаем как просмотренное текущим пользователем
-  setBadge('badgeAdJournal', adAllRecords.filter(function(x){ return x.STATUS === 'pending' && getSeenIds().indexOf(x.ID) === -1; }).length);
   // Убираем метку NUEVO с карточки без перерисовки всего списка
   var card = document.querySelector('.ad-card[onclick*="\''+id+'\'"]');
   if (card) {
@@ -2843,7 +2919,7 @@ function re_renderAnalisisCl() { renderAnalisis(); }
 function re_renderAnalisisOb() { renderAnalisis(); }
 
 function initAdminScreen() {
-  loadAdminData();
+  return loadAdminData();
 }
 
 /* ════════ NOTIFICACIONES INTERNAS ════════ */
@@ -2902,6 +2978,28 @@ function vibrateDevice() {
 }
 
 var notifyPermissionAsked = false;
+
+// Vincula el dispositivo actual con el PIN del usuario en OneSignal.
+// Así el backend (Apps Script) puede enviar un push a "external_id = PIN"
+// sin necesitar guardar el Player ID manualmente.
+function linkOneSignalUser() {
+  if (!currentPin || typeof OneSignal === 'undefined') {
+    // El SDK puede tardar en cargar — reintentamos en 1s
+    setTimeout(function() {
+      if (currentPin && typeof OneSignal !== 'undefined') linkOneSignalUser();
+    }, 1000);
+    return;
+  }
+  try {
+    OneSignal.login(String(currentPin)).catch(function(){});
+  } catch(e) {}
+}
+
+function unlinkOneSignalUser() {
+  try {
+    if (typeof OneSignal !== 'undefined') OneSignal.logout().catch(function(){});
+  } catch(e) {}
+}
 
 function ensureNotifyPermission() {
   if (!('Notification' in window)) return;
@@ -2968,10 +3066,12 @@ function addNotification(notifId, title, body) {
 
 function updateBellUI() {
   var bell = document.getElementById('notifBellWrap');
+  var badgeEl = document.getElementById('notifBadge');
   if (!bell) return;
   var log = getNotifLog();
   var unread = log.filter(function(n){ return !n.read; }).length;
   bell.classList.toggle('has-unread', unread > 0);
+  if (badgeEl) badgeEl.textContent = unread > 9 ? '9+' : String(unread);
 }
 
 function renderNotifList() {
@@ -3000,15 +3100,229 @@ function openNotifModal() {
   var modal = document.getElementById('notifFullModal');
   modal.style.display = 'flex';
 
-  // Al abrir, marcamos TODAS como leídas — el punto rojo desaparece y no reaparece
+  // Al abrir, marcamos TODAS como leídas — el contador desaparece y no reaparece
   var log = getNotifLog();
   var changed = false;
-  log.forEach(function(n){ if (!n.read) { n.read = true; changed = true; } });
+  var reportIdsToMark = [];
+  log.forEach(function(n){
+    if (!n.read) {
+      n.read = true; changed = true;
+      var baseId = n.id.split('_')[0]; // "PT-0005_approved" → "PT-0005"
+      if (/^PT-\d+$/.test(baseId)) reportIdsToMark.push(baseId);
+    }
+  });
   if (changed) { saveNotifLog(log); updateBellUI(); }
+  // Quitamos también el resaltado azul de las tarjetas correspondientes
+  reportIdsToMark.forEach(function(rid){ markAsSeen(rid); });
+  document.querySelectorAll('.mg-card-new, .ad-card.mg-card-new').forEach(function(card){
+    var cardId = card.getAttribute('data-id');
+    if (cardId && reportIdsToMark.indexOf(cardId) !== -1) card.classList.remove('mg-card-new');
+  });
 }
 
 function closeNotifModal() {
   document.getElementById('notifFullModal').style.display = 'none';
+}
+
+/* ════════ GALERÍA DE FOTOS (visor tipo iOS Photos) ════════ */
+var pgPhotos = [];
+var pgIndex = 0;
+var pgChromeVisible = true;
+
+function openPhotoGallery(triggerEl) {
+  var raw = triggerEl.getAttribute('data-photos');
+  var value = decodeURIComponent(raw || '');
+  if (!value) return;
+
+  var photos = [];
+  var isJsonArray = false;
+  try {
+    var parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) { photos = parsed; isJsonArray = true; }
+  } catch(e) { /* No es JSON — es un enlace a carpeta de Drive, tratamos abajo */ }
+
+  if (isJsonArray) {
+    if (photos.length) renderPhotoGallery(photos);
+    return;
+  }
+
+  // Es un enlace de carpeta de Drive (formato original, sin modificar en la hoja).
+  // Pedimos al backend las fotos individuales de esa carpeta para la galería.
+  showPhotoGalleryLoading();
+  fetch(WEBAPP_URL + '?action=getFolderPhotos&url=' + encodeURIComponent(value))
+    .then(function(r){ return r.json(); })
+    .then(function(result){
+      if (result && result.status === 'ok' && result.photos && result.photos.length) {
+        renderPhotoGallery(result.photos);
+      } else {
+        // No se pudo listar la carpeta — fallback: abrir el enlace tal cual
+        closePhotoGallery();
+        window.open(value, '_blank');
+      }
+    })
+    .catch(function(){
+      closePhotoGallery();
+      window.open(value, '_blank');
+    });
+}
+
+function showPhotoGalleryLoading() {
+  var track = document.getElementById('pgTrack');
+  track.innerHTML = '<div style="flex:1;display:flex;align-items:center;justify-content:center;height:100%"><div class="splash-ring" style="border-color:rgba(255,255,255,.2);border-top-color:#fff"></div></div>';
+  document.getElementById('pgCounter').textContent = '';
+  document.getElementById('photoGalleryModal').style.display = 'flex';
+  document.getElementById('pgTopBar').style.opacity = '1';
+  document.getElementById('pgBottomBar').style.opacity = '0';
+  document.getElementById('pgTopBar').style.pointerEvents = 'auto';
+  document.getElementById('pgBottomBar').style.pointerEvents = 'none';
+}
+
+function renderPhotoGallery(photos) {
+  pgPhotos = photos;
+  pgIndex = 0;
+  pgChromeVisible = true;
+
+  var track = document.getElementById('pgTrack');
+  track.innerHTML = photos.map(function(url, i){
+    return '<div class="pg-slide" data-idx="'+i+'" style="flex:0 0 100%;scroll-snap-align:center;display:flex;align-items:center;justify-content:center;height:100%">' +
+      '<img src="'+url+'" style="max-width:100%;max-height:100%;object-fit:contain;-webkit-user-select:none;user-select:none;pointer-events:none" draggable="false">' +
+    '</div>';
+  }).join('');
+  track.scrollLeft = 0;
+  updatePgCounter();
+
+  document.getElementById('photoGalleryModal').style.display = 'flex';
+  document.getElementById('pgTopBar').style.opacity = '1';
+  document.getElementById('pgBottomBar').style.opacity = '1';
+  document.getElementById('pgTopBar').style.pointerEvents = 'auto';
+  document.getElementById('pgBottomBar').style.pointerEvents = 'auto';
+
+  bindPgGestures();
+}
+
+function updatePgCounter() {
+  document.getElementById('pgCounter').textContent = (pgIndex + 1) + ' / ' + pgPhotos.length;
+}
+
+function closePhotoGallery() {
+  document.getElementById('photoGalleryModal').style.display = 'none';
+  var track = document.getElementById('pgTrack');
+  track.innerHTML = '';
+  track.style.transform = '';
+  track.style.opacity = '';
+}
+
+function togglePgChrome() {
+  pgChromeVisible = !pgChromeVisible;
+  var top = document.getElementById('pgTopBar');
+  var bottom = document.getElementById('pgBottomBar');
+  top.style.opacity = pgChromeVisible ? '1' : '0';
+  bottom.style.opacity = pgChromeVisible ? '1' : '0';
+  top.style.pointerEvents = pgChromeVisible ? 'auto' : 'none';
+  bottom.style.pointerEvents = pgChromeVisible ? 'auto' : 'none';
+}
+
+function sharePhotoGalleryCurrent() {
+  var url = pgPhotos[pgIndex];
+  if (!url) return;
+  if (navigator.share) {
+    navigator.share({ url: url }).catch(function(){});
+  } else {
+    window.open(url, '_blank');
+  }
+}
+
+var pgGesturesBound = false;
+function bindPgGestures() {
+  if (pgGesturesBound) return;
+  pgGesturesBound = true;
+
+  var track = document.getElementById('pgTrack');
+  var startX = 0, startY = 0, startScrollLeft = 0;
+  var isVerticalDrag = false, isHorizontalScroll = false, gestureDecided = false;
+  var tapCandidate = false;
+
+  track.addEventListener('touchstart', function(e) {
+    if (e.touches.length !== 1) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    startScrollLeft = track.scrollLeft;
+    isVerticalDrag = false;
+    isHorizontalScroll = false;
+    gestureDecided = false;
+    tapCandidate = true;
+    track.style.transition = 'none';
+  }, { passive: true });
+
+  track.addEventListener('touchmove', function(e) {
+    if (e.touches.length !== 1) return;
+    var dx = e.touches[0].clientX - startX;
+    var dy = e.touches[0].clientY - startY;
+
+    if (!gestureDecided) {
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+        tapCandidate = false;
+        if (Math.abs(dy) > Math.abs(dx) * 1.3) {
+          isVerticalDrag = true;
+        } else {
+          isHorizontalScroll = true;
+        }
+        gestureDecided = true;
+      }
+    }
+
+    if (isVerticalDrag) {
+      e.preventDefault();
+      var progress = Math.min(Math.abs(dy) / 300, 1);
+      track.style.transform = 'translateY(' + dy + 'px)';
+      track.style.opacity = String(1 - progress * 0.6);
+      var top = document.getElementById('pgTopBar');
+      var bottom = document.getElementById('pgBottomBar');
+      top.style.opacity = String(1 - progress);
+      bottom.style.opacity = String(1 - progress);
+    }
+    // Если это горизонтальный скролл — не мешаем нативному scroll-snap
+  }, { passive: false });
+
+  track.addEventListener('touchend', function(e) {
+    track.style.transition = 'transform .25s ease, opacity .25s ease';
+
+    if (isVerticalDrag) {
+      var dy = e.changedTouches[0].clientY - startY;
+      if (Math.abs(dy) > 100) {
+        // Свайп вниз/вверх достаточно большой — закрываем галерею
+        track.style.transform = 'translateY(' + (dy > 0 ? '100%' : '-100%') + ')';
+        track.style.opacity = '0';
+        setTimeout(closePhotoGallery, 200);
+      } else {
+        track.style.transform = 'translateY(0)';
+        track.style.opacity = '1';
+        var top = document.getElementById('pgTopBar');
+        var bottom = document.getElementById('pgBottomBar');
+        top.style.opacity = pgChromeVisible ? '1' : '0';
+        bottom.style.opacity = pgChromeVisible ? '1' : '0';
+      }
+    } else if (tapCandidate) {
+      // Fue un tap simple (sin desplazamiento significativo) — alternar UI
+      togglePgChrome();
+    }
+
+    isVerticalDrag = false;
+    isHorizontalScroll = false;
+    gestureDecided = false;
+  }, { passive: true });
+
+  // Actualiza el contador cuando el usuario termina de deslizar horizontalmente
+  var scrollTimeout = null;
+  track.addEventListener('scroll', function() {
+    if (scrollTimeout) clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(function() {
+      var w = track.clientWidth || 1;
+      var idx = Math.round(track.scrollLeft / w);
+      idx = Math.max(0, Math.min(idx, pgPhotos.length - 1));
+      if (idx !== pgIndex) { pgIndex = idx; updatePgCounter(); }
+    }, 80);
+  }, { passive: true });
 }
 
 function fireNotification(notifId, title, body) {
@@ -3042,7 +3356,7 @@ function fireNotification(notifId, title, body) {
 function startNotifyPoll() {
   if (notifyInterval) return;
   checkNotifications(); // primera comprobación inmediata (silenciosa, sin toast)
-  notifyInterval = setInterval(checkNotifications, 60 * 1000);
+  notifyInterval = setInterval(checkNotifications, 10 * 1000);
 }
 function stopNotifyPoll() {
   if (notifyInterval) { clearInterval(notifyInterval); notifyInterval = null; }
@@ -3094,12 +3408,11 @@ function checkWorkerNotifications() {
       }
 
       // Badge en "Mis informes": nº de rechazados (requieren acción)
-      setBadge('badgeOpMine', unseenCount);
       updateAppIconBadge(unseenCount);
 
       // Si la lista ya está cargada y visible, refrescamos silenciosamente
       if (myReportsLoaded) renderMyReports(reports);
-      myReportsCache = reports;
+      myReportsCache = capReports(reports);
     })
     .catch(function(){});
 }
@@ -3123,12 +3436,10 @@ function checkManagerNotifications() {
           fireNotification(r.ID + '_new_mg', 'Nuevo informe', r.ID + ' · ' + r.OPERARIO);
         });
       }
-
-      setBadge('badgeMgPending', unseenReports.length);
       updateAppIconBadge(unseenReports.length);
 
       if (mgPendingLoaded) renderManagerQueue(reports);
-      else mgReportsCache = reports;
+      else mgReportsCache = capReports(reports);
     })
     .catch(function(){});
 }
@@ -3151,8 +3462,6 @@ function checkAdminNotifications() {
           fireNotification(r.ID + '_new_ad', 'Nuevo informe', r.ID);
         });
       }
-
-      setBadge('badgeAdJournal', pendingUnseen.length);
       updateAppIconBadge(pendingUnseen.length);
     })
     .catch(function(){});
@@ -3206,16 +3515,28 @@ document.addEventListener('visibilitychange', function() {
     }, delay || 0);
   }
 
+  // Splash se oculta cuando los datos están listos, con un tope de seguridad
+  // para no dejar al usuario atascado si la red va lenta o está caída.
+  function hideSplashWhenReady(promise, maxWaitMs) {
+    var done = false;
+    var finish = function() { if (!done) { done = true; hideSplash(150); } };
+    Promise.race([
+      promise.then(finish).catch(finish),
+      new Promise(function(resolve){ setTimeout(function(){ finish(); resolve(); }, maxWaitMs || 3000); })
+    ]);
+  }
+
   currentPin = saved;
 
   // Пробуем войти мгновенно из кеша — показываем splash пока грузимся
   var cached = getUserCache(saved);
   if (cached) {
-    // Есть кеш — входим мгновенно, splash держим пока не готово
+    // Есть кеш — рендерим экран сразу (он скрыт под splash), но splash
+    // держим до тех пор, пока список действительно не подгрузится свежим.
     currentUser = cached;
-    routeToRoleScreen();
-    hideSplash(600);
-    // Фоновая проверка актуальности
+    var readyPromise = routeToRoleScreen();
+    hideSplashWhenReady(readyPromise, 3000);
+    // Фоновая проверка актуальности PIN
     fetch(WEBAPP_URL + '?action=checkUser&codigo=' + encodeURIComponent(saved) + '&t=' + Date.now())
       .then(function(r){ return r.json(); })
       .then(function(result){
@@ -3239,8 +3560,8 @@ document.addEventListener('visibilitychange', function() {
         currentUser = result;
         saveUserCache(result);
         currentPin = saved;
-        routeToRoleScreen();
-        hideSplash(300);
+        var readyPromise2 = routeToRoleScreen();
+        hideSplashWhenReady(readyPromise2, 3000);
       } else {
         // PIN больше не валиден
         try { localStorage.removeItem('parte_user_pin'); } catch(e) {}
@@ -3326,7 +3647,9 @@ if ('serviceWorker' in navigator) {
   });
   // Регистрируем новый
   window.addEventListener('load', function() {
-    navigator.serviceWorker.register('./sw.js?v=4').catch(function(e) {
+    navigator.serviceWorker.register('./sw.js?v=5').then(function(reg) {
+      reg.update();
+    }).catch(function(e) {
       console.log('SW error:', e);
     });
   });
