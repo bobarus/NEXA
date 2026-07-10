@@ -22,9 +22,27 @@
         allowLocalhostAsSecureOrigin: true,
         serviceWorkerPath: "push/onesignal/OneSignalSDKWorker.js",
         serviceWorkerParam: { scope: "/AEDIS_APP/push/onesignal/" },
+        // Desactivamos CUALQUIER prompt automático propio de OneSignal
+        // (slidedown/native) — solo usamos nuestro banner personalizado.
+        promptOptions: { slidedown: { prompts: [] } },
+        autoResubscribe: false,
       });
       window.__oneSignalReady = true;
       console.log('[OneSignal] init OK');
+
+      // Comprobación clave: si la página actual todavía NO está controlada
+      // por el Service Worker recién registrado, OneSignal.optIn() puede
+      // fallar en silencio (sin ninguna petición de red) — es una regla
+      // estándar de los navegadores: un SW nuevo no controla retroactivamente
+      // una página ya cargada hasta que se recarga. Recargamos UNA sola vez.
+      if (!navigator.serviceWorker.controller) {
+        var alreadyReloaded = sessionStorage.getItem('parte_sw_reload_done');
+        if (!alreadyReloaded) {
+          sessionStorage.setItem('parte_sw_reload_done', '1');
+          console.log('[OneSignal] Página sin controlador SW — recargando una vez...');
+          setTimeout(function(){ location.reload(); }, 300);
+        }
+      }
     } catch(err) {
       console.log('[OneSignal] init FAILED:', err && err.message);
     }
@@ -49,7 +67,7 @@ input,textarea,.rta,.mode-text-input,.mi-comment,.selectable-text,
 [contenteditable="true"]{
   -webkit-user-select:text;-moz-user-select:text;user-select:text;
 }
-html,body{background:#f2f2f7;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+html,body{background:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 110px)}
 
 /* NAV */
@@ -95,18 +113,18 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);pad
 .nav-side i{font-size:18px;color:#636366;cursor:pointer}
 
 /* SECTION LABELS */
-.slabel{font-size:14px;font-weight:600;color:#000;letter-spacing:-.1px;padding:18px 16px 8px;display:flex;align-items:center;justify-content:space-between}
+.slabel{font-size:19px;font-weight:800;color:#000;letter-spacing:-.2px;padding:20px 16px 10px;display:flex;align-items:center;justify-content:space-between;text-transform:uppercase}
 .req-badge{font-size:9px;font-weight:600;color:#ff3b30;background:rgba(255,59,48,.1);padding:2px 8px;border-radius:10px;text-transform:none;letter-spacing:0}
 
 /* CARDS */
-.card{background:#fff;border:.5px solid #e5e5ea;border-radius:12px;margin:0 16px;overflow:hidden}
-.row{display:flex;align-items:center;padding:0 14px;min-height:50px;border-bottom:.5px solid #f2f2f7}
+.card{background:#fff;border:none;border-radius:16px;margin:0 16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.06)}
+.row{display:flex;align-items:center;padding:0 14px;min-height:62px;border-bottom:.5px solid #f2f2f7}
 .row:last-child{border-bottom:none}
 .row:active{background:#f9f9f9}
 
 /* RBADGE — round apple-style */
-.rbadge{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:12px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.1)}
-.rbadge svg,.rbadge i{width:16px;height:16px;font-size:16px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.rbadge{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:12px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.rbadge svg,.rbadge i{width:22px;height:22px;font-size:22px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .b-blue{background:#e5f0ff}.b-blue svg,.b-blue i{stroke:#007AFF;color:#007AFF}
 .b-green{background:#e5f9ec}.b-green svg,.b-green i{stroke:#34c759;color:#34c759}
 .b-orange{background:#fff4e5}.b-orange svg,.b-orange i{stroke:#ff9500;color:#ff9500}
@@ -121,7 +139,7 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);pad
 .rselect.has-val{color:#000}
 .rselect option{color:#000;background:#fff}
 .rchev{margin-left:4px}.rchev svg{width:7px;height:12px;stroke:#c7c7cc;fill:none;stroke-width:2.5;stroke-linecap:round}
-.tarow{flex-direction:column;align-items:flex-start;padding:12px 14px;min-height:auto}
+.tarow{flex-direction:column;align-items:flex-start;padding:12px 14px;min-height:auto;background:#fbfbfd;border-left:2.5px solid #e3e6ec;margin:2px 8px;border-radius:8px}
 .tarow .sub-label{font-size:11px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
 .rta{width:100%;border:none;outline:none;background:transparent;font-size:15px;color:#000;font-family:inherit;resize:none;min-height:60px;line-height:1.6}
 .rta::placeholder{color:#c7c7cc}
@@ -232,7 +250,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 
 /* MIS INFORMES */
 .op-tabs{display:none}
-.mi-card{background:#fff;border:.5px solid #e5e5ea;border-radius:12px;margin:0 16px 8px;padding:14px;border-left:3px solid #c7c7cc;cursor:pointer;touch-action:manipulation}
+.mi-card{background:#fff;border:none;border-radius:16px;margin:0 16px 8px;padding:14px;border-left:3px solid #c7c7cc;cursor:pointer;touch-action:manipulation;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.06)}
 .mi-card:active{background:#f9f9f9}
 .mi-card.st-pending{border-left-color:#007AFF}
 .mi-card.st-rejected{border-left-color:#ff3b30}
@@ -249,7 +267,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 .mi-empty{padding:48px 24px;text-align:center;color:#8e8e93;font-size:14px}
 
 /* MANAGER CARDS */
-.mg-card{position:relative;background:#fff;border:.5px solid #e5e5ea;border-radius:12px;margin:0 16px 10px;padding:14px;border-left:3px solid #007AFF;cursor:pointer;touch-action:manipulation}
+.mg-card{position:relative;background:#fff;border:none;border-radius:16px;margin:0 16px 10px;padding:14px;border-left:3px solid #007AFF;cursor:pointer;touch-action:manipulation;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.06)}
 .mg-card:active{background:#f9f9f9}
 .mg-card-new{background:#fff;box-shadow:0 0 0 2px #007AFF,0 4px 14px rgba(0,122,255,.18);border-color:transparent}
 .mg-new-label{font-size:9px;font-weight:800;color:#ff9500;letter-spacing:.4px;text-transform:uppercase;flex-shrink:0}
@@ -292,7 +310,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 .mg-modal-confirm:disabled{opacity:.35;cursor:not-allowed}
 
 /* ADMIN CARDS */
-.ad-card{position:relative;background:#fff;border:.5px solid #e5e5ea;border-radius:12px;margin:0 16px 8px;padding:14px 14px;cursor:pointer;touch-action:manipulation;border-left:3px solid #c7c7cc}
+.ad-card{position:relative;background:#fff;border:none;border-radius:16px;margin:0 16px 8px;padding:14px 14px;cursor:pointer;touch-action:manipulation;border-left:3px solid #c7c7cc;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.06)}
 .ad-card:active{background:#f9f9f9}
 .ad-card.st-pending{border-left-color:#007AFF}
 .ad-card.st-approved{border-left-color:#34c759}
@@ -329,7 +347,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 /* TABBAR — cápsula flotante estilo Uber/Ride, con acento azul */
 .bottom-tabbar{
   position:fixed;left:0;right:0;
-  bottom:calc(env(safe-area-inset-bottom,0px) + 16px);
+  bottom:calc(env(safe-area-inset-bottom,0px) + 6px);
   z-index:200;
   display:flex;
   justify-content:center;
@@ -469,16 +487,16 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
       <div class="mi-comment" style="margin:12px 0" id="erCommentBlock"><b>Comentario del manager</b><span id="erComment"></span></div>
 
       <div class="s-label" style="padding:8px 0 6px">Cliente</div>
-      <input type="text" id="erCliente" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
+      <select id="erCliente" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;appearance:none;-webkit-appearance:none"></select>
 
       <div class="s-label" style="padding:14px 0 6px">Obra</div>
-      <input type="text" id="erObra" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
+      <select id="erObra" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;appearance:none;-webkit-appearance:none"></select>
 
       <div class="s-label" style="padding:14px 0 6px">Fecha</div>
       <input type="date" id="erFecha" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
 
       <div class="s-label" style="padding:14px 0 6px">Ayudante</div>
-      <input type="text" id="erAyudante" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
+      <select id="erAyudante" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;appearance:none;-webkit-appearance:none"></select>
 
       <div class="s-label" style="padding:14px 0 6px">Vehículo</div>
       <input type="text" id="erVehiculo" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
@@ -494,16 +512,32 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
       </div>
 
       <div class="s-label" style="padding:14px 0 6px">Trabajos realizados</div>
-      <textarea id="erTrabajos" rows="3" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;resize:none"></textarea>
+      <textarea id="erTrabajos" rows="3" style="width:100%;padding:10px 12px;border:none;border-left:2.5px solid #e3e6ec;border-radius:8px;background:#fbfbfd;font-size:15px;font-family:inherit;resize:none"></textarea>
 
       <div class="s-label" style="padding:14px 0 6px">Compañía (materiales)</div>
       <input type="text" id="erCompania" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
 
       <div class="s-label" style="padding:14px 0 6px">Materiales utilizados</div>
-      <textarea id="erMateriales" rows="2" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;resize:none"></textarea>
+      <textarea id="erMateriales" rows="2" style="width:100%;padding:10px 12px;border:none;border-left:2.5px solid #e3e6ec;border-radius:8px;background:#fbfbfd;font-size:15px;font-family:inherit;resize:none"></textarea>
 
       <div class="s-label" style="padding:14px 0 6px">Precio materiales (€)</div>
       <input type="number" id="erPrecio" step="0.01" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
+
+      <div class="s-label" style="padding:14px 0 6px">Fotos de obra</div>
+      <label class="photo-input-btn" style="display:flex;margin:0 auto 8px;width:fit-content">
+        <svg viewBox="0 0 24 24"><path d="M5 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2l-2-3H7L5 7z"/><circle cx="10" cy="13" r="3"/></svg>
+        Añadir
+        <input type="file" accept="image/*" multiple style="display:none" onchange="handleEditPhotoSelect(this,'obra')">
+      </label>
+      <div class="photo-thumbs" id="erThumbsObra" style="margin-bottom:8px"></div>
+
+      <div class="s-label" style="padding:6px 0 6px">Fotos de materiales</div>
+      <label class="photo-input-btn" style="display:flex;margin:0 auto 4px;width:fit-content">
+        <svg viewBox="0 0 24 24"><path d="M5 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2l-2-3H7L5 7z"/><circle cx="10" cy="13" r="3"/></svg>
+        Añadir
+        <input type="file" accept="image/*" multiple style="display:none" onchange="handleEditPhotoSelect(this,'materiales')">
+      </label>
+      <div class="photo-thumbs" id="erThumbsMat"></div>
 
       <div style="height:12px"></div>
     </div>
@@ -1937,6 +1971,9 @@ function openEditReport(id) {
   fillEditReportModal(report);
 }
 
+var erPhotosObra = [];
+var erPhotosMat = [];
+
 function fillEditReportModal(report) {
   erCurrentReport = report;
   document.getElementById('erTitle').textContent = report.ID;
@@ -1951,6 +1988,11 @@ function fillEditReportModal(report) {
     commentBlock.style.display = 'none';
   }
 
+  // Rellenamos los desplegables con las mismas listas que el formulario principal
+  buildSelect('erCliente', LISTS.clientes || [], t('ph_select'));
+  buildSelect('erObra', LISTS.obras || [], t('ph_select'));
+  buildSelect('erAyudante', (LISTS.operarios || []).filter(function(n){ return n !== (currentUser && currentUser.nombre); }), t('ph_no_assistant'));
+
   document.getElementById('erCliente').value = report.CLIENTE || '';
   document.getElementById('erObra').value = report.OBRA || '';
   document.getElementById('erFecha').value = report.FECHA ? report.FECHA.split('T')[0] : '';
@@ -1963,10 +2005,51 @@ function fillEditReportModal(report) {
   document.getElementById('erMateriales').value = report['MATERIALES UTILIZADOS'] || '';
   document.getElementById('erPrecio').value = report['PRECIO (EUR)'] || '';
 
+  // Reiniciamos las fotos nuevas a añadir en esta edición (las fotos ya
+  // guardadas del informe original no se pierden — esto solo añade extra)
+  erPhotosObra = [];
+  erPhotosMat = [];
+  renderEditThumbs('obra');
+  renderEditThumbs('materiales');
+
   var saveBtn = document.getElementById('erSaveBtn');
   saveBtn.textContent = isRejected ? 'Reenviar' : 'Guardar cambios';
 
   document.getElementById('editReportModal').classList.add('show');
+}
+
+function handleEditPhotoSelect(input, group) {
+  var files = Array.from(input.files || []);
+  var targetArr = group === 'obra' ? erPhotosObra : erPhotosMat;
+  var promises = files.map(function(file) {
+    return compressImage(file, 1600, 0.75).then(function(base64) {
+      return { name: file.name.replace(/\.(heic|HEIC)$/, '.jpg'), type:'image/jpeg', data: base64 };
+    });
+  });
+  Promise.all(promises).then(function(results) {
+    results.forEach(function(r){ targetArr.push(r); });
+    renderEditThumbs(group);
+  });
+  input.value = '';
+}
+
+function renderEditThumbs(group) {
+  var arr = group === 'obra' ? erPhotosObra : erPhotosMat;
+  var wrap = document.getElementById(group === 'obra' ? 'erThumbsObra' : 'erThumbsMat');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  arr.forEach(function(photo, idx) {
+    var div = document.createElement('div');
+    div.className = 'photo-thumb';
+    div.innerHTML = '<img src="'+photo.data+'"><div class="rm" onclick="removeEditPhoto(\''+group+'\','+idx+')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>';
+    wrap.appendChild(div);
+  });
+}
+
+function removeEditPhoto(group, idx) {
+  var arr = group === 'obra' ? erPhotosObra : erPhotosMat;
+  arr.splice(idx, 1);
+  renderEditThumbs(group);
 }
 
 function closeEditReportModal() {
@@ -2011,21 +2094,37 @@ function submitEditReport() {
   })
   .then(function(r){ return r.json(); })
   .then(function(result){
-    btn.style.pointerEvents = '';
-    btn.textContent = originalText;
-    if (result && result.status === 'ok') {
-      showToast('Informe reenviado para aprobación');
-      closeEditReportModal();
-      myReportsLoaded = false; // fuerza recarga fresca de la lista
-      loadMyReports();
-    } else {
-      showToast(result && result.message ? result.message : 'Error al reenviar', true);
+    if (!result || result.status !== 'ok') {
+      throw new Error(result && result.message ? result.message : 'Error al reenviar');
+    }
+    // Si el usuario añadió fotos nuevas durante la edición, las subimos
+    if (erPhotosObra.length || erPhotosMat.length) {
+      return fetch(WEBAPP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'uploadReportPhotos',
+          id: erCurrentReport.ID,
+          fecha: document.getElementById('erFecha').value,
+          operario: erCurrentReport.OPERARIO,
+          photosObra: erPhotosObra,
+          photosMateriales: erPhotosMat
+        })
+      }).catch(function(){}); // si falla la subida de fotos no bloqueamos el flujo
     }
   })
-  .catch(function(){
+  .then(function(){
     btn.style.pointerEvents = '';
     btn.textContent = originalText;
-    showToast('Error de conexión', true);
+    showToast('Informe reenviado para aprobación');
+    closeEditReportModal();
+    myReportsLoaded = false; // fuerza recarga fresca de la lista
+    loadMyReports();
+  })
+  .catch(function(err){
+    btn.style.pointerEvents = '';
+    btn.textContent = originalText;
+    showToast(err.message || 'Error de conexión', true);
   });
 }
 
@@ -3780,6 +3879,24 @@ document.addEventListener('visibilitychange', function() {
   });
 })();
 
+/* ════════ Diagnóstico rápido: mantener pulsada la campana 2s ════════ */
+(function() {
+  var bell = document.getElementById('notifBellWrap');
+  if (!bell) return;
+  var pressTimer = null;
+  bell.addEventListener('touchstart', function() {
+    pressTimer = setTimeout(function() {
+      if (typeof window.diagnosePush === 'function') window.diagnosePush();
+    }, 2000);
+  }, { passive: true });
+  bell.addEventListener('touchend', function() {
+    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  }, { passive: true });
+  bell.addEventListener('touchmove', function() {
+    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  }, { passive: true });
+})();
+
 (function initApp(){
   document.getElementById('mainNav').style.display = 'none';
   document.body.classList.add('pin-mode');
@@ -3874,7 +3991,8 @@ document.addEventListener('visibilitychange', function() {
   var modalClosers = {
     'mgRejectModal':    function() { closeRejectModal(); },
     'reportDetailModal':function() { closeReportDetail(); },
-    'mgDetailModal':    function() { closeManagerDetail(); }
+    'mgDetailModal':    function() { closeManagerDetail(); },
+    'editReportModal':  function() { closeEditReportModal(); }
   };
 
   Object.keys(modalClosers).forEach(function(overlayId) {
