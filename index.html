@@ -22,27 +22,17 @@
         allowLocalhostAsSecureOrigin: true,
         serviceWorkerPath: "push/onesignal/OneSignalSDKWorker.js",
         serviceWorkerParam: { scope: "/AEDIS_APP/push/onesignal/" },
-        // Desactivamos CUALQUIER prompt automático propio de OneSignal
-        // (slidedown/native) — solo usamos nuestro banner personalizado.
+        // Desactiva CUALQUIER prompt automático del SDK (slidedown o nativo).
+        // El permiso SOLO debe pedirse cuando el usuario pulsa nuestro
+        // banner propio (ver showPermissionBanner). Si esto no basta,
+        // hay que revisar también OneSignal Dashboard → Settings →
+        // Push & In-App → Prompts → "Automatically Prompt New Visitors"
+        // (debe estar DESACTIVADO ahí también).
         promptOptions: { slidedown: { prompts: [] } },
         autoResubscribe: false,
       });
       window.__oneSignalReady = true;
       console.log('[OneSignal] init OK');
-
-      // Comprobación clave: si la página actual todavía NO está controlada
-      // por el Service Worker recién registrado, OneSignal.optIn() puede
-      // fallar en silencio (sin ninguna petición de red) — es una regla
-      // estándar de los navegadores: un SW nuevo no controla retroactivamente
-      // una página ya cargada hasta que se recarga. Recargamos UNA sola vez.
-      if (!navigator.serviceWorker.controller) {
-        var alreadyReloaded = sessionStorage.getItem('parte_sw_reload_done');
-        if (!alreadyReloaded) {
-          sessionStorage.setItem('parte_sw_reload_done', '1');
-          console.log('[OneSignal] Página sin controlador SW — recargando una vez...');
-          setTimeout(function(){ location.reload(); }, 300);
-        }
-      }
     } catch(err) {
       console.log('[OneSignal] init FAILED:', err && err.message);
     }
@@ -67,11 +57,12 @@ input,textarea,.rta,.mode-text-input,.mi-comment,.selectable-text,
 [contenteditable="true"]{
   -webkit-user-select:text;-moz-user-select:text;user-select:text;
 }
-html,body{background:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+html,body{background:#f2f2f7;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 110px)}
 
 /* NAV */
-.nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;background:rgba(242,242,247,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid #d1d1d6}
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;background:rgba(255,255,255,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid #e5e5ea;transition:transform .25s ease;}
+.nav.nav-hidden{transform:translateY(-100%);}
 .nav-center{flex:1;text-align:center}
 .nav-title{font-size:17px;font-weight:600;color:#000;letter-spacing:-.2px}
 .nav-side{width:112px;display:flex;justify-content:center;align-items:center}
@@ -113,18 +104,18 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);pad
 .nav-side i{font-size:18px;color:#636366;cursor:pointer}
 
 /* SECTION LABELS */
-.slabel{font-size:19px;font-weight:800;color:#000;letter-spacing:-.2px;padding:20px 16px 10px;display:flex;align-items:center;justify-content:space-between;text-transform:uppercase}
+.slabel{font-size:14px;font-weight:600;color:#000;letter-spacing:-.1px;padding:18px 16px 8px;display:flex;align-items:center;justify-content:space-between}
 .req-badge{font-size:9px;font-weight:600;color:#ff3b30;background:rgba(255,59,48,.1);padding:2px 8px;border-radius:10px;text-transform:none;letter-spacing:0}
 
 /* CARDS */
-.card{background:#fff;border:none;border-radius:16px;margin:0 16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.06)}
-.row{display:flex;align-items:center;padding:0 14px;min-height:62px;border-bottom:.5px solid #f2f2f7}
+.card{background:#fff;border:.5px solid #e5e5ea;border-radius:12px;margin:0 16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+.row{display:flex;align-items:center;padding:0 14px;min-height:50px;border-bottom:.5px solid #f2f2f7}
 .row:last-child{border-bottom:none}
 .row:active{background:#f9f9f9}
 
 /* RBADGE — round apple-style */
-.rbadge{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:12px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-.rbadge svg,.rbadge i{width:22px;height:22px;font-size:22px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.rbadge{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:12px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.rbadge svg,.rbadge i{width:16px;height:16px;font-size:16px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .b-blue{background:#e5f0ff}.b-blue svg,.b-blue i{stroke:#007AFF;color:#007AFF}
 .b-green{background:#e5f9ec}.b-green svg,.b-green i{stroke:#34c759;color:#34c759}
 .b-orange{background:#fff4e5}.b-orange svg,.b-orange i{stroke:#ff9500;color:#ff9500}
@@ -139,7 +130,7 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);pad
 .rselect.has-val{color:#000}
 .rselect option{color:#000;background:#fff}
 .rchev{margin-left:4px}.rchev svg{width:7px;height:12px;stroke:#c7c7cc;fill:none;stroke-width:2.5;stroke-linecap:round}
-.tarow{flex-direction:column;align-items:flex-start;padding:12px 14px;min-height:auto;background:#fbfbfd;border-left:2.5px solid #e3e6ec;margin:2px 8px;border-radius:8px}
+.tarow{flex-direction:column;align-items:flex-start;padding:12px 14px;min-height:auto}
 .tarow .sub-label{font-size:11px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
 .rta{width:100%;border:none;outline:none;background:transparent;font-size:15px;color:#000;font-family:inherit;resize:none;min-height:60px;line-height:1.6}
 .rta::placeholder{color:#c7c7cc}
@@ -148,7 +139,7 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);pad
 .mode-header{display:flex;align-items:center;padding:0 14px;min-height:50px;border-bottom:.5px solid #f2f2f7}
 .mode-toggle{display:flex;background:#f2f2f7;border-radius:8px;padding:2px;gap:1px;margin-left:auto;border:none}
 .ct{font-size:12px;font-weight:500;padding:5px 12px;border-radius:7px;border:none;cursor:pointer;background:transparent;color:#8e8e93;font-family:inherit;touch-action:manipulation}
-.ct.on{background:#fff;color:#000;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.ct.on{background:#007AFF;color:#fff;box-shadow:0 2px 6px rgba(0,122,255,.35)}
 .mode-list-row{display:flex;align-items:center;padding:0 14px;min-height:46px;border-bottom:.5px solid #f2f2f7}
 .mode-list-row:last-child{border-bottom:none}
 .mode-text-row{padding:10px 14px;border-bottom:.5px solid #f2f2f7;display:none}
@@ -224,10 +215,10 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 .pin-title{font-size:22px;font-weight:700;color:#000;margin-bottom:4px}
 .pin-sub{font-size:14px;color:#8e8e93;font-weight:400;margin-bottom:28px}
 .pin-dots{display:flex;gap:14px;margin-bottom:32px;width:100%;max-width:340px;justify-content:center}
-.pin-dot{flex:1;height:56px;border-radius:12px;border:.5px solid #e5e5ea;background:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:500;color:#000;transition:border-color .15s;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.pin-dot{flex:1;height:56px;border-radius:12px;border:.5px solid #e5e5ea;background:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:500;color:#000;transition:border-color .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)}
 .pin-dot.filled{border-color:#007AFF}
 .pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%;max-width:340px;margin-bottom:16px}
-.pin-key{aspect-ratio:1;border-radius:50%;border:none;background:#fff;font-size:22px;font-weight:400;color:#000;font-family:inherit;cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.pin-key{aspect-ratio:1;border-radius:50%;border:none;background:#fff;font-size:28px;font-weight:500;color:#000;font-family:inherit;cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.16)}
 .pin-key:active{background:#e5e5ea;transform:scale(.95)}
 .pin-key.empty{background:transparent;box-shadow:none;cursor:default}
 .pin-key.del{background:transparent;box-shadow:none;color:#636366;font-size:16px}
@@ -250,7 +241,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 
 /* MIS INFORMES */
 .op-tabs{display:none}
-.mi-card{background:#fff;border:none;border-radius:16px;margin:0 16px 8px;padding:14px;border-left:3px solid #c7c7cc;cursor:pointer;touch-action:manipulation;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.06)}
+.mi-card{background:#fff;border:.5px solid #e5e5ea;border-radius:12px;margin:0 16px 8px;padding:14px;border-left:3px solid #c7c7cc;cursor:pointer;touch-action:manipulation;display:flex;flex-direction:column;min-height:150px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
 .mi-card:active{background:#f9f9f9}
 .mi-card.st-pending{border-left-color:#007AFF}
 .mi-card.st-rejected{border-left-color:#ff3b30}
@@ -261,13 +252,13 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 .mi-badge.st-rejected{background:#fff0f0;color:#ff3b30}
 .mi-obra{font-size:18px;font-weight:700;color:#000;margin-bottom:2px;letter-spacing:-.2px}
 .mi-sub{font-size:11px;color:#8e8e93;margin-bottom:8px}
-.mi-comment{background:#fff0f0;border-radius:8px;padding:9px 12px;font-size:12px;color:#ff3b30;margin-bottom:10px;line-height:1.45}
+.mi-comment{background:#fff0f0;border-radius:8px;padding:9px 12px;font-size:12px;color:#ff3b30;margin-bottom:10px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .mi-comment b{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;color:#ff3b30;font-weight:700}
-.mi-edit-btn{width:100%;background:#007AFF;color:#fff;border:none;border-radius:10px;padding:10px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation}
+.mi-edit-btn{width:100%;background:#007AFF;color:#fff;border:none;border-radius:10px;padding:10px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation;margin-top:auto !important}
 .mi-empty{padding:48px 24px;text-align:center;color:#8e8e93;font-size:14px}
 
 /* MANAGER CARDS */
-.mg-card{position:relative;background:#fff;border:none;border-radius:16px;margin:0 16px 10px;padding:14px;border-left:3px solid #007AFF;cursor:pointer;touch-action:manipulation;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.06)}
+.mg-card{position:relative;background:#fff;border:.5px solid #e5e5ea;border-radius:12px;margin:0 16px 10px;padding:14px;border-left:3px solid #007AFF;cursor:pointer;touch-action:manipulation;box-shadow:0 2px 10px rgba(0,0,0,.07)}
 .mg-card:active{background:#f9f9f9}
 .mg-card-new{background:#fff;box-shadow:0 0 0 2px #007AFF,0 4px 14px rgba(0,122,255,.18);border-color:transparent}
 .mg-new-label{font-size:9px;font-weight:800;color:#ff9500;letter-spacing:.4px;text-transform:uppercase;flex-shrink:0}
@@ -310,7 +301,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 .mg-modal-confirm:disabled{opacity:.35;cursor:not-allowed}
 
 /* ADMIN CARDS */
-.ad-card{position:relative;background:#fff;border:none;border-radius:16px;margin:0 16px 8px;padding:14px 14px;cursor:pointer;touch-action:manipulation;border-left:3px solid #c7c7cc;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.06)}
+.ad-card{position:relative;background:#fff;border:.5px solid #e5e5ea;border-radius:12px;margin:0 16px 8px;padding:14px 14px;cursor:pointer;touch-action:manipulation;border-left:3px solid #c7c7cc;box-shadow:0 2px 10px rgba(0,0,0,.07)}
 .ad-card:active{background:#f9f9f9}
 .ad-card.st-pending{border-left-color:#007AFF}
 .ad-card.st-approved{border-left-color:#34c759}
@@ -347,7 +338,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 /* TABBAR — cápsula flotante estilo Uber/Ride, con acento azul */
 .bottom-tabbar{
   position:fixed;left:0;right:0;
-  bottom:calc(env(safe-area-inset-bottom,0px) + 6px);
+  bottom:calc(env(safe-area-inset-bottom,0px) + 8px);
   z-index:200;
   display:flex;
   justify-content:center;
@@ -359,6 +350,12 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
   background:#1c1c1e;
   border-radius:999px;
   box-shadow:0 8px 24px rgba(0,0,0,.28);
+  transition:transform .25s ease, opacity .25s ease;
+}
+.bottom-tabbar.tabbar-hidden{
+  transform:translateY(calc(100% + env(safe-area-inset-bottom,0px) + 24px));
+  opacity:0;
+  pointer-events:none;
 }
 .bottom-tab{
   display:flex;flex-direction:row;align-items:center;justify-content:center;gap:7px;
@@ -487,16 +484,16 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
       <div class="mi-comment" style="margin:12px 0" id="erCommentBlock"><b>Comentario del manager</b><span id="erComment"></span></div>
 
       <div class="s-label" style="padding:8px 0 6px">Cliente</div>
-      <select id="erCliente" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;appearance:none;-webkit-appearance:none"></select>
+      <input type="text" id="erCliente" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
 
       <div class="s-label" style="padding:14px 0 6px">Obra</div>
-      <select id="erObra" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;appearance:none;-webkit-appearance:none"></select>
+      <input type="text" id="erObra" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
 
       <div class="s-label" style="padding:14px 0 6px">Fecha</div>
       <input type="date" id="erFecha" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
 
       <div class="s-label" style="padding:14px 0 6px">Ayudante</div>
-      <select id="erAyudante" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;appearance:none;-webkit-appearance:none"></select>
+      <input type="text" id="erAyudante" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
 
       <div class="s-label" style="padding:14px 0 6px">Vehículo</div>
       <input type="text" id="erVehiculo" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
@@ -512,32 +509,16 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
       </div>
 
       <div class="s-label" style="padding:14px 0 6px">Trabajos realizados</div>
-      <textarea id="erTrabajos" rows="3" style="width:100%;padding:10px 12px;border:none;border-left:2.5px solid #e3e6ec;border-radius:8px;background:#fbfbfd;font-size:15px;font-family:inherit;resize:none"></textarea>
+      <textarea id="erTrabajos" rows="3" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;resize:none"></textarea>
 
       <div class="s-label" style="padding:14px 0 6px">Compañía (materiales)</div>
       <input type="text" id="erCompania" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
 
       <div class="s-label" style="padding:14px 0 6px">Materiales utilizados</div>
-      <textarea id="erMateriales" rows="2" style="width:100%;padding:10px 12px;border:none;border-left:2.5px solid #e3e6ec;border-radius:8px;background:#fbfbfd;font-size:15px;font-family:inherit;resize:none"></textarea>
+      <textarea id="erMateriales" rows="2" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;resize:none"></textarea>
 
       <div class="s-label" style="padding:14px 0 6px">Precio materiales (€)</div>
       <input type="number" id="erPrecio" step="0.01" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
-
-      <div class="s-label" style="padding:14px 0 6px">Fotos de obra</div>
-      <label class="photo-input-btn" style="display:flex;margin:0 auto 8px;width:fit-content">
-        <svg viewBox="0 0 24 24"><path d="M5 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2l-2-3H7L5 7z"/><circle cx="10" cy="13" r="3"/></svg>
-        Añadir
-        <input type="file" accept="image/*" multiple style="display:none" onchange="handleEditPhotoSelect(this,'obra')">
-      </label>
-      <div class="photo-thumbs" id="erThumbsObra" style="margin-bottom:8px"></div>
-
-      <div class="s-label" style="padding:6px 0 6px">Fotos de materiales</div>
-      <label class="photo-input-btn" style="display:flex;margin:0 auto 4px;width:fit-content">
-        <svg viewBox="0 0 24 24"><path d="M5 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2l-2-3H7L5 7z"/><circle cx="10" cy="13" r="3"/></svg>
-        Añadir
-        <input type="file" accept="image/*" multiple style="display:none" onchange="handleEditPhotoSelect(this,'materiales')">
-      </label>
-      <div class="photo-thumbs" id="erThumbsMat"></div>
 
       <div style="height:12px"></div>
     </div>
@@ -1335,8 +1316,18 @@ function showPinError(msg) {
 }
 
 /* ════════ CAMBIAR USUARIO ════════ */
+function markVisibleQueueAsSeen() {
+  // Todo lo que está actualmente pintado en pantalla (tarjetas de manager/admin)
+  // se considera "visto" por el usuario, aunque no haya abierto el detalle.
+  document.querySelectorAll('.mg-card[data-id], .ad-card[data-id]').forEach(function(card) {
+    var id = card.getAttribute('data-id');
+    if (id) markAsSeen(id);
+  });
+}
+
 function changeUser() {
   if (!confirm('¿Cambiar de usuario en este dispositivo?')) return;
+  markVisibleQueueAsSeen();
   try { localStorage.removeItem('parte_user_pin'); } catch(e) {}
   stopListSync();
   stopManagerSync();
@@ -1971,9 +1962,6 @@ function openEditReport(id) {
   fillEditReportModal(report);
 }
 
-var erPhotosObra = [];
-var erPhotosMat = [];
-
 function fillEditReportModal(report) {
   erCurrentReport = report;
   document.getElementById('erTitle').textContent = report.ID;
@@ -1988,11 +1976,6 @@ function fillEditReportModal(report) {
     commentBlock.style.display = 'none';
   }
 
-  // Rellenamos los desplegables con las mismas listas que el formulario principal
-  buildSelect('erCliente', LISTS.clientes || [], t('ph_select'));
-  buildSelect('erObra', LISTS.obras || [], t('ph_select'));
-  buildSelect('erAyudante', (LISTS.operarios || []).filter(function(n){ return n !== (currentUser && currentUser.nombre); }), t('ph_no_assistant'));
-
   document.getElementById('erCliente').value = report.CLIENTE || '';
   document.getElementById('erObra').value = report.OBRA || '';
   document.getElementById('erFecha').value = report.FECHA ? report.FECHA.split('T')[0] : '';
@@ -2005,51 +1988,10 @@ function fillEditReportModal(report) {
   document.getElementById('erMateriales').value = report['MATERIALES UTILIZADOS'] || '';
   document.getElementById('erPrecio').value = report['PRECIO (EUR)'] || '';
 
-  // Reiniciamos las fotos nuevas a añadir en esta edición (las fotos ya
-  // guardadas del informe original no se pierden — esto solo añade extra)
-  erPhotosObra = [];
-  erPhotosMat = [];
-  renderEditThumbs('obra');
-  renderEditThumbs('materiales');
-
   var saveBtn = document.getElementById('erSaveBtn');
   saveBtn.textContent = isRejected ? 'Reenviar' : 'Guardar cambios';
 
   document.getElementById('editReportModal').classList.add('show');
-}
-
-function handleEditPhotoSelect(input, group) {
-  var files = Array.from(input.files || []);
-  var targetArr = group === 'obra' ? erPhotosObra : erPhotosMat;
-  var promises = files.map(function(file) {
-    return compressImage(file, 1600, 0.75).then(function(base64) {
-      return { name: file.name.replace(/\.(heic|HEIC)$/, '.jpg'), type:'image/jpeg', data: base64 };
-    });
-  });
-  Promise.all(promises).then(function(results) {
-    results.forEach(function(r){ targetArr.push(r); });
-    renderEditThumbs(group);
-  });
-  input.value = '';
-}
-
-function renderEditThumbs(group) {
-  var arr = group === 'obra' ? erPhotosObra : erPhotosMat;
-  var wrap = document.getElementById(group === 'obra' ? 'erThumbsObra' : 'erThumbsMat');
-  if (!wrap) return;
-  wrap.innerHTML = '';
-  arr.forEach(function(photo, idx) {
-    var div = document.createElement('div');
-    div.className = 'photo-thumb';
-    div.innerHTML = '<img src="'+photo.data+'"><div class="rm" onclick="removeEditPhoto(\''+group+'\','+idx+')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>';
-    wrap.appendChild(div);
-  });
-}
-
-function removeEditPhoto(group, idx) {
-  var arr = group === 'obra' ? erPhotosObra : erPhotosMat;
-  arr.splice(idx, 1);
-  renderEditThumbs(group);
 }
 
 function closeEditReportModal() {
@@ -2094,37 +2036,21 @@ function submitEditReport() {
   })
   .then(function(r){ return r.json(); })
   .then(function(result){
-    if (!result || result.status !== 'ok') {
-      throw new Error(result && result.message ? result.message : 'Error al reenviar');
-    }
-    // Si el usuario añadió fotos nuevas durante la edición, las subimos
-    if (erPhotosObra.length || erPhotosMat.length) {
-      return fetch(WEBAPP_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: 'uploadReportPhotos',
-          id: erCurrentReport.ID,
-          fecha: document.getElementById('erFecha').value,
-          operario: erCurrentReport.OPERARIO,
-          photosObra: erPhotosObra,
-          photosMateriales: erPhotosMat
-        })
-      }).catch(function(){}); // si falla la subida de fotos no bloqueamos el flujo
-    }
-  })
-  .then(function(){
     btn.style.pointerEvents = '';
     btn.textContent = originalText;
-    showToast('Informe reenviado para aprobación');
-    closeEditReportModal();
-    myReportsLoaded = false; // fuerza recarga fresca de la lista
-    loadMyReports();
+    if (result && result.status === 'ok') {
+      showToast('Informe reenviado para aprobación');
+      closeEditReportModal();
+      myReportsLoaded = false; // fuerza recarga fresca de la lista
+      loadMyReports();
+    } else {
+      showToast(result && result.message ? result.message : 'Error al reenviar', true);
+    }
   })
-  .catch(function(err){
+  .catch(function(){
     btn.style.pointerEvents = '';
     btn.textContent = originalText;
-    showToast(err.message || 'Error de conexión', true);
+    showToast('Error de conexión', true);
   });
 }
 
@@ -2601,6 +2527,7 @@ function openHistorialDetail(id) {
 }
 
 function switchMgTab(tab) {
+  if (tab !== 'pending') markVisibleQueueAsSeen(); // salimos de la cola — lo visto, visto queda
   document.getElementById('tabMgPending').classList.toggle('active', tab === 'pending');
   document.getElementById('tabMgHistory').classList.toggle('active', tab === 'history');
   document.getElementById('mgPanelPending').style.display = tab === 'pending' ? 'block' : 'none';
@@ -2988,6 +2915,7 @@ function openAdminInformeDetail(id) {
 }
 
 function switchAdTab(tab) {
+  if (tab !== 'journal') markVisibleQueueAsSeen();
   document.getElementById('tabAdJournal').classList.toggle('active', tab === 'journal');
   document.getElementById('tabAdAnalisis').classList.toggle('active', tab === 'analisis');
   document.getElementById('adPanelJournal').style.display = tab === 'journal' ? 'block' : 'none';
@@ -3271,23 +3199,48 @@ function waitForOneSignal(callback, retriesLeft) {
 // Vincula el dispositivo actual con el PIN del usuario en OneSignal.
 // Así el backend (Apps Script) puede enviar un push a "external_id = PIN"
 // sin necesitar guardar el Player ID manualmente.
+// Cadena de promesas para serializar login/logout: si el logout del usuario
+// anterior aún no ha terminado en el backend de OneSignal cuando el nuevo
+// usuario hace login, el external_id antiguo puede quedar temporalmente
+// vinculado a la misma suscripción push del dispositivo → notificaciones
+// cruzadas entre trabajadores. Encadenando con .then() nos aseguramos de
+// que SIEMPRE se espera a que termine el paso anterior antes del siguiente.
+var oneSignalChain = Promise.resolve();
+
 function linkOneSignalUser() {
-  if (!currentPin) return;
-  waitForOneSignal(function() {
-    if (oneSignalLinkedPin === currentPin) return; // ya vinculado, evita llamadas repetidas
-    try {
-      OneSignal.login(String(currentPin)).then(function() {
-        oneSignalLinkedPin = currentPin;
-      }).catch(function(e) { console.log('[OneSignal] login error:', e && e.message); });
-    } catch(e) { console.log('[OneSignal] login exception:', e.message); }
+  if (!currentPin) return Promise.resolve();
+  var pinToLink = currentPin;
+  oneSignalChain = oneSignalChain.then(function() {
+    return new Promise(function(resolve) {
+      waitForOneSignal(function() {
+        if (oneSignalLinkedPin === pinToLink) { resolve(); return; }
+        try {
+          OneSignal.login(String(pinToLink)).then(function() {
+            oneSignalLinkedPin = pinToLink;
+            resolve();
+          }).catch(function(e) {
+            console.log('[OneSignal] login error:', e && e.message);
+            resolve(); // no bloquear la cadena aunque falle
+          });
+        } catch(e) { console.log('[OneSignal] login exception:', e.message); resolve(); }
+      });
+    });
   });
+  return oneSignalChain;
 }
 
 function unlinkOneSignalUser() {
   oneSignalLinkedPin = null;
-  waitForOneSignal(function() {
-    try { OneSignal.logout().catch(function(){}); } catch(e) {}
+  oneSignalChain = oneSignalChain.then(function() {
+    return new Promise(function(resolve) {
+      waitForOneSignal(function() {
+        try {
+          OneSignal.logout().then(resolve).catch(function(){ resolve(); });
+        } catch(e) { resolve(); }
+      });
+    });
   });
+  return oneSignalChain;
 }
 
 // Comprueba si conviene mostrar el banner de activar notificaciones.
@@ -3474,7 +3427,9 @@ var pgPhotos = [];
 var pgIndex = 0;
 var pgChromeVisible = true;
 
+var pgLastTriggerEl = null;
 function openPhotoGallery(triggerEl) {
+  pgLastTriggerEl = triggerEl;
   var raw = triggerEl.getAttribute('data-photos');
   var value = decodeURIComponent(raw || '');
   if (!value) return;
@@ -3500,15 +3455,25 @@ function openPhotoGallery(triggerEl) {
       if (result && result.status === 'ok' && result.photos && result.photos.length) {
         renderPhotoGallery(result.photos);
       } else {
-        // No se pudo listar la carpeta — fallback: abrir el enlace tal cual
-        closePhotoGallery();
-        window.open(value, '_blank');
+        // No se pudo listar la carpeta — mostramos error DENTRO de la app,
+        // nunca salimos a Google Drive (rompía la experiencia in-app).
+        showPhotoGalleryError(triggerEl);
       }
     })
     .catch(function(){
-      closePhotoGallery();
-      window.open(value, '_blank');
+      showPhotoGalleryError(triggerEl);
     });
+}
+
+function showPhotoGalleryError(triggerEl) {
+  var track = document.getElementById('pgTrack');
+  track.innerHTML =
+    '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff;padding:0 32px;text-align:center">' +
+      '<i class="ti ti-photo-off" style="font-size:40px;color:rgba(255,255,255,.5)"></i>' +
+      '<div style="font-size:14px;color:rgba(255,255,255,.85)">No se pudieron cargar las fotos</div>' +
+      '<button onclick="openPhotoGallery(pgLastTriggerEl)" style="background:#fff;color:#000;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">Reintentar</button>' +
+    '</div>';
+  document.getElementById('pgCounter').textContent = '';
 }
 
 function showPhotoGalleryLoading() {
@@ -3879,24 +3844,6 @@ document.addEventListener('visibilitychange', function() {
   });
 })();
 
-/* ════════ Diagnóstico rápido: mantener pulsada la campana 2s ════════ */
-(function() {
-  var bell = document.getElementById('notifBellWrap');
-  if (!bell) return;
-  var pressTimer = null;
-  bell.addEventListener('touchstart', function() {
-    pressTimer = setTimeout(function() {
-      if (typeof window.diagnosePush === 'function') window.diagnosePush();
-    }, 2000);
-  }, { passive: true });
-  bell.addEventListener('touchend', function() {
-    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-  }, { passive: true });
-  bell.addEventListener('touchmove', function() {
-    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-  }, { passive: true });
-})();
-
 (function initApp(){
   document.getElementById('mainNav').style.display = 'none';
   document.body.classList.add('pin-mode');
@@ -3985,63 +3932,175 @@ document.addEventListener('visibilitychange', function() {
     });
 })();
 
-/* ════════ SWIPE TO CLOSE — для всех модалов ════════ */
+/* ════════ GESTOS DE MODAL: resize lento / fullscreen swipe / cerrar ════════
+   Comportamiento (igual en todos los popups):
+   - Arrastre LENTO del handle -> la ventana cambia de tamano en vivo,
+     siguiendo el dedo (crece hacia arriba, se encoge hacia abajo).
+   - Swipe RAPIDO hacia arriba -> pantalla completa, aparece boton cerrar (X).
+   - Swipe RAPIDO hacia abajo -> se cierra el modal.
+   - Al soltar tras un arrastre lento, hace snap al estado mas cercano:
+     tamano por defecto, pantalla completa, o cerrado. */
 (function() {
-  // Функции закрытия каждого модала
   var modalClosers = {
-    'mgRejectModal':    function() { closeRejectModal(); },
-    'reportDetailModal':function() { closeReportDetail(); },
-    'mgDetailModal':    function() { closeManagerDetail(); },
-    'editReportModal':  function() { closeEditReportModal(); }
+    'mgRejectModal':     function() { closeRejectModal(); },
+    'reportDetailModal': function() { closeReportDetail(); },
+    'mgDetailModal':     function() { closeManagerDetail(); },
+    'editReportModal':   function() { closeEditReportModal(); }
   };
+
+  var DEFAULT_MAXH = 'min(72dvh, 640px)';
+  var FAST_VELOCITY = 0.55; // px/ms - umbral para considerar "swipe rapido"
+  var MIN_H = 110;          // por debajo de esto, se interpreta como "cerrar"
 
   Object.keys(modalClosers).forEach(function(overlayId) {
     var overlay = document.getElementById(overlayId);
     if (!overlay) return;
     var modal = overlay.querySelector('.mg-modal');
     if (!modal) return;
-
-    var startY = 0;
-    var isDragging = false;
+    var handle = modal.querySelector('.modal-handle');
     var closeFn = modalClosers[overlayId];
-    // Внутренний скроллируемый контейнер (если модал разделён на scroll+footer)
-    var scrollEl = modal.querySelector('[style*="overflow-y:auto"]') || modal;
+    var closeBtn = null;
+    var isFullscreen = false;
 
-    modal.addEventListener('touchstart', function(e) {
+    function resetModalSize() {
+      isFullscreen = false;
+      modal.style.transition = 'none';
+      modal.style.height = '';
+      modal.style.maxHeight = DEFAULT_MAXH;
+      modal.style.borderRadius = '';
+      modal.style.transform = '';
+      overlay.style.background = '';
+      if (closeBtn) closeBtn.style.display = 'none';
+      requestAnimationFrame(function() { modal.style.transition = ''; });
+    }
+
+    function ensureCloseBtn() {
+      if (closeBtn) return closeBtn;
+      closeBtn = document.createElement('button');
+      closeBtn.setAttribute('aria-label', 'Cerrar');
+      closeBtn.innerHTML = '<i class="ti ti-x" style="font-size:19px"></i>';
+      closeBtn.style.cssText = 'position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:14px;width:32px;height:32px;border-radius:50%;background:rgba(120,120,128,.16);border:none;display:none;align-items:center;justify-content:center;z-index:20;color:#000;touch-action:manipulation';
+      closeBtn.onclick = function() { closeFn(); };
+      modal.style.position = 'relative';
+      modal.appendChild(closeBtn);
+      return closeBtn;
+    }
+
+    function setFullscreen(on) {
+      isFullscreen = on;
+      modal.style.transition = 'height .3s cubic-bezier(.32,1,.2,1), max-height .3s cubic-bezier(.32,1,.2,1), border-radius .3s';
+      if (on) {
+        modal.style.height = '100dvh';
+        modal.style.maxHeight = '100dvh';
+        modal.style.borderRadius = '0';
+        ensureCloseBtn().style.display = 'flex';
+      } else {
+        modal.style.height = '';
+        modal.style.maxHeight = DEFAULT_MAXH;
+        modal.style.borderRadius = '22px 22px 0 0';
+        if (closeBtn) closeBtn.style.display = 'none';
+      }
+    }
+
+    // Reinicia el tamano cada vez que el modal se abre (nunca hereda el
+    // estado -- fullscreen o encogido -- de la vez anterior).
+    new MutationObserver(function(muts) {
+      muts.forEach(function(m) {
+        if (m.attributeName === 'class' && overlay.classList.contains('show')) {
+          resetModalSize();
+        }
+      });
+    }).observe(overlay, { attributes: true });
+
+    var scrollEl = modal.querySelector('[style*="overflow-y:auto"]') || modal;
+    var startY = 0, startTime = 0, startH = 0, dragging = false;
+
+    if (handle) handle.addEventListener('touchstart', function(e) {
       startY = e.touches[0].clientY;
-      isDragging = false;
+      startTime = Date.now();
+      startH = modal.getBoundingClientRect().height;
+      dragging = true;
       modal.style.transition = 'none';
     }, { passive: true });
 
+    if (handle) handle.addEventListener('touchmove', function(e) {
+      if (!dragging) return;
+      var y = e.touches[0].clientY;
+      var dy = startY - y; // positivo = arrastre hacia arriba
+      var newH = Math.min(window.innerHeight, Math.max(60, startH + dy));
+      modal.style.height = newH + 'px';
+      modal.style.maxHeight = newH + 'px';
+      modal.style.borderRadius = newH > window.innerHeight - 20 ? '0' : '22px 22px 0 0';
+      e.preventDefault();
+    }, { passive: false });
+
+    if (handle) handle.addEventListener('touchend', function(e) {
+      if (!dragging) return;
+      dragging = false;
+      var endY = e.changedTouches[0].clientY;
+      var dt = Math.max(Date.now() - startTime, 1);
+      var dy = startY - endY; // positivo = arriba
+      var velocity = dy / dt; // px/ms
+
+      if (velocity > FAST_VELOCITY) {
+        setFullscreen(true); // swipe rapido arriba -> pantalla completa
+        return;
+      }
+      if (velocity < -FAST_VELOCITY) {
+        modal.style.transition = 'transform .25s cubic-bezier(.32,1,.2,1)';
+        modal.style.transform = 'translateY(100%)';
+        setTimeout(closeFn, 220); // swipe rapido abajo -> cerrar
+        return;
+      }
+      // Arrastre lento -- snap al estado mas cercano segun altura final
+      var curH = modal.getBoundingClientRect().height;
+      var vh = window.innerHeight;
+      if (curH < MIN_H) {
+        modal.style.transition = 'transform .25s cubic-bezier(.32,1,.2,1)';
+        modal.style.transform = 'translateY(100%)';
+        setTimeout(closeFn, 220);
+      } else if (curH > vh * 0.85) {
+        setFullscreen(true);
+      } else {
+        setFullscreen(false);
+      }
+    }, { passive: true });
+
+    // Cierre normal por swipe hacia abajo desde cualquier punto del modal
+    // (no solo el handle), siempre que el scroll interno este al inicio.
+    modal.addEventListener('touchstart', function(e) {
+      if (e.target === handle) return; // ya gestionado arriba
+      modal.__sy = e.touches[0].clientY;
+      modal.__st = Date.now();
+      modal.__sd = false;
+    }, { passive: true });
+
     modal.addEventListener('touchmove', function(e) {
-      var dy = e.touches[0].clientY - startY;
-      // Свайп вниз только если скролл в начале
-      if (dy > 0 && scrollEl.scrollTop <= 0) {
-        isDragging = true;
+      if (e.target === handle || modal.__sy === undefined) return;
+      var dy = e.touches[0].clientY - modal.__sy;
+      if (dy > 0 && scrollEl.scrollTop <= 0 && !isFullscreen) {
+        modal.__sd = true;
+        modal.style.transition = 'none';
         modal.style.transform = 'translateY(' + Math.max(0, dy) + 'px)';
-        var progress = Math.min(dy / 300, 1);
-        overlay.style.background = 'rgba(0,0,0,' + (0.35 * (1 - progress * 0.6)) + ')';
+        overlay.style.background = 'rgba(0,0,0,' + (0.35 * (1 - Math.min(dy / 300, 1) * 0.6)) + ')';
         e.preventDefault();
       }
     }, { passive: false });
 
     modal.addEventListener('touchend', function(e) {
-      var dy = e.changedTouches[0].clientY - startY;
+      if (e.target === handle || modal.__sy === undefined) return;
+      var dy = e.changedTouches[0].clientY - modal.__sy;
+      var dt = Math.max(Date.now() - modal.__st, 1);
       modal.style.transition = 'transform .3s cubic-bezier(.32,1,.2,1)';
       overlay.style.background = '';
-
-      if (isDragging && dy > 80) {
-        // Свайп достаточно большой — закрываем
+      if (modal.__sd && (dy > 80 || dy / dt > FAST_VELOCITY)) {
         modal.style.transform = 'translateY(100%)';
-        setTimeout(function() {
-          modal.style.transform = '';
-          closeFn();
-        }, 280);
+        setTimeout(function() { modal.style.transform = ''; closeFn(); }, 280);
       } else {
-        // Возвращаем на место
         modal.style.transform = 'translateY(0)';
       }
-      isDragging = false;
+      modal.__sd = false;
+      modal.__sy = undefined;
     }, { passive: true });
   });
 })();
@@ -4063,6 +4122,57 @@ if ('serviceWorker' in navigator) {
   // OneSignal (ver serviceWorkerPath en la config de arriba) — registrar el
   // mismo archivo también manualmente aquí provocaba un conflicto de doble
   // registro que impedía crear la suscripción push real en iOS Safari.
+  // ═══ NAVBAR HIDE-ON-SCROLL (estilo Tinkoff) ═══
+  // Al hacer scroll hacia abajo, la barra superior se oculta deslizándose
+  // hacia arriba; al hacer scroll hacia arriba (o cerca del tope), reaparece.
+  (function() {
+    var lastY = 0;
+    var navEl = null;
+    var ticking = false;
+    function getNav() {
+      if (!navEl) navEl = document.querySelector('.nav');
+      return navEl;
+    }
+    window.addEventListener('scroll', function() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function() {
+        var nav = getNav();
+        ticking = false;
+        if (!nav) return;
+        var y = window.scrollY || document.documentElement.scrollTop || 0;
+        if (y <= 8) {
+          nav.classList.remove('nav-hidden'); // siempre visible cerca del tope
+        } else if (y > lastY + 4) {
+          nav.classList.add('nav-hidden'); // scroll hacia abajo → ocultar
+        } else if (y < lastY - 4) {
+          nav.classList.remove('nav-hidden'); // scroll hacia arriba → mostrar
+        }
+        lastY = y;
+      });
+    }, { passive: true });
+  })();
+
+  // ═══ FIX: evitar que los campos "salten" con el teclado de iOS ═══
+  // Cuando el teclado aparece, Safari reduce el visualViewport pero el
+  // layout viewport (y por tanto nuestros overlays position:fixed) no
+  // siempre se ajustan igual → los campos del modal parecen "moverse".
+  // Anclamos el modal abierto al alto real visible del visualViewport.
+  if (window.visualViewport) {
+    var vv = window.visualViewport;
+    function adjustOpenModalToViewport() {
+      var openModal = document.querySelector('.mg-modal-overlay.show, .mg-modal-overlay[style*="display: flex"]');
+      if (!openModal) return;
+      var inner = openModal.querySelector('.mg-modal');
+      if (!inner) return;
+      // Alto disponible real (descontando el teclado), con un pequeño margen.
+      var availH = Math.round(vv.height - 8);
+      inner.style.maxHeight = availH + 'px';
+    }
+    vv.addEventListener('resize', adjustOpenModalToViewport);
+    vv.addEventListener('scroll', adjustOpenModalToViewport);
+  }
+
   window.addEventListener('load', function() {
     setTimeout(function() {
       navigator.serviceWorker.getRegistration().then(function(reg) {
