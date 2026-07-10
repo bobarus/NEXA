@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="AEDIS">
-<meta name="theme-color" content="#f2f2f7">
+<meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/dist/tabler-icons.min.css">
@@ -57,7 +57,7 @@ input,textarea,.rta,.mode-text-input,.mi-comment,.selectable-text,
 [contenteditable="true"]{
   -webkit-user-select:text;-moz-user-select:text;user-select:text;
 }
-html,body{background:#f2f2f7;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+html,body{background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 110px)}
 
 /* NAV */
@@ -148,7 +148,7 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);pad
 
 /* HORAS */
 .horas-wrap{display:flex;align-items:center;gap:12px;margin-left:auto}
-.step-btn{width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:300;background:#f2f2f7;color:#000;touch-action:manipulation}
+.step-btn{width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:300;background:#f2f2f7;color:#000;touch-action:manipulation;box-shadow:0 2px 6px rgba(0,0,0,.1)}
 .step-btn:active{background:#e5e5ea}
 .horas-display{position:relative;width:40px;height:34px;display:flex;align-items:center;justify-content:center}
 .horas-num{font-size:20px;font-weight:600;color:#000;pointer-events:none;position:relative;z-index:1}
@@ -164,7 +164,7 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);pad
 .photo-row:last-child{border-bottom:none}
 .photo-row-head{display:flex;align-items:center;margin-bottom:3px}
 .photo-hint{font-size:12px;color:#8e8e93;margin-bottom:14px}
-.photo-input-btn{display:inline-flex;align-items:center;gap:8px;background:#007AFF;border:none;border-radius:22px;padding:11px 22px 11px 16px;font-size:15px;font-weight:600;color:#fff;cursor:pointer;touch-action:manipulation;margin-left:auto;transition:opacity .12s}
+.photo-input-btn{display:inline-flex;align-items:center;gap:8px;background:#007AFF;border:none;border-radius:22px;padding:11px 22px 11px 16px;font-size:15px;font-weight:600;color:#fff;cursor:pointer;touch-action:manipulation;margin-left:auto;transition:opacity .12s;box-shadow:0 3px 10px rgba(0,122,255,.3)}
 .photo-input-btn:active{opacity:.8}
 .photo-input-btn svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round}
 .photo-input-btn.hidden{display:none}
@@ -178,8 +178,8 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);pad
 .photo-add-mini:active{background:#e5e5ea}
 
 /* SAVE BTN — фиксированы над таббаром */
-.btn-save{display:block;width:calc(100% - 32px);margin:20px 16px 8px;background:#8e8e93;border:none;color:#fff;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:inherit;cursor:not-allowed;transition:background .2s;touch-action:manipulation}
-.btn-save.ready{background:#34c759;cursor:pointer}
+.btn-save{display:block;width:calc(100% - 32px);margin:20px 16px 8px;background:#8e8e93;border:none;color:#fff;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:inherit;cursor:not-allowed;transition:background .2s;touch-action:manipulation;box-shadow:0 3px 10px rgba(0,0,0,.15)}
+.btn-save.ready{background:#34c759;cursor:pointer;box-shadow:0 3px 12px rgba(52,199,89,.35)}
 .btn-save.ready:active{opacity:.88}
 .btn-clear{display:block;width:calc(100% - 32px);margin:0 16px 24px;text-align:center;font-size:14px;font-weight:500;color:#ff3b30;background:none;border:none;cursor:pointer;padding:10px;font-family:inherit;touch-action:manipulation}
 .spinner-inline{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,.12);border-top-color:#007AFF;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
@@ -260,7 +260,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 /* MANAGER CARDS */
 .mg-card{position:relative;background:#fff;border:.5px solid #e5e5ea;border-radius:12px;margin:0 16px 10px;padding:14px;border-left:3px solid #007AFF;cursor:pointer;touch-action:manipulation;box-shadow:0 2px 10px rgba(0,0,0,.07)}
 .mg-card:active{background:#f9f9f9}
-.mg-card-new{background:#fff;box-shadow:0 0 0 2px #007AFF,0 4px 14px rgba(0,122,255,.18);border-color:transparent}
+.mg-card-new{background:#fff;box-shadow:0 4px 16px rgba(0,122,255,.28);border-color:transparent}
 .mg-new-label{font-size:9px;font-weight:800;color:#ff9500;letter-spacing:.4px;text-transform:uppercase;flex-shrink:0}
 .mg-operario{font-size:11px;color:#8e8e93;margin-bottom:10px;margin-top:2px;font-weight:500}
 .mg-cliente{font-size:12px;color:#8e8e93;margin-bottom:0}
@@ -286,7 +286,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 /* MODALS */
 .mg-modal-overlay{display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.35);align-items:flex-end;justify-content:center}
 .mg-modal-overlay.show{display:flex}
-.mg-modal{width:100%;max-width:480px;background:#f2f2f7;border-radius:22px 22px 0 0;padding:20px 18px calc(env(safe-area-inset-bottom,0px) + 20px);transform:translateY(0);transition:transform .3s cubic-bezier(.32,1,.2,1);will-change:transform;touch-action:pan-y}
+.mg-modal{width:100%;max-width:480px;background:#fff;border-radius:22px 22px 0 0;padding:20px 18px calc(env(safe-area-inset-bottom,0px) + 20px);transform:translateY(0);transition:transform .3s cubic-bezier(.32,1,.2,1);will-change:transform;touch-action:pan-y;box-shadow:0 -4px 24px rgba(0,0,0,.12)}
 .mg-modal-title{font-size:17px;font-weight:600;color:#000;margin-bottom:3px}
 .mg-modal-sub{font-size:13px;color:#8e8e93;margin-bottom:14px}
 .mg-modal-textarea{width:100%;min-height:80px;border-radius:12px;border:.5px solid #d1d1d6;background:#fff;padding:12px 14px;font-size:15px;font-family:inherit;color:#000;resize:none;margin-bottom:8px;transition:border-color .15s;outline:none}
@@ -338,7 +338,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 /* TABBAR — cápsula flotante estilo Uber/Ride, con acento azul */
 .bottom-tabbar{
   position:fixed;left:0;right:0;
-  bottom:calc(env(safe-area-inset-bottom,0px) + 8px);
+  bottom:calc(env(safe-area-inset-bottom,0px) + 2px);
   z-index:200;
   display:flex;
   justify-content:center;
@@ -2188,6 +2188,16 @@ function renderManagerQueue(reports) {
 
   var seen = getSeenIds();
 
+  // Sincroniza el centro de notificaciones (campana): todo informe que
+  // aparece como "NUEVO" en la lista debe existir también como entrada
+  // en la campana — addNotification es idempotente, así que es seguro
+  // llamarlo aquí en cada render (no duplica ni repite sonido/toast).
+  reports.forEach(function(r) {
+    if (seen.indexOf(r.ID) === -1) {
+      addNotification(r.ID + '_new_mg', 'Nuevo informe', r.ID + ' · ' + r.OPERARIO);
+    }
+  });
+
   // Новые сверху: сначала непросмотренные, потом просмотренные
   reports.sort(function(a, b) {
     var aNew = seen.indexOf(a.ID) === -1 ? 0 : 1;
@@ -2734,6 +2744,14 @@ function renderAdminJournal() {
   var seen = getSeenIds();
   var now = new Date();
   var curYear = now.getFullYear(), curMonth = now.getMonth();
+
+  // Sincroniza la campana solo con los PENDING no vistos (los que requieren
+  // acción) — el resto del histórico no debe inundar el centro de notificaciones.
+  adFilteredRecords.forEach(function(r) {
+    if (r.STATUS === 'pending' && seen.indexOf(r.ID) === -1) {
+      addNotification(r.ID + '_new_ad', 'Nuevo informe', r.ID);
+    }
+  });
 
   // Группируем по году+месяцу
   var groups = {};
@@ -3968,6 +3986,7 @@ document.addEventListener('visibilitychange', function() {
       modal.style.height = '';
       modal.style.maxHeight = DEFAULT_MAXH;
       modal.style.borderRadius = '';
+      modal.style.paddingTop = '';
       modal.style.transform = '';
       overlay.style.background = '';
       if (closeBtn) closeBtn.style.display = 'none';
@@ -3988,16 +4007,20 @@ document.addEventListener('visibilitychange', function() {
 
     function setFullscreen(on) {
       isFullscreen = on;
-      modal.style.transition = 'height .3s cubic-bezier(.32,1,.2,1), max-height .3s cubic-bezier(.32,1,.2,1), border-radius .3s';
+      modal.style.transition = 'height .3s cubic-bezier(.32,1,.2,1), max-height .3s cubic-bezier(.32,1,.2,1), border-radius .3s, padding-top .3s';
       if (on) {
         modal.style.height = '100dvh';
         modal.style.maxHeight = '100dvh';
         modal.style.borderRadius = '0';
+        modal.style.paddingTop = 'calc(env(safe-area-inset-top,0px) + 16px)';
+        overlay.style.background = '#fff'; // sin hueco visible tras el modal a pantalla completa
         ensureCloseBtn().style.display = 'flex';
       } else {
         modal.style.height = '';
         modal.style.maxHeight = DEFAULT_MAXH;
         modal.style.borderRadius = '22px 22px 0 0';
+        modal.style.paddingTop = '';
+        overlay.style.background = '';
         if (closeBtn) closeBtn.style.display = 'none';
       }
     }
@@ -4066,17 +4089,18 @@ document.addEventListener('visibilitychange', function() {
       }
     }, { passive: true });
 
-    // Cierre normal por swipe hacia abajo desde cualquier punto del modal
-    // (no solo el handle), siempre que el scroll interno este al inicio.
+    // Cierre por swipe hacia abajo desde cualquier punto: SOLO para modales
+    // SIN asa de arrastre (p.ej. mgRejectModal). En los que sí tienen asa,
+    // el body no debe interceptar touchmove o rompe el scroll del contenido.
+    if (!handle) {
     modal.addEventListener('touchstart', function(e) {
-      if (e.target === handle) return; // ya gestionado arriba
       modal.__sy = e.touches[0].clientY;
       modal.__st = Date.now();
       modal.__sd = false;
     }, { passive: true });
 
     modal.addEventListener('touchmove', function(e) {
-      if (e.target === handle || modal.__sy === undefined) return;
+      if (modal.__sy === undefined) return;
       var dy = e.touches[0].clientY - modal.__sy;
       if (dy > 0 && scrollEl.scrollTop <= 0 && !isFullscreen) {
         modal.__sd = true;
@@ -4088,7 +4112,7 @@ document.addEventListener('visibilitychange', function() {
     }, { passive: false });
 
     modal.addEventListener('touchend', function(e) {
-      if (e.target === handle || modal.__sy === undefined) return;
+      if (modal.__sy === undefined) return;
       var dy = e.changedTouches[0].clientY - modal.__sy;
       var dt = Math.max(Date.now() - modal.__st, 1);
       modal.style.transition = 'transform .3s cubic-bezier(.32,1,.2,1)';
@@ -4102,6 +4126,7 @@ document.addEventListener('visibilitychange', function() {
       modal.__sd = false;
       modal.__sy = undefined;
     }, { passive: true });
+    }
   });
 })();
 </script>
