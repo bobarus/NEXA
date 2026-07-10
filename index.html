@@ -16,13 +16,18 @@
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "9a409dcc-a927-47e6-a37b-7955d5ef84f2",
-      allowLocalhostAsSecureOrigin: true,
-      serviceWorkerParam: { scope: "/AEDIS_APP/" },
-      serviceWorkerPath: "sw.js",
-    });
-    window.__oneSignalReady = true;
+    try {
+      await OneSignal.init({
+        appId: "9a409dcc-a927-47e6-a37b-7955d5ef84f2",
+        allowLocalhostAsSecureOrigin: true,
+        serviceWorkerPath: "push/onesignal/OneSignalSDKWorker.js",
+        serviceWorkerParam: { scope: "/AEDIS_APP/push/onesignal/" },
+      });
+      window.__oneSignalReady = true;
+      console.log('[OneSignal] init OK');
+    } catch(err) {
+      console.log('[OneSignal] init FAILED:', err && err.message);
+    }
   });
 </script>
 <title>AEDIS</title>
@@ -36,13 +41,16 @@ const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwiBvSurSTwZi1Cb7RCU
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 /* Запрещаем выделение текста на системных элементах интерфейса */
 body{-webkit-user-select:none;-moz-user-select:none;user-select:none}
-/* Разрешаем выделение только там, где пользователь вводит/читает свой текст */
-input,textarea,.rta,.mode-text-input,.rd-text span,.mg-text span,.rd-field-full span,
+/* Разрешаем выделение ТОЛЬКО там, где пользователь вводит/читает свободный текст:
+   поля ввода, комментарий менеджера, описание работ и материалов.
+   Всё остальное (лейблы, значения полей, статусы, даты, кнопки) — элементы
+   меню, их выделять/копировать нельзя. */
+input,textarea,.rta,.mode-text-input,.mi-comment,.selectable-text,
 [contenteditable="true"]{
   -webkit-user-select:text;-moz-user-select:text;user-select:text;
 }
 html,body{background:#f2f2f7;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 52px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 110px)}
+body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 110px)}
 
 /* NAV */
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;background:rgba(242,242,247,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid #d1d1d6}
@@ -318,16 +326,34 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 .rd-photo-link{display:flex;align-items:center;justify-content:center;gap:6px;background:#f2f2f7;border:.5px solid #e5e5ea;border-radius:10px;padding:10px;font-size:13px;font-weight:500;color:#007AFF;text-decoration:none;margin-top:6px;width:100%;font-family:inherit;cursor:pointer;touch-action:manipulation}
 .rd-photo-link svg,.rd-photo-link i{width:15px;height:15px;font-size:15px;stroke:#007AFF;fill:none;stroke-width:2;stroke-linecap:round;color:#007AFF}
 
-/* TABBAR — стиль Telegram */
-.bottom-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:200;display:flex;padding:8px 8px calc(env(safe-area-inset-bottom,0px) + 6px);background:#fff;border-top:.5px solid #d1d1d6}
-.bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;touch-action:manipulation;background:none;border:none;font-family:inherit;padding:2px 4px;min-height:48px}
-.bottom-tab .tab-icon{width:48px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center;transition:background .15s}
-.bottom-tab i{font-size:24px;color:#8e8e93;line-height:1;display:block;font-style:normal;transition:color .15s}
-.bottom-tab span{font-size:10px;font-weight:500;color:#8e8e93;display:block;transition:color .15s}
-.bottom-tab.active .tab-icon{background:#e8f0fe}
-.bottom-tab.active i{color:#007AFF}
-.bottom-tab.active span{color:#007AFF;font-weight:600}
-.bottom-tab:active{opacity:.6}
+/* TABBAR — cápsula flotante estilo Uber/Ride, con acento azul */
+.bottom-tabbar{
+  position:fixed;left:0;right:0;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 16px);
+  z-index:200;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:6px;
+  width:fit-content;
+  margin:0 auto;
+  padding:6px;
+  background:#1c1c1e;
+  border-radius:999px;
+  box-shadow:0 8px 24px rgba(0,0,0,.28);
+}
+.bottom-tab{
+  display:flex;flex-direction:row;align-items:center;justify-content:center;gap:7px;
+  cursor:pointer;touch-action:manipulation;background:none;border:none;font-family:inherit;
+  padding:11px 16px;min-height:auto;border-radius:999px;transition:background .2s;
+}
+.bottom-tab .tab-icon{width:auto;height:auto;border-radius:0;display:flex;align-items:center;justify-content:center;transition:none;background:transparent !important}
+.bottom-tab i{font-size:22px;color:#98989d;line-height:1;display:block;font-style:normal;transition:color .15s}
+.bottom-tab span{font-size:14px;font-weight:600;color:#98989d;display:none;transition:color .15s;white-space:nowrap}
+.bottom-tab.active{background:#007AFF;padding:11px 18px}
+.bottom-tab.active i{color:#fff}
+.bottom-tab.active span{color:#fff;display:block}
+.bottom-tab:active{opacity:.75}
 .tab-icon{position:relative}
 .tab-badge{
   position:absolute;top:-3px;right:-6px;
@@ -335,7 +361,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
   background:#ff3b30;border-radius:9px;
   display:flex;align-items:center;justify-content:center;
   font-size:10px;font-weight:700;color:#fff;
-  border:1.5px solid #fff;
+  border:1.5px solid #1c1c1e;
   line-height:1;
 }
 .tab-badge.dot{
@@ -377,7 +403,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 </div>
 
 <nav class="nav" id="mainNav">
-  <div class="nav-side" id="navExit" style="visibility:hidden">
+  <div class="nav-side" id="navExit" style="visibility:hidden;justify-content:flex-start">
     <div class="globe-btn" onclick="changeUser()"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
   </div>
   <div class="nav-center">
@@ -385,7 +411,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
   </div>
   <div class="nav-side right" style="position:relative">
     <div class="globe-btn notif-bell" id="notifBellWrap" onclick="openNotifModal()">
-      <i class="ti ti-bell"></i>
+      <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       <span class="notif-badge" id="notifBadge"></span>
     </div>
     <div class="globe-btn" id="globeWrap" onclick="toggleLangDrop()">
@@ -429,6 +455,64 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
     <button type="button" onclick="sharePhotoGalleryCurrent()" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);border:none;border-radius:20px;padding:10px 20px;color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation">
       <i class="ti ti-send" style="font-size:16px"></i> Compartir
     </button>
+  </div>
+</div>
+
+<!-- ═══ MODAL: EDITAR INFORME RECHAZADO (in-place, sin cambiar de pantalla) ═══ -->
+<div id="editReportModal" class="mg-modal-overlay" onclick="if(event.target===this)closeEditReportModal()">
+  <div class="mg-modal" style="max-height:88vh;overflow:hidden;display:flex;flex-direction:column;padding:0">
+    <div style="overflow-y:auto;flex:1;padding:16px 18px 8px;-webkit-overflow-scrolling:touch">
+      <div class="modal-handle" style="width:36px;height:4px;background:#c7c7cc;border-radius:2px;margin:0 auto 16px"></div>
+      <div class="mg-modal-title" id="erTitle">Editar informe</div>
+      <div class="mg-modal-sub" id="erSub">—</div>
+
+      <div class="mi-comment" style="margin:12px 0" id="erCommentBlock"><b>Comentario del manager</b><span id="erComment"></span></div>
+
+      <div class="s-label" style="padding:8px 0 6px">Cliente</div>
+      <input type="text" id="erCliente" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
+
+      <div class="s-label" style="padding:14px 0 6px">Obra</div>
+      <input type="text" id="erObra" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
+
+      <div class="s-label" style="padding:14px 0 6px">Fecha</div>
+      <input type="date" id="erFecha" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
+
+      <div class="s-label" style="padding:14px 0 6px">Ayudante</div>
+      <input type="text" id="erAyudante" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
+
+      <div class="s-label" style="padding:14px 0 6px">Vehículo</div>
+      <input type="text" id="erVehiculo" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
+
+      <div class="s-label" style="padding:14px 0 6px">Tipo de trabajo</div>
+      <input type="text" id="erTipo" class="mode-text-input" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
+
+      <div class="s-label" style="padding:14px 0 6px">Horas trabajadas</div>
+      <div style="display:flex;align-items:center;gap:14px;background:#fff;border:.5px solid #d1d1d6;border-radius:10px;padding:8px 14px">
+        <div class="step-btn" onclick="erChangeHoras(-1)">−</div>
+        <div style="flex:1;text-align:center;font-size:18px;font-weight:600" id="erHorasVal">0</div>
+        <div class="step-btn" onclick="erChangeHoras(1)">+</div>
+      </div>
+
+      <div class="s-label" style="padding:14px 0 6px">Trabajos realizados</div>
+      <textarea id="erTrabajos" rows="3" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;resize:none"></textarea>
+
+      <div class="s-label" style="padding:14px 0 6px">Compañía (materiales)</div>
+      <input type="text" id="erCompania" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
+
+      <div class="s-label" style="padding:14px 0 6px">Materiales utilizados</div>
+      <textarea id="erMateriales" rows="2" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;resize:none"></textarea>
+
+      <div class="s-label" style="padding:14px 0 6px">Precio materiales (€)</div>
+      <input type="number" id="erPrecio" step="0.01" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
+
+      <div style="height:12px"></div>
+    </div>
+    <div style="padding:10px 18px calc(env(safe-area-inset-bottom,0px) + 14px);border-top:.5px solid #e5e5ea;background:#f2f2f7;flex-shrink:0">
+      <div class="mg-actions">
+        <button class="mg-modal-cancel" style="flex:1" onclick="closeEditReportModal()">Cancelar</button>
+        <button class="mg-btn mg-btn-approve" style="flex:1" id="erSaveBtn" onclick="submitEditReport()">Reenviar</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1802,6 +1886,8 @@ function renderMyReports(reports) {
     if (r.STATUS === 'rejected' && r.COMENTARIO_MANAGER) {
       html += '<div class="mi-comment" style="margin-top:8px"><b>Comentario</b>'+r.COMENTARIO_MANAGER+'</div>';
       html += '<button class="mi-edit-btn" style="margin-top:8px" onclick="event.stopPropagation();openEditReport(\''+r.ID+'\')">Editar y reenviar</button>';
+    } else if (r.STATUS === 'pending') {
+      html += '<button class="mi-edit-btn" style="margin-top:8px;background:#f2f2f7;color:#007AFF;border:.5px solid #d1d1d6" onclick="event.stopPropagation();openEditReport(\''+r.ID+'\')">Editar</button>';
     }
     html += '</div>';
     return html;
@@ -1833,35 +1919,114 @@ function closeReportDetail() {
   rdCurrentId = null;
 }
 
+var erCurrentReport = null;
+
 function openEditReport(id) {
-  fetch(WEBAPP_URL + '?action=getMyReports&operario=' + encodeURIComponent(currentUser.nombre) + '&t=' + Date.now())
-    .then(function(r){ return r.json(); })
-    .then(function(result){
-      var report = (result.data || []).find(function(r){ return r.ID === id; });
-      if (!report) { showToast('Informe no encontrado', true); return; }
+  var report = myReportsCache.find(function(r){ return r.ID === id; });
+  if (!report) {
+    // Por si acaso no está en caché, lo pedimos al servidor
+    fetch(WEBAPP_URL + '?action=getMyReports&operario=' + encodeURIComponent(currentUser.nombre) + '&t=' + Date.now())
+      .then(function(r){ return r.json(); })
+      .then(function(result){
+        var r2 = (result.data || []).find(function(x){ return x.ID === id; });
+        if (!r2) { showToast('Informe no encontrado', true); return; }
+        fillEditReportModal(r2);
+      });
+    return;
+  }
+  fillEditReportModal(report);
+}
 
-      editingReportId = id;
-      switchOpTab('new');
+function fillEditReportModal(report) {
+  erCurrentReport = report;
+  document.getElementById('erTitle').textContent = report.ID;
+  document.getElementById('erSub').textContent = (report.CLIENTE || '') + ' · ' + (report.OBRA || '');
 
-      document.getElementById('fecha').value = report.FECHA ? report.FECHA.split('T')[0] : '';
-      document.getElementById('cliente').value = report.CLIENTE; document.getElementById('cliente').classList.add('has-val');
-      document.getElementById('obra').value = report.OBRA; document.getElementById('obra').classList.add('has-val');
-      document.getElementById('vehiculo').value = report.VEHÍCULO || '';
-      document.getElementById('trabajos').value = report.TRABAJOS_REALIZADAS || report['TRABAJOS REALIZADOS'] || '';
-      document.getElementById('horas').value = report.HORAS;
-      document.getElementById('horasVal').textContent = report.HORAS;
-      document.getElementById('materiales').value = report['MATERIALES UTILIZADOS'] || '';
-      document.getElementById('precio').value = report['PRECIO (EUR)'] || '';
+  var isRejected = report.STATUS === 'rejected';
+  var commentBlock = document.getElementById('erCommentBlock');
+  if (isRejected && report.COMENTARIO_MANAGER) {
+    commentBlock.style.display = 'block';
+    document.getElementById('erComment').textContent = report.COMENTARIO_MANAGER;
+  } else {
+    commentBlock.style.display = 'none';
+  }
 
-      setTipoMode('new');
-      document.getElementById('tipoNew').value = report['TIPO DE TRABAJO'] || '';
+  document.getElementById('erCliente').value = report.CLIENTE || '';
+  document.getElementById('erObra').value = report.OBRA || '';
+  document.getElementById('erFecha').value = report.FECHA ? report.FECHA.split('T')[0] : '';
+  document.getElementById('erAyudante').value = report.AYUDANTE || '';
+  document.getElementById('erVehiculo').value = report['VEHÍCULO'] || '';
+  document.getElementById('erTipo').value = report['TIPO DE TRABAJO'] || '';
+  document.getElementById('erHorasVal').textContent = report.HORAS || 0;
+  document.getElementById('erTrabajos').value = report['TRABAJOS REALIZADAS'] || report['TRABAJOS REALIZADOS'] || '';
+  document.getElementById('erCompania').value = report['COMPAÑÍA'] || '';
+  document.getElementById('erMateriales').value = report['MATERIALES UTILIZADOS'] || '';
+  document.getElementById('erPrecio').value = report['PRECIO (EUR)'] || '';
 
-      var btn = document.getElementById('btnSave');
-      btn.textContent = 'Reenviar informe';
-      btn.setAttribute('onclick', 'resubmitRecord()');
-      updateBtn();
-      showToast('Edita los datos y vuelve a enviar');
-    });
+  var saveBtn = document.getElementById('erSaveBtn');
+  saveBtn.textContent = isRejected ? 'Reenviar' : 'Guardar cambios';
+
+  document.getElementById('editReportModal').classList.add('show');
+}
+
+function closeEditReportModal() {
+  document.getElementById('editReportModal').classList.remove('show');
+  erCurrentReport = null;
+}
+
+function erChangeHoras(delta) {
+  var el = document.getElementById('erHorasVal');
+  var v = Math.max(0, (parseInt(el.textContent) || 0) + delta);
+  el.textContent = v;
+}
+
+function submitEditReport() {
+  if (!erCurrentReport) return;
+  var btn = document.getElementById('erSaveBtn');
+  var originalText = btn.textContent;
+  btn.textContent = '...';
+  btn.style.pointerEvents = 'none';
+
+  var horas  = parseInt(document.getElementById('erHorasVal').textContent) || 0;
+  var precio = parseFloat(document.getElementById('erPrecio').value) || 0;
+
+  fetch(WEBAPP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({
+      action: 'resubmit',
+      id: erCurrentReport.ID,
+      fecha: document.getElementById('erFecha').value,
+      cliente: document.getElementById('erCliente').value,
+      obra: document.getElementById('erObra').value,
+      ayudante: document.getElementById('erAyudante').value,
+      vehiculo: document.getElementById('erVehiculo').value,
+      trabajos: document.getElementById('erTrabajos').value,
+      tipo: document.getElementById('erTipo').value,
+      horas: horas,
+      compania: document.getElementById('erCompania').value,
+      materiales: document.getElementById('erMateriales').value,
+      precio: precio
+    })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(result){
+    btn.style.pointerEvents = '';
+    btn.textContent = originalText;
+    if (result && result.status === 'ok') {
+      showToast('Informe reenviado para aprobación');
+      closeEditReportModal();
+      myReportsLoaded = false; // fuerza recarga fresca de la lista
+      loadMyReports();
+    } else {
+      showToast(result && result.message ? result.message : 'Error al reenviar', true);
+    }
+  })
+  .catch(function(){
+    btn.style.pointerEvents = '';
+    btn.textContent = originalText;
+    showToast('Error de conexión', true);
+  });
 }
 
 function resubmitRecord() {
@@ -2064,7 +2229,7 @@ function buildDetailHtml(r, showTotal) {
       if (showTotal) html += '<span style="display:block;font-size:11px;color:#8e8e93;margin-top:4px">'+PRECIO_HORA+' €/h</span>';
       html += '</div>';
     }
-    if (trabajos) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:4px">Trabajos realizados</b><span style="font-size:13px;color:#000;line-height:1.5">'+trabajos+'</span></div>';
+    if (trabajos) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:4px">Trabajos realizados</b><span class="selectable-text" style="font-size:13px;color:#000;line-height:1.5">'+trabajos+'</span></div>';
     if (fotosObra) html += '<button type="button" class="rd-photo-link" onclick="openPhotoGallery(this)" data-photos=\''+encodeURIComponent(fotosObra)+'\'>'+svgCam+'Fotos de obra</button>';
     html += '</div>';
   }
@@ -2080,7 +2245,7 @@ function buildDetailHtml(r, showTotal) {
     html += '<div class="det-group">';
     html += '<div class="det-group-title">' + t('grp_materiales') + '</div>';
     if (compania) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:2px">Compañía</b><span style="font-size:14px;font-weight:500;color:#000">'+compania+'</span></div>';
-    if (materiales) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:4px">Descripción</b><span style="font-size:13px;color:#000;line-height:1.5">'+materiales+'</span></div>';
+    if (materiales) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:4px">Descripción</b><span class="selectable-text" style="font-size:13px;color:#000;line-height:1.5">'+materiales+'</span></div>';
     if (precio > 0) {
       html += '<div class="rd-field-full" style="text-align:center;padding:12px">';
       html += '<b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:6px">Coste materiales</b>';
@@ -2977,54 +3142,135 @@ function vibrateDevice() {
   }
 }
 
+/* ════════ ONESIGNAL: vinculación, permiso, diagnóstico ════════
+   Reescrito para ser robusto en cualquier navegador/dispositivo:
+   - Usa SIEMPRE los métodos del SDK de OneSignal (nunca la API nativa
+     Notification.requestPermission() directamente) para que el permiso
+     y la creación de la suscripción push queden correctamente enlazados.
+   - Un único banner propio, con guardas contra duplicados.
+   - Función de autodiagnóstico accesible desde la consola sin necesidad
+     de depuración remota (window.diagnosePush()). */
+
 var notifyPermissionAsked = false;
+var oneSignalLinkedPin = null;
+
+// Espera a que el SDK de OneSignal esté realmente listo (window.OneSignalDeferred
+// ya resolvió OneSignal.init()) antes de intentar usar cualquier método suyo.
+function waitForOneSignal(callback, retriesLeft) {
+  if (retriesLeft === undefined) retriesLeft = 20; // ~10s máx (20 x 500ms)
+  if (window.__oneSignalReady && typeof OneSignal !== 'undefined') {
+    callback();
+    return;
+  }
+  if (retriesLeft <= 0) {
+    console.log('[OneSignal] SDK no llegó a inicializar tras esperar');
+    return;
+  }
+  setTimeout(function() { waitForOneSignal(callback, retriesLeft - 1); }, 500);
+}
 
 // Vincula el dispositivo actual con el PIN del usuario en OneSignal.
 // Así el backend (Apps Script) puede enviar un push a "external_id = PIN"
 // sin necesitar guardar el Player ID manualmente.
 function linkOneSignalUser() {
-  if (!currentPin || typeof OneSignal === 'undefined') {
-    // El SDK puede tardar en cargar — reintentamos en 1s
-    setTimeout(function() {
-      if (currentPin && typeof OneSignal !== 'undefined') linkOneSignalUser();
-    }, 1000);
-    return;
-  }
-  try {
-    OneSignal.login(String(currentPin)).catch(function(){});
-  } catch(e) {}
+  if (!currentPin) return;
+  waitForOneSignal(function() {
+    if (oneSignalLinkedPin === currentPin) return; // ya vinculado, evita llamadas repetidas
+    try {
+      OneSignal.login(String(currentPin)).then(function() {
+        oneSignalLinkedPin = currentPin;
+      }).catch(function(e) { console.log('[OneSignal] login error:', e && e.message); });
+    } catch(e) { console.log('[OneSignal] login exception:', e.message); }
+  });
 }
 
 function unlinkOneSignalUser() {
-  try {
-    if (typeof OneSignal !== 'undefined') OneSignal.logout().catch(function(){});
-  } catch(e) {}
+  oneSignalLinkedPin = null;
+  waitForOneSignal(function() {
+    try { OneSignal.logout().catch(function(){}); } catch(e) {}
+  });
 }
 
+// Comprueba si conviene mostrar el banner de activar notificaciones.
+// Solo se muestra si: el navegador soporta notificaciones, el permiso
+// todavía no se ha decidido, y no lo hemos preguntado ya en esta sesión.
 function ensureNotifyPermission() {
-  if (!('Notification' in window)) return;
-  if (Notification.permission === 'default' && !notifyPermissionAsked) {
-    notifyPermissionAsked = true;
-    showPermissionBanner();
-  }
+  if (!('Notification' in window)) return; // navegador sin soporte — no insistimos
+  if (notifyPermissionAsked) return;
+  if (Notification.permission !== 'default') return; // ya concedido o denegado
+  notifyPermissionAsked = true;
+  waitForOneSignal(function() { showPermissionBanner(); });
 }
 
 function showPermissionBanner() {
-  if (document.getElementById('notifyPermBanner')) return;
+  if (document.getElementById('notifyPermBanner')) return; // evita duplicados
+  if (Notification.permission !== 'default') return; // pudo cambiar mientras esperábamos
+
   var b = document.createElement('div');
   b.id = 'notifyPermBanner';
-  b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);z-index:6000;background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 6px 24px rgba(0,0,0,.18);display:flex;align-items:center;gap:12px;border:.5px solid #e5e5ea';
+  b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);z-index:6000;background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 6px 24px rgba(0,0,0,.18);display:flex;align-items:center;gap:12px;border:.5px solid #e5e5ea;opacity:0;transform:translateY(10px);transition:opacity .25s,transform .25s';
   b.innerHTML =
     '<i class="ti ti-bell-ringing" style="font-size:22px;color:#007AFF;flex-shrink:0"></i>' +
     '<div style="flex:1;font-size:13px;color:#000;line-height:1.35">Activa las notificaciones para no perderte novedades</div>' +
-    '<button id="notifyPermBtn" style="background:#007AFF;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;font-family:inherit;flex-shrink:0">Activar</button>' +
-    '<button id="notifyPermClose" style="background:none;border:none;color:#8e8e93;font-size:18px;padding:2px;flex-shrink:0">×</button>';
+    '<button id="notifyPermBtn" style="background:#007AFF;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;font-family:inherit;flex-shrink:0;cursor:pointer;touch-action:manipulation">Activar</button>' +
+    '<button id="notifyPermClose" style="background:none;border:none;color:#8e8e93;font-size:18px;padding:2px;flex-shrink:0;cursor:pointer;touch-action:manipulation">×</button>';
   document.body.appendChild(b);
+  requestAnimationFrame(function(){ b.style.opacity = '1'; b.style.transform = 'translateY(0)'; });
+
+  function closeBanner() {
+    b.style.opacity = '0';
+    b.style.transform = 'translateY(10px)';
+    setTimeout(function(){ b.remove(); }, 250);
+  }
+
   document.getElementById('notifyPermBtn').onclick = function() {
-    Notification.requestPermission().finally(function(){ b.remove(); });
+    var btn = this;
+    btn.textContent = '...';
+    btn.disabled = true;
+    // IMPORTANTE: usamos el método del SDK de OneSignal, NO el nativo
+    // Notification.requestPermission(). El wrapper de OneSignal encadena
+    // automáticamente permiso → creación de la suscripción push real.
+    // Esto es lo que garantiza que funcione igual en cualquier navegador.
+    OneSignal.Notifications.requestPermission()
+      .then(function(granted) {
+        console.log('[OneSignal] permiso concedido:', granted);
+        closeBanner();
+      })
+      .catch(function(e) {
+        console.log('[OneSignal] error al pedir permiso:', e && e.message);
+        closeBanner();
+      });
   };
-  document.getElementById('notifyPermClose').onclick = function() { b.remove(); };
+  document.getElementById('notifyPermClose').onclick = closeBanner;
 }
+
+/* ════════ AUTODIAGNÓSTICO — sin necesidad de depuración remota ════════
+   Ejecutar en la consola: diagnosePush()
+   Muestra en un solo alert() el estado de cada requisito para push. */
+window.diagnosePush = function() {
+  var lines = [];
+  lines.push('OneSignal SDK: ' + (typeof OneSignal !== 'undefined' ? 'OK' : 'FALTA'));
+  lines.push('Notification API: ' + ('Notification' in window ? 'OK' : 'NO SOPORTADO'));
+  lines.push('Permiso: ' + (('Notification' in window) ? Notification.permission : 'n/a'));
+  lines.push('Display mode: ' + (window.matchMedia('(display-mode: standalone)').matches ? 'standalone (correcto)' : 'navegador (INCORRECTO — abre desde el icono)'));
+
+  navigator.serviceWorker.getRegistrations().then(function(regs) {
+    lines.push('Service Workers registrados: ' + regs.length);
+    regs.forEach(function(r, i) {
+      lines.push('  [' + i + '] scope=' + r.scope + ' active=' + !!r.active);
+    });
+    return navigator.serviceWorker.getRegistration();
+  }).then(function(reg) {
+    if (!reg) { lines.push('Suscripción push: SIN SERVICE WORKER'); alert(lines.join('\n')); return; }
+    return reg.pushManager.getSubscription().then(function(sub) {
+      lines.push('Suscripción push: ' + (sub ? 'ACTIVA (' + sub.endpoint.substring(0,40) + '...)' : 'NO EXISTE'));
+      alert(lines.join('\n'));
+    });
+  }).catch(function(e) {
+    lines.push('Error durante diagnóstico: ' + e.message);
+    alert(lines.join('\n'));
+  });
+};
 
 // Dispara la alerta completa: sonido + vibración + notificación de sistema (si backgrounded) + toast (si visible)
 /* ════════ CENTRO DE NOTIFICACIONES — persistente por usuario (PIN), nunca repite ════════ */
@@ -3489,6 +3735,50 @@ document.addEventListener('visibilitychange', function() {
     }
   }
 });
+
+/* ════════ SCROLL LOCK — bloquea el scroll del fondo mientras hay un modal
+   abierto. Solo el contenido DENTRO del modal puede desplazarse. ════════ */
+(function() {
+  var modalIds = [
+    'reportDetailModal', 'mgDetailModal', 'editReportModal',
+    'mgRejectModal', 'notifFullModal', 'photoGalleryModal'
+  ];
+  var savedScrollY = 0;
+  var isLocked = false;
+
+  function isAnyModalOpen() {
+    return modalIds.some(function(id) {
+      var el = document.getElementById(id);
+      if (!el) return false;
+      return el.classList.contains('show') || el.style.display === 'flex';
+    });
+  }
+
+  function updateLock() {
+    var shouldLock = isAnyModalOpen();
+    if (shouldLock && !isLocked) {
+      savedScrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = '-' + savedScrollY + 'px';
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      isLocked = true;
+    } else if (!shouldLock && isLocked) {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      window.scrollTo(0, savedScrollY);
+      isLocked = false;
+    }
+  }
+
+  var observer = new MutationObserver(updateLock);
+  modalIds.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) observer.observe(el, { attributes: true, attributeFilter: ['class', 'style'] });
+  });
+})();
 
 (function initApp(){
   document.getElementById('mainNav').style.display = 'none';
