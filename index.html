@@ -67,6 +67,12 @@ input,textarea,.rta,.mode-text-input,.mi-comment,.selectable-text,
   -webkit-user-select:text;-moz-user-select:text;user-select:text;
 }
 html,body{background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+/* Ocultar la barra de scroll en TODA la app — el gesto táctil sigue
+   funcionando igual, solo desaparece la línea visual del lateral derecho
+   (en móvil suele ya estar oculta por defecto, pero en desktop/algunos
+   Android puede aparecer y da un aspecto poco pulido). */
+*{scrollbar-width:none;-ms-overflow-style:none}
+*::-webkit-scrollbar{display:none;width:0;height:0}
 body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 110px)}
 
 /* NAV */
@@ -130,7 +136,7 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);pad
 .b-orange{background:#fff4e5}.b-orange svg,.b-orange i{stroke:#ff9500;color:#ff9500}
 .b-teal{background:#e5f9f5}.b-teal svg,.b-teal i{stroke:#30d158;color:#30d158}
 
-.rlabel{font-size:15px;font-weight:400;color:#000;flex-shrink:0;display:flex;align-items:center;gap:4px}
+.rlabel{font-size:15px;font-weight:500;color:#000;flex-shrink:0;display:flex;align-items:center;gap:4px;letter-spacing:-.1px}
 .req-dot{width:5px;height:5px;border-radius:50%;background:#ff3b30;display:inline-block;flex-shrink:0}
 .rinput{flex:1;text-align:right;font-size:15px;color:#000;border:none;outline:none;background:transparent;font-family:inherit;min-width:0;margin-left:auto}
 .rinput::placeholder{color:#c7c7cc}
@@ -141,7 +147,9 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);pad
 .rchev{margin-left:4px}.rchev svg{width:7px;height:12px;stroke:#c7c7cc;fill:none;stroke-width:2.5;stroke-linecap:round}
 .tarow{flex-direction:column;align-items:flex-start;padding:12px 14px;min-height:auto}
 .tarow .sub-label{font-size:11px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
-.rta{width:100%;border:none;outline:none;background:transparent;font-size:15px;color:#000;font-family:inherit;resize:none;min-height:60px;line-height:1.6}
+.rta{width:100%;border:none;outline:none;background:#f2f2f7;border-radius:12px;padding:12px 14px;margin-top:2px;font-size:15px;color:#000;font-family:inherit;resize:none;min-height:70px;line-height:1.6;transition:background .15s}
+.rta:focus{background:#e8effe}
+.rta::placeholder{color:#8e8e93}
 .rta::placeholder{color:#c7c7cc}
 
 /* MODE TOGGLE */
@@ -152,7 +160,9 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);pad
 .mode-list-row{display:flex;align-items:center;padding:0 14px;min-height:46px;border-bottom:.5px solid #f2f2f7}
 .mode-list-row:last-child{border-bottom:none}
 .mode-text-row{padding:10px 14px;border-bottom:.5px solid #f2f2f7;display:none}
-.mode-text-input{width:100%;border:none;outline:none;background:transparent;font-size:15px;color:#000;font-family:inherit;padding-bottom:3px;border-bottom:.5px solid #d1d1d6}
+.mode-text-input{width:100%;border:none;outline:none;background:#f2f2f7;border-radius:10px;padding:10px 12px;font-size:15px;color:#000;font-family:inherit;transition:background .15s}
+.mode-text-input:focus{background:#e8effe}
+.mode-text-input::placeholder{color:#8e8e93}
 .mode-text-input::placeholder{color:#c7c7cc}
 
 /* HORAS */
@@ -344,10 +354,12 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 .rd-photo-link{display:flex;align-items:center;justify-content:center;gap:6px;background:#f2f2f7;border:.5px solid #e5e5ea;border-radius:10px;padding:10px;font-size:13px;font-weight:500;color:#007AFF;text-decoration:none;margin-top:6px;width:100%;font-family:inherit;cursor:pointer;touch-action:manipulation}
 .rd-photo-link svg,.rd-photo-link i{width:15px;height:15px;font-size:15px;stroke:#007AFF;fill:none;stroke-width:2;stroke-linecap:round;color:#007AFF}
 
-/* TABBAR — cápsula flotante estilo Uber/Ride, con acento azul */
+/* TABBAR — cápsula flotante estilo Uber/Ride, con acento azul.
+   Pegada al borde inferior real de la pantalla (bottom:0, sin hueco) —
+   el propio padding interno ya deja aire suficiente para el dedo. */
 .bottom-tabbar{
   position:fixed;left:0;right:0;
-  bottom:env(safe-area-inset-bottom,0px);
+  bottom:8px;
   z-index:200;
   display:flex;
   justify-content:center;
@@ -362,7 +374,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
   transition:transform .25s ease, opacity .25s ease;
 }
 .bottom-tabbar.tabbar-hidden{
-  transform:translateY(calc(100% + env(safe-area-inset-bottom,0px) + 24px));
+  transform:translateY(calc(100% + 24px));
   opacity:0;
   pointer-events:none;
 }
@@ -414,7 +426,14 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 }
 @keyframes splashSpin{
   to{transform:rotate(360deg)}
-}
+}/* El SDK de OneSignal a veces muestra su propio slidedown pese a
+   autoPrompt:false (bug conocido y muy reportado del SDK, no de nuestro
+   código — ver issues #128, #152, #282 del repo de OneSignal). Como la
+   configuración no lo bloquea de forma fiable en todas las versiones,
+   lo ocultamos por fuerza bruta: solo debe verse nuestro banner propio. */
+#onesignal-slidedown-container,
+.onesignal-slidedown-container,
+#onesignal-slidedown-dialog { display: none !important; }
 </style>
 
 </head>
@@ -462,7 +481,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 </div>
 
 <!-- ═══ MODAL: GALERÍA DE FOTOS (visor tipo iOS Photos) ═══ -->
-<div id="photoGalleryModal" style="display:none;position:fixed;inset:0;z-index:9500;background:#000;flex-direction:column">
+<div id="photoGalleryModal" style="display:none;position:fixed;inset:0;height:100dvh;width:100vw;z-index:9500;background:#000;flex-direction:column">
   <!-- Barra superior: contador + cerrar -->
   <div id="pgTopBar" style="position:absolute;top:0;left:0;right:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 40px;background:linear-gradient(to bottom,rgba(0,0,0,.55),rgba(0,0,0,0));transition:opacity .25s">
     <div id="pgCounter" style="font-size:13px;font-weight:600;color:#fff">1 / 1</div>
@@ -473,6 +492,10 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 
   <!-- Track deslizable -->
   <div id="pgTrack" style="flex:1;display:flex;height:100%;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;position:relative"></div>
+
+  <!-- Franja de miniaturas — como en la galería de iPhone: se ve de un
+       vistazo cuántas fotos hay y cuál está activa; tocar una salta a ella. -->
+  <div id="pgThumbStrip" style="position:absolute;left:0;right:0;bottom:64px;z-index:2;display:flex;gap:6px;padding:0 12px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch;transition:opacity .25s"></div>
 
   <!-- Barra inferior: compartir -->
   <div id="pgBottomBar" style="position:absolute;bottom:0;left:0;right:0;z-index:2;display:flex;align-items:center;justify-content:center;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 16px);background:linear-gradient(to top,rgba(0,0,0,.55),rgba(0,0,0,0));transition:opacity .25s">
@@ -792,7 +815,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 
 <!-- MODAL: DETALLE DE INFORME (Mis informes) -->
 <div class="mg-modal-overlay" id="reportDetailModal" onclick="if(event.target===this)closeReportDetail()">
-  <div class="mg-modal" style="max-height:85vh;overflow-y:auto">
+  <div class="mg-modal" style="max-height:88vh;overflow-y:auto">
     <div class="modal-handle" style="width:36px;height:4px;background:#c7c7cc;border-radius:2px;margin:0 auto 16px"></div>
     <div class="mg-modal-title" id="rdTitle">—</div>
     <div class="mg-modal-sub" id="rdSub">—</div>
@@ -3344,12 +3367,46 @@ function unlinkOneSignalUser() {
 // Comprueba si conviene mostrar el banner de activar notificaciones.
 // Solo se muestra si: el navegador soporta notificaciones, el permiso
 // todavía no se ha decidido, y no lo hemos preguntado ya en esta sesión.
+function isIOSDevice() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS moderno se reporta como Mac
+}
+function isStandalonePWA() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
 function ensureNotifyPermission() {
   if (!('Notification' in window)) return; // navegador sin soporte — no insistimos
   if (notifyPermissionAsked) return;
   if (Notification.permission !== 'default') return; // ya concedido o denegado
   notifyPermissionAsked = true;
+  // iOS EXIGE que la app esté instalada (icono en pantalla de inicio) para
+  // que el push funcione — en una pestaña normal de Safari es IMPOSIBLE,
+  // por diseño de Apple, sin importar cuánto insistamos con el permiso.
+  // Pedirlo igualmente crea un "suscriptor fantasma" en OneSignal sin
+  // token real (justo el "No Push Token" visto en el Dashboard).
+  if (isIOSDevice() && !isStandalonePWA()) {
+    waitForOneSignal(function() { showInstallBanner(); });
+    return;
+  }
   waitForOneSignal(function() { showPermissionBanner(); });
+}
+
+function showInstallBanner() {
+  if (document.getElementById('notifyPermBanner')) return;
+  var b = document.createElement('div');
+  b.id = 'notifyPermBanner';
+  b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);z-index:6000;background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 6px 24px rgba(0,0,0,.18);display:flex;align-items:center;gap:12px;border:.5px solid #e5e5ea;opacity:0;transform:translateY(10px);transition:opacity .25s,transform .25s';
+  b.innerHTML =
+    '<i class="ti ti-square-plus" style="font-size:22px;color:#007AFF;flex-shrink:0"></i>' +
+    '<div style="flex:1;font-size:12.5px;color:#000;line-height:1.4">Para recibir notificaciones: pulsa <b>Compartir</b> <span style="display:inline-block">⬆️</span> y luego <b>"Añadir a pantalla de inicio"</b></div>' +
+    '<button id="notifyPermClose" style="background:none;border:none;color:#8e8e93;font-size:18px;padding:2px;flex-shrink:0;cursor:pointer;touch-action:manipulation">×</button>';
+  document.body.appendChild(b);
+  requestAnimationFrame(function(){ b.style.opacity = '1'; b.style.transform = 'translateY(0)'; });
+  document.getElementById('notifyPermClose').onclick = function() {
+    b.style.opacity = '0'; b.style.transform = 'translateY(10px)';
+    setTimeout(function(){ b.remove(); }, 250);
+  };
 }
 
 function showPermissionBanner() {
@@ -3637,14 +3694,42 @@ function renderPhotoGallery(photos) {
   }).join('');
   track.scrollLeft = 0;
   updatePgCounter();
+  renderPgThumbStrip();
 
   document.getElementById('photoGalleryModal').style.display = 'flex';
   document.getElementById('pgTopBar').style.opacity = '1';
   document.getElementById('pgBottomBar').style.opacity = '1';
+  document.getElementById('pgThumbStrip').style.opacity = '1';
   document.getElementById('pgTopBar').style.pointerEvents = 'auto';
   document.getElementById('pgBottomBar').style.pointerEvents = 'auto';
 
   bindPgGestures();
+}
+
+function renderPgThumbStrip() {
+  var strip = document.getElementById('pgThumbStrip');
+  if (pgPhotos.length < 2) {
+    // Con una sola foto la franja no aporta nada — la ocultamos.
+    strip.style.display = 'none';
+    strip.innerHTML = '';
+    return;
+  }
+  strip.style.display = 'flex';
+  strip.innerHTML = pgPhotos.map(function(url, i){
+    var active = i === pgIndex;
+    return '<div onclick="pgJumpTo('+i+')" style="flex-shrink:0;width:44px;height:44px;border-radius:8px;overflow:hidden;cursor:pointer;touch-action:manipulation;' +
+      'border:2px solid ' + (active ? '#fff' : 'transparent') + ';opacity:' + (active ? '1' : '.55') + ';transition:opacity .15s,border-color .15s">' +
+      '<img src="'+url+'" style="width:100%;height:100%;object-fit:cover;-webkit-user-select:none;user-select:none;pointer-events:none" draggable="false">' +
+    '</div>';
+  }).join('');
+}
+
+function pgJumpTo(i) {
+  var track = document.getElementById('pgTrack');
+  track.scrollTo({ left: i * track.clientWidth, behavior: 'smooth' });
+  pgIndex = i;
+  updatePgCounter();
+  renderPgThumbStrip();
 }
 
 function updatePgCounter() {
@@ -3663,10 +3748,13 @@ function togglePgChrome() {
   pgChromeVisible = !pgChromeVisible;
   var top = document.getElementById('pgTopBar');
   var bottom = document.getElementById('pgBottomBar');
+  var strip = document.getElementById('pgThumbStrip');
   top.style.opacity = pgChromeVisible ? '1' : '0';
   bottom.style.opacity = pgChromeVisible ? '1' : '0';
+  strip.style.opacity = pgChromeVisible ? '1' : '0';
   top.style.pointerEvents = pgChromeVisible ? 'auto' : 'none';
   bottom.style.pointerEvents = pgChromeVisible ? 'auto' : 'none';
+  strip.style.pointerEvents = pgChromeVisible ? 'auto' : 'none';
 }
 
 function sharePhotoGalleryCurrent() {
@@ -3767,7 +3855,7 @@ function bindPgGestures() {
       var w = track.clientWidth || 1;
       var idx = Math.round(track.scrollLeft / w);
       idx = Math.max(0, Math.min(idx, pgPhotos.length - 1));
-      if (idx !== pgIndex) { pgIndex = idx; updatePgCounter(); }
+      if (idx !== pgIndex) { pgIndex = idx; updatePgCounter(); renderPgThumbStrip(); }
     }, 80);
   }, { passive: true });
 }
@@ -4069,14 +4157,13 @@ document.addEventListener('visibilitychange', function() {
     });
 })();
 
-/* ════════ GESTOS DE MODAL: resize lento / fullscreen swipe / cerrar ════════
-   Comportamiento (igual en todos los popups):
-   - Arrastre LENTO del handle -> la ventana cambia de tamano en vivo,
-     siguiendo el dedo (crece hacia arriba, se encoge hacia abajo).
-   - Swipe RAPIDO hacia arriba -> pantalla completa, aparece boton cerrar (X).
-   - Swipe RAPIDO hacia abajo -> se cierra el modal.
-   - Al soltar tras un arrastre lento, hace snap al estado mas cercano:
-     tamano por defecto, pantalla completa, o cerrado. */
+/* ═══ CIERRE DE MODAL — patrón simple y estándar (como cualquier app
+   moderna): el modal abre siempre al mismo tamaño, se cierra arrastrando
+   hacia abajo desde la ZONA SUPERIOR (la franja de la manija) o tocando
+   fuera. El scroll del contenido es completamente independiente — nunca
+   se intercepta, así que nunca "engancha" ni compite con el gesto de
+   cierre. Sin redimensionado en vivo, sin pantalla completa por gesto:
+   esa complejidad era la causa de los tirones/glitches reportados. */
 (function() {
   var modalClosers = {
     'mgRejectModal':     function() { closeRejectModal(); },
@@ -4085,9 +4172,8 @@ document.addEventListener('visibilitychange', function() {
     'editReportModal':   function() { closeEditReportModal(); }
   };
 
-  var DEFAULT_MAXH = 'min(72dvh, 640px)';
-  var FAST_VELOCITY = 0.55; // px/ms - umbral para considerar "swipe rapido"
-  var MIN_H = 110;          // por debajo de esto, se interpreta como "cerrar"
+  var CLOSE_DISTANCE = 70;   // px de arrastre para considerar "cerrar"
+  var CLOSE_VELOCITY = 0.5;  // px/ms — swipe rápido también cierra aunque no llegue a CLOSE_DISTANCE
 
   Object.keys(modalClosers).forEach(function(overlayId) {
     var overlay = document.getElementById(overlayId);
@@ -4096,154 +4182,62 @@ document.addEventListener('visibilitychange', function() {
     if (!modal) return;
     var handle = modal.querySelector('.modal-handle');
     var closeFn = modalClosers[overlayId];
-    var closeBtn = null;
-    var isFullscreen = false;
 
-    function resetModalSize() {
-      isFullscreen = false;
-      modal.style.transition = 'none';
-      modal.style.height = '';
-      modal.style.maxHeight = DEFAULT_MAXH;
-      modal.style.borderRadius = '';
-      modal.style.paddingTop = '';
-      modal.style.transform = '';
-      overlay.style.background = '';
-      if (closeBtn) closeBtn.style.display = 'none';
-      requestAnimationFrame(function() { modal.style.transition = ''; });
-    }
+    // El área de arrastre es SOLO la manija (y una pequeña franja alrededor
+    // suya, no el modal completo) — así el contenido nunca ve estos eventos
+    // y su scroll nativo funciona exactamente igual que en cualquier lista normal.
+    var dragHandle = handle || modal;
+    var startY = 0, startTime = 0, dragging = false;
 
-    function ensureCloseBtn() {
-      if (closeBtn) return closeBtn;
-      closeBtn = document.createElement('button');
-      closeBtn.setAttribute('aria-label', 'Cerrar');
-      closeBtn.innerHTML = '<i class="ti ti-x" style="font-size:19px"></i>';
-      closeBtn.style.cssText = 'position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:14px;width:32px;height:32px;border-radius:50%;background:rgba(120,120,128,.16);border:none;display:none;align-items:center;justify-content:center;z-index:20;color:#000;touch-action:manipulation';
-      closeBtn.onclick = function() { closeFn(); };
-      modal.style.position = 'relative';
-      modal.appendChild(closeBtn);
-      return closeBtn;
-    }
-
-    function setFullscreen(on) {
-      isFullscreen = on;
-      modal.style.transition = 'height .3s cubic-bezier(.32,1,.2,1), max-height .3s cubic-bezier(.32,1,.2,1), border-radius .3s, padding-top .3s';
-      if (on) {
-        modal.style.height = '100dvh';
-        modal.style.maxHeight = '100dvh';
-        modal.style.borderRadius = '0';
-        modal.style.paddingTop = 'env(safe-area-inset-top,0px)';
-        ensureCloseBtn().style.display = 'flex';
-      } else {
-        modal.style.height = '';
-        modal.style.maxHeight = DEFAULT_MAXH;
-        modal.style.borderRadius = '22px 22px 0 0';
-        modal.style.paddingTop = '';
-        if (closeBtn) closeBtn.style.display = 'none';
+    dragHandle.addEventListener('touchstart', function(e) {
+      // Si no hay manija dedicada, solo iniciamos el gesto si el toque
+      // empieza en los primeros ~24px del modal (la franja visual de la
+      // manija), para no robarle el scroll al resto del contenido.
+      if (!handle) {
+        var rect = modal.getBoundingClientRect();
+        if (e.touches[0].clientY - rect.top > 24) return;
       }
-    }
-
-    // Reinicia el tamano cada vez que el modal se abre (nunca hereda el
-    // estado -- fullscreen o encogido -- de la vez anterior).
-    new MutationObserver(function(muts) {
-      muts.forEach(function(m) {
-        if (m.attributeName === 'class' && overlay.classList.contains('show')) {
-          resetModalSize();
-        }
-      });
-    }).observe(overlay, { attributes: true });
-
-    var scrollEl = modal.querySelector('[style*="overflow-y:auto"]') || modal;
-    var startY = 0, startTime = 0, startH = 0, dragging = false;
-
-    if (handle) handle.addEventListener('touchstart', function(e) {
       startY = e.touches[0].clientY;
       startTime = Date.now();
-      startH = modal.getBoundingClientRect().height;
       dragging = true;
       modal.style.transition = 'none';
     }, { passive: true });
 
-    if (handle) handle.addEventListener('touchmove', function(e) {
+    dragHandle.addEventListener('touchmove', function(e) {
       if (!dragging) return;
-      var y = e.touches[0].clientY;
-      var dy = startY - y; // positivo = arrastre hacia arriba
-      var newH = Math.min(window.innerHeight, Math.max(60, startH + dy));
-      modal.style.height = newH + 'px';
-      modal.style.maxHeight = newH + 'px';
-      modal.style.borderRadius = newH > window.innerHeight - 20 ? '0' : '22px 22px 0 0';
-      e.preventDefault();
-    }, { passive: false });
+      var dy = e.touches[0].clientY - startY;
+      if (dy > 0) {
+        modal.style.transform = 'translateY(' + dy + 'px)';
+      }
+    }, { passive: true });
 
-    if (handle) handle.addEventListener('touchend', function(e) {
+    dragHandle.addEventListener('touchend', function(e) {
       if (!dragging) return;
       dragging = false;
-      var endY = e.changedTouches[0].clientY;
+      var dy = e.changedTouches[0].clientY - startY;
       var dt = Math.max(Date.now() - startTime, 1);
-      var dy = startY - endY; // positivo = arriba
-      var velocity = dy / dt; // px/ms
+      var velocity = dy / dt;
+      modal.style.transition = 'transform .25s cubic-bezier(.32,1,.2,1)';
 
-      if (velocity > FAST_VELOCITY) {
-        setFullscreen(true); // swipe rapido arriba -> pantalla completa
-        return;
-      }
-      if (velocity < -FAST_VELOCITY) {
-        modal.style.transition = 'transform .25s cubic-bezier(.32,1,.2,1)';
+      if (dy > CLOSE_DISTANCE || velocity > CLOSE_VELOCITY) {
         modal.style.transform = 'translateY(100%)';
-        setTimeout(closeFn, 220); // swipe rapido abajo -> cerrar
-        return;
-      }
-      // Arrastre lento -- snap al estado mas cercano segun altura final
-      var curH = modal.getBoundingClientRect().height;
-      var vh = window.innerHeight;
-      if (curH < MIN_H) {
-        modal.style.transition = 'transform .25s cubic-bezier(.32,1,.2,1)';
-        modal.style.transform = 'translateY(100%)';
-        setTimeout(closeFn, 220);
-      } else if (curH > vh * 0.85) {
-        setFullscreen(true);
+        setTimeout(function() { modal.style.transform = ''; closeFn(); }, 220);
       } else {
-        setFullscreen(false);
+        modal.style.transform = '';
       }
     }, { passive: true });
 
-    // Cierre por swipe hacia abajo desde cualquier punto: SOLO para modales
-    // SIN asa de arrastre (p.ej. mgRejectModal). En los que sí tienen asa,
-    // el body no debe interceptar touchmove o rompe el scroll del contenido.
-    if (!handle) {
-    modal.addEventListener('touchstart', function(e) {
-      modal.__sy = e.touches[0].clientY;
-      modal.__st = Date.now();
-      modal.__sd = false;
-    }, { passive: true });
-
-    modal.addEventListener('touchmove', function(e) {
-      if (modal.__sy === undefined) return;
-      var dy = e.touches[0].clientY - modal.__sy;
-      if (dy > 0 && scrollEl.scrollTop <= 0 && !isFullscreen) {
-        modal.__sd = true;
-        modal.style.transition = 'none';
-        modal.style.transform = 'translateY(' + Math.max(0, dy) + 'px)';
-        overlay.style.background = 'rgba(0,0,0,' + (0.35 * (1 - Math.min(dy / 300, 1) * 0.6)) + ')';
-        e.preventDefault();
-      }
-    }, { passive: false });
-
-    modal.addEventListener('touchend', function(e) {
-      if (modal.__sy === undefined) return;
-      var dy = e.changedTouches[0].clientY - modal.__sy;
-      var dt = Math.max(Date.now() - modal.__st, 1);
-      modal.style.transition = 'transform .3s cubic-bezier(.32,1,.2,1)';
-      overlay.style.background = '';
-      if (modal.__sd && (dy > 80 || dy / dt > FAST_VELOCITY)) {
-        modal.style.transform = 'translateY(100%)';
-        setTimeout(function() { modal.style.transform = ''; closeFn(); }, 280);
-      } else {
-        modal.style.transform = 'translateY(0)';
-      }
-      modal.__sd = false;
-      modal.__sy = undefined;
-    }, { passive: true });
-    }
+    // Reinicia cualquier resto de transform al reabrir (nunca hereda
+    // posición de un cierre anterior).
+    new MutationObserver(function(muts) {
+      muts.forEach(function(m) {
+        if (m.attributeName === 'class' && overlay.classList.contains('show')) {
+          modal.style.transition = 'none';
+          modal.style.transform = '';
+          requestAnimationFrame(function() { modal.style.transition = ''; });
+        }
+      });
+    }).observe(overlay, { attributes: true });
   });
 })();
 </script>
