@@ -90,11 +90,14 @@ const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwiBvSurSTwZi1Cb7RCU
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 /* Запрещаем выделение текста на системных элементах интерфейса */
 body{-webkit-user-select:none;-moz-user-select:none;user-select:none}
-/* Разрешаем выделение ТОЛЬКО там, где пользователь вводит/читает свободный текст:
-   поля ввода, комментарий менеджера, описание работ и материалов.
-   Всё остальное (лейблы, значения полей, статусы, даты, кнопки) — элементы
-   меню, их выделять/копировать нельзя. */
-input,textarea,.rta,.mode-text-input,.mi-comment,.selectable-text,
+/* Разрешаем выделение ТОЛЬКО там, где пользователь вводит текст (поля
+   формы) или читает именно комментарий менеджера/причину отклонения
+   (.mi-comment). Остальной текст в детальном просмотре отчёта (описание
+   работ, материалов и т.д.) — не выделяется, как и любые лейблы/значения
+   полей/статусы/даты/кнопки. Раньше .selectable-text (Trabajos
+   realizados/Descripción) тоже разрешал выделение — убрано по просьбе:
+   выделяемым должен быть только текст комментария. */
+input,textarea,.rta,.mode-text-input,.mi-comment,
 [contenteditable="true"]{
   -webkit-user-select:text;-moz-user-select:text;user-select:text;
 }
@@ -139,12 +142,19 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);pad
 .notif-card{
   background:#fff;border:.5px solid #e5e5ea;border-radius:12px;
   margin:0 16px 8px;padding:12px 14px;
+  transition:background .15s;
 }
-.notif-card .ni-title{font-size:13px;font-weight:600;color:#000;margin-bottom:2px}
+.notif-card.notif-clickable{cursor:pointer;touch-action:manipulation}
+.notif-card.notif-clickable:active{background:#f9f9f9}
+.notif-card .ni-title{font-size:13px;font-weight:600;color:#000;margin-bottom:2px;display:flex;align-items:center;gap:6px}
 .notif-card .ni-body{font-size:13px;color:#000;line-height:1.4;margin-bottom:4px}
 .notif-card .ni-time{font-size:11px;color:#8e8e93}
+/* No leídas: punto rojo junto al título + fondo ligeramente teñido —
+   mismo rojo que el resto de indicadores "nuevo/no leído" de la app. */
+.notif-card.notif-unread{background:rgba(255,59,48,.04);border-color:rgba(255,59,48,.15)}
+.notif-card.notif-unread .ni-title::before{content:'';width:7px;height:7px;border-radius:50%;background:#ff3b30;flex-shrink:0}
 .notif-empty{padding:60px 24px;text-align:center;font-size:15px;color:#8e8e93}
-.lang-opt{display:flex;align-items:center;gap:10px;padding:12px 16px;font-size:15px;color:#000;cursor:pointer;font-weight:400;width:100%;text-align:left;background:none;border:none;border-bottom:.5px solid #f2f2f7;font-family:inherit}
+.lang-opt{display:flex;align-items:center;gap:10px;padding:12px 16px;font-size:15px;color:#000;cursor:pointer;font-weight:400;width:100%;text-align:left;background:none;border:none;border-bottom:.5px solid #f2f2f7;font-family:inherit;touch-action:manipulation}
 .lang-opt:last-child{border-bottom:none}
 .lang-opt.active{font-weight:600;color:#007AFF}
 .nav-side svg{stroke:#636366;width:18px;height:18px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;cursor:pointer}
@@ -322,9 +332,9 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 .mi-empty{padding:48px 24px;text-align:center;color:#8e8e93;font-size:14px}
 
 /* MANAGER CARDS */
-.mg-card{position:relative;background:#fff;border:.5px solid #e5e5ea;border-radius:12px;margin:0 16px 10px;padding:14px;cursor:pointer;touch-action:manipulation;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+.mg-card{position:relative;background:#fff;border:.5px solid #e5e5ea;border-radius:12px;margin:0 16px 8px;padding:14px;cursor:pointer;touch-action:manipulation;box-shadow:0 2px 10px rgba(0,0,0,.07)}
 .mg-card:active{background:#f9f9f9}
-.mg-new-label{font-size:9px;font-weight:800;color:#ff9500;letter-spacing:.4px;text-transform:uppercase;flex-shrink:0}
+.mg-new-label{font-size:11px;font-weight:800;color:#ff3b30;letter-spacing:.3px;text-transform:uppercase;flex-shrink:0}
 .mg-operario{font-size:11px;color:#8e8e93;margin-bottom:10px;margin-top:2px;font-weight:500}
 .mg-cliente{font-size:12px;color:#8e8e93;margin-bottom:0}
 .mg-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
@@ -349,7 +359,13 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 /* MODALS */
 .mg-modal-overlay{display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.35);align-items:flex-end;justify-content:center}
 .mg-modal-overlay.show{display:flex}
-.mg-modal{width:100%;max-width:480px;background:#fff;border-radius:22px 22px 0 0;padding:20px 18px calc(env(safe-area-inset-bottom,0px) + 20px);transform:translateY(0);transition:transform .3s cubic-bezier(.32,1,.2,1);will-change:transform;touch-action:pan-y;box-shadow:0 -4px 24px rgba(0,0,0,.12)}
+/* transform/transition/will-change/touch-action:pan-y ELIMINADOS: eran
+   resto del antiguo gesto de arrastre para cerrar el modal (ver el
+   comentario en el bloque "MODALES" del JS) — el modal ya no cambia su
+   transform nunca (siempre translateY(0)), así que solo mantenían viva
+   una capa de composición de más en cada modal abierto sin ningún efecto
+   visual, sin aportar nada al scroll. */
+.mg-modal{width:100%;max-width:480px;background:#fff;border-radius:22px 22px 0 0;padding:20px 18px calc(env(safe-area-inset-bottom,0px) + 20px);box-shadow:0 -4px 24px rgba(0,0,0,.12)}
 .mg-modal-title{font-size:17px;font-weight:600;color:#000;margin-bottom:3px}
 .mg-modal-sub{font-size:13px;color:#8e8e93;margin-bottom:14px}
 .mg-modal-textarea{width:100%;min-height:80px;border-radius:12px;border:.5px solid #d1d1d6;background:#fff;padding:12px 14px;font-size:15px;font-family:inherit;color:#000;resize:none;margin-bottom:8px;transition:border-color .15s;outline:none}
@@ -359,8 +375,8 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 @keyframes shakeField{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(3px)}30%,50%,70%{transform:translateX(-5px)}40%,60%{transform:translateX(5px)}}
 .mg-modal-textarea.shake{animation:shakeField .4s}
 .mg-modal-actions{display:flex;gap:8px}
-.mg-modal-cancel{flex:1;background:#fff;color:#000;border:.5px solid #e5e5ea;border-radius:12px;padding:13px;font-size:14px;font-weight:500;font-family:inherit;cursor:pointer}
-.mg-modal-confirm{flex:1;background:#ff3b30;color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer}
+.mg-modal-cancel{flex:1;background:#fff;color:#000;border:.5px solid #e5e5ea;border-radius:12px;padding:13px;font-size:14px;font-weight:500;font-family:inherit;cursor:pointer;touch-action:manipulation}
+.mg-modal-confirm{flex:1;background:#ff3b30;color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation}
 .mg-modal-confirm:disabled{opacity:.35;cursor:not-allowed}
 
 /* ADMIN CARDS */
@@ -400,7 +416,10 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
    el propio padding interno ya deja aire suficiente para el dedo. */
 .bottom-tabbar{
   position:fixed;left:0;right:0;
-  bottom:8px;
+  /* BUG CORREGIDO: bottom:8px fijo no contaba con el safe-area-inset del
+     home indicator de iPhone — la barra flotante quedaba pegada casi
+     encima de la línea de "deslizar para inicio", pisándose con ella. */
+  bottom:calc(env(safe-area-inset-bottom,0px) + 14px);
   z-index:200;
   display:flex;
   justify-content:center;
@@ -554,48 +573,48 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
       <div class="mg-modal-title" id="erTitle">Editar informe</div>
       <div class="mg-modal-sub" id="erSub">—</div>
 
-      <div class="mi-comment full" style="margin:12px 0" id="erCommentBlock"><b>Comentario del manager</b><span id="erComment"></span></div>
+      <div class="mi-comment full" style="margin:12px 0" id="erCommentBlock"><b id="erCommentLabel">Comentario del manager</b><span id="erComment"></span></div>
 
-      <div class="s-label" style="padding:8px 0 6px">Cliente</div>
+      <div class="s-label" style="padding:8px 0 6px" id="erLblCliente">Cliente</div>
       <input type="text" id="erCliente" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
 
-      <div class="s-label" style="padding:14px 0 6px">Obra</div>
+      <div class="s-label" style="padding:14px 0 6px" id="erLblObra">Obra</div>
       <input type="text" id="erObra" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
 
-      <div class="s-label" style="padding:14px 0 6px">Fecha</div>
+      <div class="s-label" style="padding:14px 0 6px" id="erLblFecha">Fecha</div>
       <input type="date" id="erFecha" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
 
-      <div class="s-label" style="padding:14px 0 6px">Ayudante</div>
+      <div class="s-label" style="padding:14px 0 6px" id="erLblAyudante">Ayudante</div>
       <input type="text" id="erAyudante" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
 
-      <div class="s-label" style="padding:14px 0 6px">Vehículo</div>
+      <div class="s-label" style="padding:14px 0 6px" id="erLblVehiculo">Vehículo</div>
       <input type="text" id="erVehiculo" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
 
-      <div class="s-label" style="padding:14px 0 6px">Tipo de trabajo</div>
+      <div class="s-label" style="padding:14px 0 6px" id="erLblTipo">Tipo de trabajo</div>
       <input type="text" id="erTipo" class="mode-text-input" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
 
-      <div class="s-label" style="padding:14px 0 6px">Horas trabajadas</div>
+      <div class="s-label" style="padding:14px 0 6px" id="erLblHoras">Horas trabajadas</div>
       <div style="display:flex;align-items:center;gap:14px;background:#fff;border:.5px solid #d1d1d6;border-radius:10px;padding:8px 14px">
         <div class="step-btn" onclick="erChangeHoras(-1)">−</div>
         <div style="flex:1;text-align:center;font-size:18px;font-weight:600" id="erHorasVal">0</div>
         <div class="step-btn" onclick="erChangeHoras(1)">+</div>
       </div>
 
-      <div class="s-label" style="padding:14px 0 6px">Trabajos realizados</div>
+      <div class="s-label" style="padding:14px 0 6px" id="erLblTrabajos">Trabajos realizados</div>
       <textarea id="erTrabajos" rows="3" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;resize:none"></textarea>
 
-      <div class="s-label" style="padding:14px 0 6px">Compañía (materiales)</div>
+      <div class="s-label" style="padding:14px 0 6px" id="erLblCompania">Compañía (materiales)</div>
       <input type="text" id="erCompania" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
 
-      <div class="s-label" style="padding:14px 0 6px">Materiales utilizados</div>
+      <div class="s-label" style="padding:14px 0 6px" id="erLblMateriales">Materiales utilizados</div>
       <textarea id="erMateriales" rows="2" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;resize:none"></textarea>
 
-      <div class="s-label" style="padding:14px 0 6px">Precio materiales (€)</div>
+      <div class="s-label" style="padding:14px 0 6px" id="erLblPrecio">Precio materiales (€)</div>
       <input type="number" id="erPrecio" step="0.01" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
 
       <div style="height:12px"></div>
     </div>
-    <div style="padding:10px 18px calc(env(safe-area-inset-bottom,0px) + 14px);border-top:.5px solid #e5e5ea;background:#f2f2f7;flex-shrink:0">
+    <div style="padding:10px 18px calc(env(safe-area-inset-bottom,0px) + 14px);border-top:.5px solid #e5e5ea;background:#fff;flex-shrink:0">
       <div class="mg-actions">
         <button class="mg-modal-cancel" style="flex:1" onclick="closeEditReportModal()">Cancelar</button>
         <button class="mg-btn mg-btn-approve" style="flex:1" id="erSaveBtn" onclick="submitEditReport()">Reenviar</button>
@@ -676,7 +695,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
       <div class="row" id="rFecha">
         <div class="rbadge b-blue"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
         <span class="rlabel"><span id="lbl-fecha">Fecha</span> <span class="req-dot"></span></span>
-        <input type="date" id="fecha" onchange="clearErr('rFecha');updateBtn()" style="margin-left:auto;border:none;outline:none;background:transparent;font-family:inherit;font-size:16px;color:#1a2a4a;-webkit-appearance:none;cursor:pointer">
+        <input type="date" id="fecha" onchange="clearErr('rFecha');updateBtn()" style="margin-left:auto;border:none;outline:none;background:transparent;font-family:inherit;font-size:16px;color:#000;-webkit-appearance:none;cursor:pointer">
       </div>
     </div>
 
@@ -896,7 +915,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
       </button>
     </div>
     <!-- Фиксированный footer — только кнопки решения -->
-    <div style="padding:10px 18px calc(env(safe-area-inset-bottom,0px) + 14px);border-top:.5px solid #e5e5ea;background:#f2f2f7;flex-shrink:0">
+    <div style="padding:10px 18px calc(env(safe-area-inset-bottom,0px) + 14px);border-top:.5px solid #e5e5ea;background:#fff;flex-shrink:0">
       <div class="mg-actions">
         <button class="mg-btn mg-btn-reject" onclick="rejectFromDetail()">Rechazar</button>
         <button class="mg-btn mg-btn-approve" onclick="approveFromDetail()">Aprobar</button>
@@ -995,7 +1014,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
       </div>
 
       <!-- Сброс фильтров -->
-      <button onclick="resetAdminFilters()" style="width:100%;margin-top:10px;padding:9px;border-radius:10px;border:none;background:rgba(255,59,48,.1);color:#ff3b30;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">Resetear filtros</button>
+      <button onclick="resetAdminFilters()" style="width:100%;margin-top:10px;padding:9px;border-radius:10px;border:none;background:rgba(255,59,48,.1);color:#ff3b30;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation">Resetear filtros</button>
     </div>
 
   </div>
@@ -1010,12 +1029,12 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 
     <!-- Выбор года и интервала дат -->
     <div style="padding:10px 14px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <select id="anYear" onchange="loadAnalisis()" style="padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.6);background:rgba(255,255,255,0.4);font-family:inherit;font-size:13px;font-weight:600;color:#1a2a4a;-webkit-appearance:none;appearance:none;flex:1;min-width:80px">
+      <select id="anYear" onchange="loadAnalisis()" style="padding:8px 10px;border-radius:12px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;font-weight:600;color:#000;-webkit-appearance:none;appearance:none;flex:1;min-width:80px">
       </select>
-      <select id="anMonthFrom" onchange="loadAnalisis()" style="padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.6);background:rgba(255,255,255,0.4);font-family:inherit;font-size:13px;font-weight:600;color:#1a2a4a;-webkit-appearance:none;appearance:none;flex:1;min-width:80px">
+      <select id="anMonthFrom" onchange="loadAnalisis()" style="padding:8px 10px;border-radius:12px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;font-weight:600;color:#000;-webkit-appearance:none;appearance:none;flex:1;min-width:80px">
       </select>
-      <span style="font-size:12px;color:rgba(40,60,120,0.5);flex-shrink:0">—</span>
-      <select id="anMonthTo" onchange="loadAnalisis()" style="padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.6);background:rgba(255,255,255,0.4);font-family:inherit;font-size:13px;font-weight:600;color:#1a2a4a;-webkit-appearance:none;appearance:none;flex:1;min-width:80px">
+      <span style="font-size:12px;color:#8e8e93;flex-shrink:0">—</span>
+      <select id="anMonthTo" onchange="loadAnalisis()" style="padding:8px 10px;border-radius:12px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;font-weight:600;color:#000;-webkit-appearance:none;appearance:none;flex:1;min-width:80px">
       </select>
     </div>
 
@@ -1052,7 +1071,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 <div class="bottom-tabbar" id="tabbarAdmin" style="display:none">
   <div class="bottom-tab active" id="tabAdJournal" onclick="switchAdTab('journal')">
     <div class="tab-icon"><i class="ti ti-list"></i></div>
-    <span>Журнал</span>
+    <span>Diario</span>
   </div>
   <div class="bottom-tab" id="tabAdAnalisis" onclick="switchAdTab('analisis')">
     <div class="tab-icon"><i class="ti ti-chart-bar"></i></div>
@@ -1086,12 +1105,19 @@ var LANGS = {
     pin_title:'Introduce tu código', pin_sub:'PIN de 4 dígitos', pin_ok:'OK', pin_error:'Código incorrecto',
     nav_new:'PARTE DE TRABAJO', nav_manager:'Aprobaciones', nav_admin:'Panel admin',
     tab_nuevo:'Nuevo', tab_mis:'Mis informes', tab_pending:'Pendientes', tab_hist:'Historial',
-    tab_journal:'Журнал', tab_analisis:'Análisis',
+    tab_journal:'Diario', tab_analisis:'Análisis',
     grp_ident:'Identificación', grp_personal:'Personal', grp_trabajo:'Trabajo', grp_materiales:'Materiales',
     lbl_cliente:'Cliente', lbl_obra:'Obra', lbl_fecha:'Fecha', lbl_operario:'Operario',
     lbl_ayudante:'Ayudante', lbl_vehiculo:'Vehículo', lbl_tipo:'Tipo', lbl_horas:'Horas',
     sub_trabajos:'Trabajos realizados', lbl_compania:'Compañía', sub_materiales:'Materiales utilizados',
     lbl_precio:'Precio', lbl_foto_obra:'Fotos de obra', lbl_foto_mat:'Materiales / recibo',
+    lbl_tipo_trabajo:'Tipo de trabajo', lbl_horas_trabajadas:'Horas trabajadas',
+    lbl_compania_mat:'Compañía (materiales)', lbl_precio_mat:'Precio materiales (€)',
+    lbl_descripcion:'Descripción', lbl_coste_materiales:'Coste materiales',
+    lbl_fotos_materiales:'Fotos de materiales', lbl_total_caption:'TOTAL',
+    msg_sin_datos:'Sin datos adicionales',
+    lbl_comentario:'Comentario', lbl_comentario_manager:'Comentario del manager', lbl_motivo_rechazo:'Motivo del rechazo',
+    btn_editar_reenviar:'Editar y reenviar',
     ph_vehiculo:'Matrícula / modelo', ph_tipo_new:'Describir tipo...', ph_trabajos:'Describir los trabajos...',
     ph_compania_new:'Nombre de la compañía...', ph_materiales:'Listar materiales...',
     hint_obra:'Añade fotos del estado de la obra', hint_mat:'Añade fotos del recibo o albarán de materiales',
@@ -1119,6 +1145,13 @@ var LANGS = {
     lbl_ayudante:'Помощник', lbl_vehiculo:'Транспорт', lbl_tipo:'Тип', lbl_horas:'Часы',
     sub_trabajos:'Выполненные работы', lbl_compania:'Компания', sub_materiales:'Использованные материалы',
     lbl_precio:'Цена', lbl_foto_obra:'Фото работ', lbl_foto_mat:'Материалы / чек',
+    lbl_tipo_trabajo:'Тип работы', lbl_horas_trabajadas:'Отработанные часы',
+    lbl_compania_mat:'Компания (материалы)', lbl_precio_mat:'Цена материалов (€)',
+    lbl_descripcion:'Описание', lbl_coste_materiales:'Стоимость материалов',
+    lbl_fotos_materiales:'Фото материалов', lbl_total_caption:'ИТОГО',
+    msg_sin_datos:'Нет дополнительных данных',
+    lbl_comentario:'Комментарий', lbl_comentario_manager:'Комментарий менеджера', lbl_motivo_rechazo:'Причина отказа',
+    btn_editar_reenviar:'Исправить и отправить снова',
     ph_vehiculo:'Номер / модель', ph_tipo_new:'Описать тип...', ph_trabajos:'Описать выполненные работы...',
     ph_compania_new:'Название компании...', ph_materiales:'Список материалов...',
     hint_obra:'Добавьте фото хода работ', hint_mat:'Добавьте фото чека или накладной',
@@ -1146,6 +1179,13 @@ var LANGS = {
     lbl_ayudante:'Assistant', lbl_vehiculo:'Vehicle', lbl_tipo:'Type', lbl_horas:'Hours',
     sub_trabajos:'Work done', lbl_compania:'Company', sub_materiales:'Materials used',
     lbl_precio:'Price', lbl_foto_obra:'Site photos', lbl_foto_mat:'Materials / receipt',
+    lbl_tipo_trabajo:'Type of work', lbl_horas_trabajadas:'Hours worked',
+    lbl_compania_mat:'Company (materials)', lbl_precio_mat:'Materials price (€)',
+    lbl_descripcion:'Description', lbl_coste_materiales:'Materials cost',
+    lbl_fotos_materiales:'Materials photos', lbl_total_caption:'TOTAL',
+    msg_sin_datos:'No additional data',
+    lbl_comentario:'Comment', lbl_comentario_manager:'Manager comment', lbl_motivo_rechazo:'Rejection reason',
+    btn_editar_reenviar:'Edit and resend',
     ph_vehiculo:'Plate / model', ph_tipo_new:'Describe type...', ph_trabajos:'Describe work done...',
     ph_compania_new:'Company name...', ph_materiales:'List materials...',
     hint_obra:'Add photos of the work progress', hint_mat:'Add photos of the receipt or delivery note',
@@ -1213,6 +1253,22 @@ function applyLang() {
   setEl('lbl-precio',    t('lbl_precio'));
   setEl('lbl-foto-obra', t('lbl_foto_obra'));
   setEl('lbl-foto-mat',  t('lbl_foto_mat'));
+
+  // Modal "Editar informe" — BUG CORREGIDO: todas estas etiquetas estaban
+  // escritas directamente en español en el HTML, ignorando el idioma
+  // elegido por el usuario.
+  setEl('erCommentLabel', t('lbl_comentario_manager'));
+  setEl('erLblCliente',   t('lbl_cliente'));
+  setEl('erLblObra',      t('lbl_obra'));
+  setEl('erLblFecha',     t('lbl_fecha'));
+  setEl('erLblAyudante',  t('lbl_ayudante'));
+  setEl('erLblVehiculo',  t('lbl_vehiculo'));
+  setEl('erLblTipo',      t('lbl_tipo_trabajo'));
+  setEl('erLblHoras',     t('lbl_horas_trabajadas'));
+  setEl('erLblTrabajos',  t('sub_trabajos'));
+  setEl('erLblCompania',  t('lbl_compania_mat'));
+  setEl('erLblMateriales',t('sub_materiales'));
+  setEl('erLblPrecio',    t('lbl_precio_mat'));
 
   // Sub-labels
   setEl('sub-trabajos',    t('sub_trabajos'));
@@ -1416,12 +1472,44 @@ function showPinError(msg) {
 
 /* ════════ CAMBIAR USUARIO ════════ */
 function markVisibleQueueAsSeen() {
-  // Todo lo que está actualmente pintado en pantalla (tarjetas de manager/admin)
+  // Todo lo que está REALMENTE visible en pantalla (tarjetas de manager/admin)
   // se considera "visto" por el usuario, aunque no haya abierto el detalle.
+  // BUG CORREGIDO: no filtraba por visibilidad real — en Admin las tarjetas
+  // de un mes con el grupo COLAPSADO también se marcaban como vistas
+  // aunque el usuario nunca hubiera podido verlas (están en display:none).
+  // offsetParent es null tanto para elementos con display:none como para
+  // cualquier ancestro con display:none — forma barata de detectar "no
+  // visible" sin recorrer manualmente la cadena de ancestros.
   document.querySelectorAll('.mg-card[data-id], .ad-card[data-id]').forEach(function(card) {
+    if (card.offsetParent === null) return;
     var id = card.getAttribute('data-id');
     var ts = card.getAttribute('data-ts') || '';
-    if (id) markAsSeen(id + '@' + ts);
+    if (!id) return;
+    markAsSeen(id + '@' + ts);
+    // BUG CORREGIDO: markAsSeen() solo actualizaba localStorage — el
+    // resaltado "NUEVO" seguía en pantalla hasta el próximo re-render
+    // (hasta 10s después, en el siguiente sondeo). Lo quitamos ya del DOM,
+    // igual que hacen openManagerDetail/openAdminDetail al abrir el detalle.
+    if (!card.classList.contains('card-shadow-new')) return;
+    card.classList.remove('card-shadow-new');
+    if (card.classList.contains('mg-card')) {
+      var mgLabel = card.querySelector('.mg-new-label');
+      if (mgLabel) mgLabel.remove();
+    } else {
+      // Admin: el "NUEVO" no se borra sin más, se sustituye por el
+      // badge de estado real (igual que openAdminDetail) para no dejar
+      // un hueco vacío donde antes iba el estado.
+      var adLabel = card.querySelector('span[style*="ff3b30"]');
+      if (adLabel && adLabel.textContent.indexOf('NUEVO') !== -1) {
+        var rec = adAllRecords.find(function(x){ return x.ID === id; });
+        var st = rec ? (rec.STATUS || 'pending') : 'pending';
+        var statusLabelsMap = { pending:t('status_pending'), approved:t('status_approved'), rejected:t('status_rejected') };
+        adLabel.className = 'ad-status-badge st-'+st;
+        adLabel.removeAttribute('style');
+        adLabel.style.marginBottom = '0';
+        adLabel.textContent = statusLabelsMap[st];
+      }
+    }
   });
   // Recalculamos el badge del icono AL INSTANTE con los datos que ya
   // tenemos en memoria, sin esperar al próximo sondeo (hasta 10s de retraso).
@@ -2018,6 +2106,12 @@ function shareReportDetailFromModal() {
 }
 
 function renderMyReports(reports) {
+  // Se actualiza aquí (no solo en checkWorkerNotifications) para que la
+  // firma refleje SIEMPRE lo que hay realmente en pantalla, venga el
+  // render de donde venga (carga inicial, refresco en segundo plano o
+  // sondeo) — así el sondeo nunca repinta de más justo después de una
+  // carga que ya mostró los mismos datos.
+  lastMyReportsSig = reportsSignature(reports);
   myReportsCache = capReports(reports);
   reports = myReportsCache;
   var visible = reports.filter(function(r){ return r.STATUS === 'pending' || r.STATUS === 'rejected'; });
@@ -2050,8 +2144,8 @@ function renderMyReports(reports) {
     // Клиент · объект
     html += '<div style="font-size:12px;color:#8e8e93">'+r.CLIENTE+' · '+r.OBRA+'</div>';
     if (r.STATUS === 'rejected' && r.COMENTARIO_MANAGER) {
-      html += '<div class="mi-comment" style="margin-top:8px"><b>Comentario</b>'+r.COMENTARIO_MANAGER+'</div>';
-      html += '<button class="mi-edit-btn" style="margin-top:8px" onclick="event.stopPropagation();openEditReport(\''+r.ID+'\')">Editar y reenviar</button>';
+      html += '<div class="mi-comment" style="margin-top:8px"><b>'+t('lbl_comentario')+'</b>'+r.COMENTARIO_MANAGER+'</div>';
+      html += '<button class="mi-edit-btn" style="margin-top:8px" onclick="event.stopPropagation();openEditReport(\''+r.ID+'\')">'+t('btn_editar_reenviar')+'</button>';
     }
     // STATUS 'pending' → sin botón de editar. Mientras el manager no lo
     // rechace, el informe queda bloqueado en solo-lectura (evita que el
@@ -2074,7 +2168,7 @@ function openReportDetail(id) {
 
   var html = buildDetailHtml(r, false); // рабочий не видит Total
   if (r.STATUS === 'rejected' && r.COMENTARIO_MANAGER) {
-    html += '<div class="mi-comment full" style="margin-top:10px"><b>Comentario del manager</b>'+r.COMENTARIO_MANAGER+'</div>';
+    html += '<div class="mi-comment full" style="margin-top:10px"><b>'+t('lbl_comentario_manager')+'</b>'+r.COMENTARIO_MANAGER+'</div>';
   }
 
   document.getElementById('rdBody').innerHTML = html;
@@ -2429,6 +2523,8 @@ function refreshPendingBackground() {
 }
 
 function renderManagerQueue(reports) {
+  // Ver el comentario equivalente en renderMyReports().
+  lastMgQueueSig = reportsSignature(reports);
   mgReportsCache = capReports(reports);
   reports = mgReportsCache;
   var listEl = document.getElementById('mgList');
@@ -2478,6 +2574,25 @@ function renderManagerQueue(reports) {
     html += '</div>';
     return html;
   }).join('');
+
+  scheduleManagerAutoSeen();
+}
+
+// BUG CORREGIDO: la marca "NUEVO" solo desaparecía si el usuario abría el
+// detalle de la tarjeta o cambiaba de pestaña — si se quedaba mirando la
+// cola de pendientes sin tocar nada, quedaba "pegada" para siempre aunque
+// la hubiera visto perfectamente. Ahora, tras ~2.5s con la pestaña de
+// pendientes realmente visible en pantalla, se considera vista de forma
+// automática — igual que hacen las apps de mensajería con los mensajes
+// en pantalla. Con debounce para no disparar de más en sondeos seguidos.
+var mgAutoSeenTimer = null;
+function scheduleManagerAutoSeen() {
+  if (mgAutoSeenTimer) clearTimeout(mgAutoSeenTimer);
+  mgAutoSeenTimer = setTimeout(function() {
+    mgAutoSeenTimer = null;
+    var panel = document.getElementById('mgPanelPending');
+    if (panel && panel.style.display !== 'none') markVisibleQueueAsSeen();
+  }, 2500);
 }
 
 /* ════════ MANAGER: DETALLE + DECISIÓN (modal a pantalla completa) ════════ */
@@ -2491,9 +2606,9 @@ function buildDetailHtml(r, showTotal) {
 
   // ── БЛОК 1: TRABAJO ──
   var trabajoFields = [];
-  if (r.OPERARIO) trabajoFields.push({k:'Operario', v: r.OPERARIO});
-  if (r.AYUDANTE && r.AYUDANTE.trim()) trabajoFields.push({k:'Ayudante', v: r.AYUDANTE});
-  if (r['TIPO DE TRABAJO']) trabajoFields.push({k:'Tipo', v: r['TIPO DE TRABAJO']});
+  if (r.OPERARIO) trabajoFields.push({k:t('lbl_operario'), v: r.OPERARIO});
+  if (r.AYUDANTE && r.AYUDANTE.trim()) trabajoFields.push({k:t('lbl_ayudante'), v: r.AYUDANTE});
+  if (r['TIPO DE TRABAJO']) trabajoFields.push({k:t('lbl_tipo'), v: r['TIPO DE TRABAJO']});
 
   var trabajos = r['TRABAJOS REALIZADOS'] || '';
   var fotosObra = r['FOTOS DE OBRA'] || '';
@@ -2512,13 +2627,13 @@ function buildDetailHtml(r, showTotal) {
     }
     if (horas > 0) {
       html += '<div class="rd-field-full" style="text-align:center;padding:12px">';
-      html += '<b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:6px">Horas trabajadas</b>';
+      html += '<b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:6px">'+t('lbl_horas_trabajadas')+'</b>';
       html += '<span style="font-size:28px;font-weight:700;color:#000;letter-spacing:-.5px">'+horas+' h</span>';
       if (showTotal) html += '<span style="display:block;font-size:11px;color:#8e8e93;margin-top:4px">'+PRECIO_HORA+' €/h</span>';
       html += '</div>';
     }
-    if (trabajos) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:4px">Trabajos realizados</b><span class="selectable-text" style="font-size:13px;color:#000;line-height:1.5">'+trabajos+'</span></div>';
-    if (fotosObra) html += '<button type="button" class="rd-photo-link" onclick="openPhotoGallery(this)" data-photos=\''+encodeURIComponent(fotosObra)+'\'>'+svgCam+'Fotos de obra</button>';
+    if (trabajos) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:4px">'+t('sub_trabajos')+'</b><span style="font-size:13px;color:#000;line-height:1.5">'+trabajos+'</span></div>';
+    if (fotosObra) html += '<button type="button" class="rd-photo-link" onclick="openPhotoGallery(this)" data-photos=\''+encodeURIComponent(fotosObra)+'\'>'+svgCam+t('lbl_foto_obra')+'</button>';
     html += '</div>';
   }
 
@@ -2532,27 +2647,27 @@ function buildDetailHtml(r, showTotal) {
   if (hasMateriales) {
     html += '<div class="det-group">';
     html += '<div class="det-group-title">' + t('grp_materiales') + '</div>';
-    if (compania) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:2px">Compañía</b><span style="font-size:14px;font-weight:500;color:#000">'+compania+'</span></div>';
-    if (materiales) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:4px">Descripción</b><span class="selectable-text" style="font-size:13px;color:#000;line-height:1.5">'+materiales+'</span></div>';
+    if (compania) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:2px">'+t('lbl_compania')+'</b><span style="font-size:14px;font-weight:500;color:#000">'+compania+'</span></div>';
+    if (materiales) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:4px">'+t('lbl_descripcion')+'</b><span style="font-size:13px;color:#000;line-height:1.5">'+materiales+'</span></div>';
     if (precio > 0) {
       html += '<div class="rd-field-full" style="text-align:center;padding:12px">';
-      html += '<b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:6px">Coste materiales</b>';
+      html += '<b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:6px">'+t('lbl_coste_materiales')+'</b>';
       html += '<span style="font-size:28px;font-weight:700;color:#000;letter-spacing:-.5px">'+precio.toFixed(2)+' €</span>';
       html += '</div>';
     }
-    if (fotosMat) html += '<button type="button" class="rd-photo-link" onclick="openPhotoGallery(this)" data-photos=\''+encodeURIComponent(fotosMat)+'\'>'+svgCam+'Fotos de materiales</button>';
+    if (fotosMat) html += '<button type="button" class="rd-photo-link" onclick="openPhotoGallery(this)" data-photos=\''+encodeURIComponent(fotosMat)+'\'>'+svgCam+t('lbl_fotos_materiales')+'</button>';
     html += '</div>';
   }
 
   // ── TOTAL ── (только для менеджера/админа)
   if (showTotal && r.TOTAL && parseFloat(r.TOTAL) > 0) {
     html += '<div style="text-align:center;margin:14px 0 4px;background:linear-gradient(135deg,#1a7f37,#34c759);border-radius:14px;padding:18px 12px">'
-      + '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.75);margin-bottom:6px">TOTAL</div>'
+      + '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.75);margin-bottom:6px">'+t('lbl_total_caption')+'</div>'
       + '<div style="font-size:36px;font-weight:700;color:#fff;letter-spacing:-.5px">'+parseFloat(r.TOTAL).toFixed(2)+' €</div>'
       + '</div>';
   }
 
-  return html || '<div class="mi-empty" style="padding:16px 0">Sin datos adicionales</div>';
+  return html || '<div class="mi-empty" style="padding:16px 0">'+t('msg_sin_datos')+'</div>';
 }
 
 function openManagerDetail(id) {
@@ -2756,15 +2871,27 @@ function renderHistorial(reports) {
     listEl.innerHTML = '<div class="mi-empty">No hay informes procesados aún</div>';
     return;
   }
+  // BUG CORREGIDO: esta tarjeta tenía DOS problemas de consistencia:
+  // 1) usaba un borde de color a la izquierda para señalar el estado,
+  //    contradiciendo la norma ya documentada más arriba en el CSS de que
+  //    el estado se señaliza solo con badge/sombra, nunca con bordes de
+  //    color — ninguna otra tarjeta de la app hacía esto.
+  //    Ahora reutiliza el mismo badge .ad-status-badge que ya usa Admin,
+  //    en vez de glifos ✓/✗ sueltos sin traducir.
+  // 2) .mg-obra (pensada para el NÚMERO grande) llevaba el nombre de la
+  //    obra, y .mg-id (pensada para texto pequeño) llevaba el ID — al
+  //    revés que en la cola de Pendientes del propio Manager, donde
+  //    .mg-obra sí es el ID grande. Dos pestañas del mismo rol
+  //    mostrando la misma información con jerarquía visual invertida.
+  //    Ahora sigue exactamente la misma estructura que renderManagerQueue.
+  var statusLabelsHist = { approved: t('status_approved'), rejected: t('status_rejected') };
   listEl.innerHTML = reports.map(function(r){
     var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
-    var isApproved = r.STATUS === 'approved';
-    var statusColor = isApproved ? '#34c759' : '#ff3b30';
-    var statusLabel = isApproved ? '✓ ' + t('status_approved') : '✗ ' + t('status_rejected');
-    return '<div class="mg-card" style="border-left-width:3px;border-left-color:'+statusColor+';cursor:pointer" data-hid="'+r.ID+'" onclick="openHistorialDetail(\''+r.ID+'\')">'
-      + '<div class="mg-head"><span class="mg-id">'+r.ID+'</span><span class="mg-id" style="color:'+statusColor+';font-weight:700">'+statusLabel+'</span></div>'
-      + '<div class="mg-obra">'+r.OBRA+'</div>'
-      + '<div class="mg-cliente">'+r.CLIENTE+' · '+r.OPERARIO+' · '+fecha+'</div>'
+    return '<div class="mg-card" data-hid="'+r.ID+'" onclick="openHistorialDetail(\''+r.ID+'\')">'
+      + '<div class="mg-head"><span class="mg-id">'+fecha+'</span><span class="ad-status-badge st-'+r.STATUS+'" style="margin-bottom:0">'+statusLabelsHist[r.STATUS]+'</span></div>'
+      + '<div class="mg-operario">'+r.OPERARIO+'</div>'
+      + '<div class="mg-obra">'+r.ID+'</div>'
+      + '<div class="mg-cliente">'+r.CLIENTE+' · '+r.OBRA+'</div>'
       + '</div>';
   }).join('');
 }
@@ -2780,7 +2907,7 @@ function openHistorialDetail(id) {
 
   var html = buildDetailHtml(r, true);
   if (!isApproved && r['COMENTARIO_MANAGER']) {
-    html += '<div class="mi-comment full" style="margin-top:10px"><b>Comentario del manager</b>'+r['COMENTARIO_MANAGER']+'</div>';
+    html += '<div class="mi-comment full" style="margin-top:10px"><b>'+t('lbl_comentario_manager')+'</b>'+r['COMENTARIO_MANAGER']+'</div>';
   }
   document.getElementById('mgdBody').innerHTML = html;
 
@@ -2826,7 +2953,7 @@ function loadAdminData() {
     buildAdminDatalistOptions();
     applyAdminFilters();
   } else {
-    document.getElementById('adList').innerHTML = '<div class="mi-empty"><span class="spinner-inline" style="border-top-color:#1a3080;border-color:rgba(20,40,100,0.2)"></span> Cargando...</div>';
+    document.getElementById('adList').innerHTML = '<div class="mi-empty"><span class="spinner-inline"></span> Cargando...</div>';
   }
   return fetch(WEBAPP_URL + '?action=getAdminStats&codigo=' + encodeURIComponent(currentPin) + '&t=' + Date.now())
     .then(function(r){ return r.json(); })
@@ -2848,7 +2975,7 @@ function loadAdminData() {
 }
 
 function loadAdminInforme() {
-  document.getElementById('adInformeList').innerHTML = '<div class="mi-empty"><span class="spinner-inline" style="border-top-color:#1a3080;border-color:rgba(20,40,100,0.2)"></span> Cargando...</div>';
+  document.getElementById('adInformeList').innerHTML = '<div class="mi-empty"><span class="spinner-inline"></span> Cargando...</div>';
   fetch(WEBAPP_URL + '?action=getInforme&codigo=' + encodeURIComponent(currentPin) + '&t=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(result){
@@ -3043,9 +3170,9 @@ function renderAdminJournal() {
     // Заголовок группы
     html += '<div class="ad-month-header" onclick="toggleAdMonth(\''+key+'\')" data-key="'+key+'">';
     html += '<div style="display:flex;align-items:center;gap:8px">';
-    html += '<svg style="width:14px;height:14px;stroke:rgba(40,60,120,0.6);fill:none;stroke-width:2.5;stroke-linecap:round;transition:transform .2s;transform:rotate('+(isCollapsed?'-90deg':'0deg')+')" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>';
-    html += '<span style="font-size:13px;font-weight:700;color:#1a2a4a">'+g.label+'</span>';
-    html += '<span style="font-size:11px;color:rgba(40,60,120,0.5)">'+g.records.length+' reg.</span>';
+    html += '<svg style="width:14px;height:14px;stroke:#8e8e93;fill:none;stroke-width:2.5;stroke-linecap:round;transition:transform .2s;transform:rotate('+(isCollapsed?'-90deg':'0deg')+')" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>';
+    html += '<span style="font-size:13px;font-weight:700;color:#000">'+g.label+'</span>';
+    html += '<span style="font-size:11px;color:#8e8e93">'+g.records.length+' reg.</span>';
     html += '</div>';
     if (newCount > 0) html += '<span style="font-size:10px;font-weight:800;color:#ff3b30;letter-spacing:0.3px">'+newCount+' NUEVO'+(newCount>1?'S':'')+'</span>';
     html += '</div>';
@@ -3059,14 +3186,14 @@ function renderAdminJournal() {
       var shadowCls = st === 'rejected' ? ' card-shadow-rejected' : (isNew ? ' card-shadow-new' : '');
       html += '<div class="ad-card st-'+st+shadowCls+'" data-id="'+r.ID+'" data-ts="'+(r.TIMESTAMP||'')+'" onclick="openAdminDetail(\''+r.ID+'\')">';
       html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">';
-      html += '<span style="font-size:12px;color:rgba(40,60,120,0.55);font-weight:600">'+fecha+'</span>';
+      html += '<span style="font-size:12px;color:#8e8e93;font-weight:600">'+fecha+'</span>';
       var rightEl = isNew
         ? '<span style="font-size:11px;font-weight:800;color:#ff3b30;letter-spacing:0.3px">NUEVO</span>'
         : '<span class="ad-status-badge st-'+st+'" style="margin-bottom:0">'+statusLabels[st]+'</span>';
       html += rightEl + '</div>';
-      html += '<div style="font-size:12px;color:rgba(40,60,120,0.55);font-weight:600;margin-bottom:10px">'+r.OPERARIO+'</div>';
-      html += '<div style="font-size:22px;font-weight:700;color:#1a2a4a;letter-spacing:-0.3px;margin-bottom:5px">'+r.ID+'</div>';
-      html += '<div style="font-size:13px;font-weight:600;color:rgba(40,60,120,0.7);margin-bottom:'+(((st==='approved'||st==='rejected')&&r.MANAGER_NOMBRE)||r.COMENTARIO_MANAGER?'10px':'0')+'">'+r.CLIENTE+' · '+r.OBRA+'</div>';
+      html += '<div style="font-size:12px;color:#8e8e93;font-weight:600;margin-bottom:10px">'+r.OPERARIO+'</div>';
+      html += '<div style="font-size:22px;font-weight:700;color:#000;letter-spacing:-0.3px;margin-bottom:5px">'+r.ID+'</div>';
+      html += '<div style="font-size:13px;font-weight:600;color:#8e8e93;margin-bottom:'+(((st==='approved'||st==='rejected')&&r.MANAGER_NOMBRE)||r.COMENTARIO_MANAGER?'10px':'0')+'">'+r.CLIENTE+' · '+r.OBRA+'</div>';
       if (!isNew) {
         // Статус-бейдж показываем снизу только у просмотренных (у новых он уже сверху справа)
         if (st === 'pending') {
@@ -3085,7 +3212,7 @@ function renderAdminJournal() {
       }
       if (r.COMENTARIO_MANAGER && String(r.COMENTARIO_MANAGER).trim()) {
         html += '<div class="mi-comment full" style="margin-top:8px;margin-bottom:0">'
-          + '<b>Comentario</b>'
+          + '<b>'+t('lbl_comentario')+'</b>'
           + r.COMENTARIO_MANAGER + '</div>';
       }
       html += '</div>';
@@ -3094,6 +3221,19 @@ function renderAdminJournal() {
   });
 
   listEl.innerHTML = html;
+  scheduleAdminAutoSeen();
+}
+
+// Mismo mecanismo que scheduleManagerAutoSeen (ver comentario allí) mas la
+// comprobación adicional de que el panel "Журнал" esté realmente visible.
+var adAutoSeenTimer = null;
+function scheduleAdminAutoSeen() {
+  if (adAutoSeenTimer) clearTimeout(adAutoSeenTimer);
+  adAutoSeenTimer = setTimeout(function() {
+    adAutoSeenTimer = null;
+    var panel = document.getElementById('adPanelJournal');
+    if (panel && panel.style.display !== 'none') markVisibleQueueAsSeen();
+  }, 2500);
 }
 
 function toggleAdMonth(key) {
@@ -3109,6 +3249,9 @@ function toggleAdMonth(key) {
   try { collapsed = JSON.parse(localStorage.getItem(collapsedKey) || '{}'); } catch(e) {}
   collapsed[key] = !isNowCollapsed;
   try { localStorage.setItem(collapsedKey, JSON.stringify(collapsed)); } catch(e) {}
+  // Al expandir un grupo, sus tarjetas pasan a estar realmente visibles —
+  // reprogramamos el auto-marcado para que también se limpien las suyas.
+  if (isNowCollapsed) scheduleAdminAutoSeen();
 }
 
 function renderAdminInforme() {
@@ -3120,10 +3263,10 @@ function renderAdminInforme() {
   listEl.innerHTML = adInformeRecords.map(function(r){
     var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
     return '<div class="ad-card st-approved" onclick="openAdminInformeDetail(\''+r.ID+'\')">'
-      + '<div style="font-size:12px;color:rgba(40,60,120,0.55);font-weight:600;margin-bottom:2px">'+fecha+'</div>'
-      + '<div style="font-size:12px;color:rgba(40,60,120,0.55);font-weight:600;margin-bottom:10px">'+(r.OPERARIO||'')+'</div>'
-      + '<div style="font-size:22px;font-weight:700;color:#1a2a4a;letter-spacing:-0.3px;margin-bottom:5px">'+(r.ID||'—')+'</div>'
-      + '<div style="font-size:13px;font-weight:600;color:rgba(40,60,120,0.7);margin-bottom:8px">'+(r.CLIENTE||'')+'·'+(r.OBRA||'')+'</div>'
+      + '<div style="font-size:12px;color:#8e8e93;font-weight:600;margin-bottom:2px">'+fecha+'</div>'
+      + '<div style="font-size:12px;color:#8e8e93;font-weight:600;margin-bottom:10px">'+(r.OPERARIO||'')+'</div>'
+      + '<div style="font-size:22px;font-weight:700;color:#000;letter-spacing:-0.3px;margin-bottom:5px">'+(r.ID||'—')+'</div>'
+      + '<div style="font-size:13px;font-weight:600;color:#8e8e93;margin-bottom:8px">'+(r.CLIENTE||'')+'·'+(r.OBRA||'')+'</div>'
       + '<span class="ad-status-badge st-approved">' + t('status_approved') + '</span>'
       + (r.MANAGER_NOMBRE ? '<div class="ad-manager-line approved">Aprobó: '+r.MANAGER_NOMBRE+'</div>' : '')
       + '</div>';
@@ -3156,7 +3299,7 @@ function openAdminDetail(id) {
   document.getElementById('mgdSub').textContent = r.CLIENTE + ' · ' + r.ID + ' · ' + fecha + ' · ' + statusLabels[st];
   var html = buildDetailHtml(r, true);
   if (r.COMENTARIO_MANAGER && String(r.COMENTARIO_MANAGER).trim()) {
-    html += '<div class="mi-comment full" style="margin-top:10px"><b>'+(st==='rejected'?'Motivo del rechazo':'Comentario del manager')+'</b>'+r.COMENTARIO_MANAGER+'</div>';
+    html += '<div class="mi-comment full" style="margin-top:10px"><b>'+(st==='rejected'?t('lbl_motivo_rechazo'):t('lbl_comentario_manager'))+'</b>'+r.COMENTARIO_MANAGER+'</div>';
   }
   if (r.MANAGER_NOMBRE) {
     var mgLabel = st === 'approved' ? 'Aprobó' : (st === 'rejected' ? 'Rechazó' : 'Procesó');
@@ -3240,7 +3383,7 @@ function initAnalisis() {
 }
 
 function loadAnalisis() {
-  document.getElementById('anContent').innerHTML = '<div class="mi-empty"><span class="spinner-inline" style="border-top-color:#1a3080;border-color:rgba(20,40,100,0.2)"></span> Cargando...</div>';
+  document.getElementById('anContent').innerHTML = '<div class="mi-empty"><span class="spinner-inline"></span> Cargando...</div>';
   fetch(WEBAPP_URL + '?action=getInforme&codigo=' + encodeURIComponent(currentPin) + '&t=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(result){
@@ -3300,35 +3443,35 @@ function getUnique(records, field) {
 }
 
 function anTable(rows, grouped) {
-  var html = '<div style="overflow-x:auto;margin:0 14px 6px;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.6)">';
-  html += '<table style="width:100%;border-collapse:collapse;background:rgba(255,255,255,0.35);font-family:inherit">';
-  html += '<thead><tr style="background:rgba(40,80,200,0.15)">';
-  html += '<th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:rgba(20,40,130,0.7);text-transform:uppercase;letter-spacing:0.4px">'+(grouped?'Mes':'Mes')+'</th>';
-  html += '<th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:700;color:rgba(20,40,130,0.7);text-transform:uppercase;letter-spacing:0.4px">Turnos</th>';
-  html += '<th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:700;color:rgba(20,40,130,0.7);text-transform:uppercase;letter-spacing:0.4px">Horas</th>';
-  html += '<th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:700;color:rgba(20,40,130,0.7);text-transform:uppercase;letter-spacing:0.4px">Mat. €</th>';
-  html += '<th style="padding:9px 10px;text-align:right;font-size:11px;font-weight:700;color:rgba(20,40,130,0.7);text-transform:uppercase;letter-spacing:0.4px">Total €</th>';
+  var html = '<div style="overflow-x:auto;margin:0 14px 6px;border-radius:14px;overflow:hidden;border:.5px solid #e5e5ea;box-shadow:0 2px 10px rgba(0,0,0,.07)">';
+  html += '<table style="width:100%;border-collapse:collapse;background:#fff;font-family:inherit">';
+  html += '<thead><tr style="background:#f2f2f7">';
+  html += '<th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:0.4px">'+(grouped?'Mes':'Mes')+'</th>';
+  html += '<th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:0.4px">Turnos</th>';
+  html += '<th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:0.4px">Horas</th>';
+  html += '<th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:0.4px">Mat. €</th>';
+  html += '<th style="padding:9px 10px;text-align:right;font-size:11px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:0.4px">Total €</th>';
   html += '</tr></thead><tbody>';
   var totalTurnos=0, totalHoras=0, totalMat=0, totalTotal=0;
   rows.forEach(function(row, i) {
-    var bg = i%2===0 ? 'transparent' : 'rgba(255,255,255,0.2)';
+    var bg = i%2===0 ? 'transparent' : '#f9f9fb';
     var bold = (row.turnos > 0) ? 'font-weight:600' : 'opacity:0.5';
     html += '<tr style="background:'+bg+'">';
-    html += '<td style="padding:8px 10px;font-size:13px;'+bold+';color:#1a2a4a">'+row.mes+'</td>';
-    html += '<td style="padding:8px 8px;text-align:right;font-size:13px;'+bold+';color:#1a2a4a">'+row.turnos+'</td>';
-    html += '<td style="padding:8px 8px;text-align:right;font-size:13px;'+bold+';color:#1a2a4a">'+row.horas+'</td>';
-    html += '<td style="padding:8px 8px;text-align:right;font-size:13px;'+bold+';color:#1a2a4a">'+(row.materiales > 0 ? row.materiales.toFixed(2) : '0.00')+'</td>';
-    html += '<td style="padding:8px 10px;text-align:right;font-size:13px;'+bold+';color:#1a2a4a">'+(row.total > 0 ? row.total.toFixed(2) : '0.00')+'</td>';
+    html += '<td style="padding:8px 10px;font-size:13px;'+bold+';color:#000">'+row.mes+'</td>';
+    html += '<td style="padding:8px 8px;text-align:right;font-size:13px;'+bold+';color:#000">'+row.turnos+'</td>';
+    html += '<td style="padding:8px 8px;text-align:right;font-size:13px;'+bold+';color:#000">'+row.horas+'</td>';
+    html += '<td style="padding:8px 8px;text-align:right;font-size:13px;'+bold+';color:#000">'+(row.materiales > 0 ? row.materiales.toFixed(2) : '0.00')+'</td>';
+    html += '<td style="padding:8px 10px;text-align:right;font-size:13px;'+bold+';color:#000">'+(row.total > 0 ? row.total.toFixed(2) : '0.00')+'</td>';
     html += '</tr>';
     totalTurnos += row.turnos; totalHoras += row.horas; totalMat += row.materiales; totalTotal += row.total;
   });
   // Итого
-  html += '<tr style="background:rgba(40,80,200,0.12);border-top:1.5px solid rgba(40,80,200,0.2)">';
-  html += '<td style="padding:9px 10px;font-size:13px;font-weight:700;color:#1a2a4a">TOTAL</td>';
-  html += '<td style="padding:9px 8px;text-align:right;font-size:13px;font-weight:700;color:#1a2a4a">'+totalTurnos+'</td>';
-  html += '<td style="padding:9px 8px;text-align:right;font-size:13px;font-weight:700;color:#1a2a4a">'+totalHoras+'</td>';
-  html += '<td style="padding:9px 8px;text-align:right;font-size:13px;font-weight:700;color:#1a2a4a">'+totalMat.toFixed(2)+'</td>';
-  html += '<td style="padding:9px 10px;text-align:right;font-size:14px;font-weight:700;color:#0d2260">'+totalTotal.toFixed(2)+'</td>';
+  html += '<tr style="background:#e5f0ff;border-top:1.5px solid rgba(0,122,255,.2)">';
+  html += '<td style="padding:9px 10px;font-size:13px;font-weight:700;color:#000">TOTAL</td>';
+  html += '<td style="padding:9px 8px;text-align:right;font-size:13px;font-weight:700;color:#000">'+totalTurnos+'</td>';
+  html += '<td style="padding:9px 8px;text-align:right;font-size:13px;font-weight:700;color:#000">'+totalHoras+'</td>';
+  html += '<td style="padding:9px 8px;text-align:right;font-size:13px;font-weight:700;color:#000">'+totalMat.toFixed(2)+'</td>';
+  html += '<td style="padding:9px 10px;text-align:right;font-size:14px;font-weight:700;color:#000">'+totalTotal.toFixed(2)+'</td>';
   html += '</tr></tbody></table></div>';
   return html;
 }
@@ -3336,9 +3479,9 @@ function anTable(rows, grouped) {
 function anSection(title, rows, selectId, options, onchange) {
   var html = '<div style="margin-bottom:18px">';
   html += '<div style="display:flex;align-items:center;gap:8px;padding:0 14px;margin-bottom:8px">';
-  html += '<span style="font-size:14px;font-weight:700;color:#0d2260">'+title+'</span>';
+  html += '<span style="font-size:14px;font-weight:700;color:#000">'+title+'</span>';
   if (selectId) {
-    html += '<select id="'+selectId+'" onchange="'+onchange+'" style="flex:1;padding:6px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.6);background:rgba(255,255,255,0.4);font-family:inherit;font-size:12px;font-weight:600;color:#1a2a4a;-webkit-appearance:none;appearance:none">';
+    html += '<select id="'+selectId+'" onchange="'+onchange+'" style="flex:1;padding:6px 10px;border-radius:10px;border:none;background:#f2f2f7;font-family:inherit;font-size:12px;font-weight:600;color:#000;-webkit-appearance:none;appearance:none">';
     options.forEach(function(o){ html += '<option>'+o+'</option>'; });
     html += '</select>';
   }
@@ -3837,7 +3980,18 @@ function renderNotifList() {
   listEl.innerHTML = log.map(function(n){
     var d = new Date(n.ts);
     var timeStr = ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+' · '+('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2);
-    return '<div class="notif-card">' +
+    // BUG CORREGIDO: las notificaciones de la campana no hacían nada al
+    // tocarlas — no había forma de ir directo al informe correspondiente,
+    // había que buscarlo a mano en la lista. El id de la notificación
+    // siempre empieza por "PT-XXXX" (ver checkWorkerNotifications,
+    // checkManagerNotifications, checkAdminNotifications, saveReport,
+    // approveRecord, rejectRecord y resubmitRecord en Code_v5.gs), así
+    // que lo extraemos para poder abrir el informe real.
+    var baseIdMatch = n.id.match(/^(PT-\d+)/);
+    var baseId = baseIdMatch ? baseIdMatch[1] : '';
+    var classes = 'notif-card' + (n.read ? '' : ' notif-unread') + (baseId ? ' notif-clickable' : '');
+    var onclickAttr = baseId ? ' onclick="openReportFromNotif(\''+baseId+'\')"' : '';
+    return '<div class="'+classes+'"'+onclickAttr+'>' +
       '<div class="ni-title">'+escNotif(n.title)+'</div>' +
       '<div class="ni-body">'+escNotif(n.body)+'</div>' +
       '<div class="ni-time">'+timeStr+'</div>' +
@@ -3845,9 +3999,35 @@ function renderNotifList() {
   }).join('');
 }
 
+// Abre el detalle del informe correspondiente a una notificación de la
+// campana, según el rol actual y en la caché donde realmente esté
+// (p.ej. para manager, un informe ya resuelto está en el historial, no
+// en la cola de pendientes).
+function openReportFromNotif(baseId) {
+  if (!currentUser || !baseId) return;
+  closeNotifModal();
+  if (currentUser.rol === 'operario') {
+    if (myReportsCache.some(function(r){ return r.ID === baseId; })) openReportDetail(baseId);
+  } else if (currentUser.rol === 'manager') {
+    if (mgReportsCache.some(function(r){ return r.ID === baseId; })) openManagerDetail(baseId);
+    else if (mgHistorialCache.some(function(r){ return r.ID === baseId; })) openHistorialDetail(baseId);
+  } else if (currentUser.rol === 'admin') {
+    if (adAllRecords.some(function(r){ return r.ID === baseId; })) openAdminDetail(baseId);
+  }
+}
+
 function openNotifModal() {
   var langDrop = document.getElementById('langDrop');
   if (langDrop) langDrop.classList.remove('open');
+
+  // Las notificaciones que ya estaban marcadas como leídas de una visita
+  // ANTERIOR a la campana se eliminan del historial antes de pintar la
+  // lista — así cada notificación se ve una vez (la vez que se marca como
+  // leída, más abajo) y desaparece en la siguiente apertura, en vez de
+  // quedarse acumulada para siempre como "vista pero irrelevante".
+  var fullLog = getNotifLog();
+  var purgedLog = fullLog.filter(function(n){ return !n.read; });
+  if (purgedLog.length !== fullLog.length) saveNotifLog(purgedLog);
 
   renderNotifList();
   var modal = document.getElementById('notifFullModal');
@@ -3956,7 +4136,7 @@ function showPhotoGalleryError(triggerEl, reason) {
       '<i class="ti ti-photo-off" style="font-size:40px;color:rgba(255,255,255,.5)"></i>' +
       '<div style="font-size:14px;color:rgba(255,255,255,.85)">No se pudieron cargar las fotos</div>' +
       (reason ? '<div style="font-size:11px;color:rgba(255,255,255,.5);word-break:break-word">'+String(reason).replace(/</g,'&lt;')+'</div>' : '') +
-      '<button onclick="openPhotoGallery(pgLastTriggerEl)" style="background:#fff;color:#000;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">Reintentar</button>' +
+      '<button onclick="openPhotoGallery(pgLastTriggerEl)" style="background:#fff;color:#000;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation">Reintentar</button>' +
     '</div>';
   document.getElementById('pgCounter').textContent = '';
 }
@@ -4246,12 +4426,31 @@ function checkWorkerNotifications() {
       var unreadLog = getNotifLog().filter(function(n){ return !n.read; }).length;
       updateAppIconBadge(unreadLog);
 
-      // Si la lista ya está cargada y visible, refrescamos silenciosamente
-      if (myReportsLoaded) renderMyReports(reports);
+      // BUG CORREGIDO: antes se volvía a pintar TODA la lista (innerHTML
+      // completo) en cada sondeo de 10s, aunque los datos fueran
+      // idénticos a los ya mostrados. Si el sondeo caía justo cuando el
+      // usuario tenía el dedo en la pantalla (scroll en curso o un tap),
+      // el navegador destruía y recreaba los nodos DOM de las tarjetas en
+      // ese instante — perdiendo el estado ':active', y a veces "comiéndose"
+      // el tap porque el nodo bajo el dedo dejaba de ser el mismo. Ahora
+      // solo se repinta si algo realmente cambió (comparando una firma
+      // barata ID+STATUS+TIMESTAMP), igual que un scroll nativo esperaría.
+      var sigNow = reportsSignature(reports);
+      if (myReportsLoaded && sigNow !== lastMyReportsSig) {
+        lastMyReportsSig = sigNow;
+        renderMyReports(reports);
+      }
       myReportsCache = capReports(reports);
     })
     .catch(function(){});
 }
+
+// Firma barata para detectar cambios reales sin comparar objetos enteros.
+function reportsSignature(reports) {
+  return reports.map(function(r){ return r.ID + ':' + r.STATUS + ':' + (r.TIMESTAMP||''); }).join('|');
+}
+var lastMyReportsSig = null;
+var lastMgQueueSig = null;
 
 /* --- MANAGER: nuevos informes pendientes --- */
 function checkManagerNotifications() {
@@ -4274,8 +4473,15 @@ function checkManagerNotifications() {
       }
       updateAppIconBadge(unseenReports.length);
 
-      if (mgPendingLoaded) renderManagerQueue(reports);
-      else mgReportsCache = capReports(reports);
+      // Ver el comentario en checkWorkerNotifications: no repintar si no
+      // hay cambios reales, para no romper un scroll/tap en curso.
+      var sigNowMg = reportsSignature(reports);
+      if (mgPendingLoaded && sigNowMg !== lastMgQueueSig) {
+        lastMgQueueSig = sigNowMg;
+        renderManagerQueue(reports);
+      } else if (!mgPendingLoaded) {
+        mgReportsCache = capReports(reports);
+      }
     })
     .catch(function(){});
 }
