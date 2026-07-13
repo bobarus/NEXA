@@ -3644,7 +3644,21 @@ window.diagnosePush = function() {
           return oneSignalReg.pushManager.getSubscription();
         }).then(function(sub2) {
           lines.push('Suscripción tras optIn(): ' + (sub2 ? 'ACTIVA (' + sub2.endpoint.substring(0,40) + '...)' : 'SIGUE SIN EXISTIR'));
-          alert(lines.join('\n'));
+          if (sub2) { alert(lines.join('\n')); return; }
+          // Último recurso: pushManager.subscribe() a pelo, sin pasar por
+          // OneSignal en absoluto, para capturar el error NATIVO del
+          // navegador/iOS tal cual — es la señal más autorizada que
+          // podemos conseguir sin acceso a Xcode/Mac.
+          lines.push('Probando pushManager.subscribe() directo (sin OneSignal)...');
+          return oneSignalReg.pushManager.subscribe({ userVisibleOnly: true })
+            .then(function(rawSub) {
+              lines.push('subscribe() directo: OK, endpoint=' + rawSub.endpoint.substring(0,40) + '...');
+              alert(lines.join('\n'));
+            })
+            .catch(function(rawErr) {
+              lines.push('subscribe() directo FALLÓ: ' + (rawErr && rawErr.name) + ' — ' + (rawErr && rawErr.message));
+              alert(lines.join('\n'));
+            });
         }).catch(function(err) {
           lines.push('optIn() FALLÓ: ' + (err && err.name) + ' — ' + (err && err.message));
           alert(lines.join('\n'));
