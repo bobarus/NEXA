@@ -3590,13 +3590,29 @@ window.diagnosePush = function() {
       var url = (r.active && r.active.scriptURL) || (r.installing && r.installing.scriptURL) || (r.waiting && r.waiting.scriptURL) || '';
       return url.indexOf('OneSignalSDKWorker') !== -1 || r.scope.indexOf('push/onesignal') !== -1;
     });
-    if (!oneSignalReg) { lines.push('Suscripción push (SW OneSignal): SERVICE WORKER DE ONESIGNAL NO ENCONTRADO'); alert(lines.join('\n')); return; }
+    if (!oneSignalReg) {
+      lines.push('Suscripción push (SW OneSignal): SERVICE WORKER DE ONESIGNAL NO ENCONTRADO');
+      // Intento MANUAL de registro (fuera del SDK de OneSignal) solo para
+      // capturar el error REAL que da el navegador — OneSignal puede estar
+      // tragándose ese error internamente y resolviendo su init() igual,
+      // sin mostrarlo nunca en consola.
+      lines.push('Intentando registrar manualmente para ver el error real...');
+      return navigator.serviceWorker.register('OneSignalSDKWorker.js', { scope: '/AEDIS_APP/' })
+        .then(function(reg) {
+          lines.push('Registro manual: OK (scope=' + reg.scope + ')');
+          alert(lines.join('\n'));
+        })
+        .catch(function(err) {
+          lines.push('Registro manual FALLÓ: ' + (err && err.name) + ' — ' + (err && err.message));
+          alert(lines.join('\n'));
+        });
+    }
     return oneSignalReg.pushManager.getSubscription().then(function(sub) {
       lines.push('Suscripción push (SW OneSignal): ' + (sub ? 'ACTIVA (' + sub.endpoint.substring(0,40) + '...)' : 'NO EXISTE'));
       alert(lines.join('\n'));
     });
   }).catch(function(e) {
-    lines.push('Error durante diagnóstico: ' + e.message);
+    lines.push('Error durante diagnóstico: ' + (e && e.name) + ' — ' + (e && e.message));
     alert(lines.join('\n'));
   });
 };
