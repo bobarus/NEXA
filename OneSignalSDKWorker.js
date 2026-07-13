@@ -33,6 +33,15 @@ self.addEventListener('activate', function(e) {
 
 // Siempre red, nunca caché (igual que el antiguo sw.js) — evita que la PWA
 // se quede pegada a una versión antigua del HTML/CSS/JS tras un redeploy.
+// BUG CORREGIDO: fetch(request) sin más SIGUE respetando el Cache-Control
+// HTTP normal del navegador — y GitHub Pages sirve con "max-age=600" (10
+// min). O sea que "siempre red" no garantizaba red de verdad: dentro de
+// esos 10 minutos, Safari podía devolver una copia cacheada sin ni
+// siquiera hacer la petición. Con varios redeploys seguidos en pocos
+// minutos (como durante esta depuración), eso significaba que el
+// teléfono podía seguir viendo código antiguo pese a "actualizar".
+// { cache: 'no-store' } fuerza una petición de red real siempre, sin
+// consultar ni guardar en el HTTP cache del navegador.
 self.addEventListener('fetch', function(e) {
-  e.respondWith(fetch(e.request).catch(function() { return caches.match(e.request); }));
+  e.respondWith(fetch(e.request, { cache: 'no-store' }).catch(function() { return caches.match(e.request); }));
 });
