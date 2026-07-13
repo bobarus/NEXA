@@ -4414,11 +4414,21 @@ if ('serviceWorker' in navigator) {
   // barra superior ("AEDIS" / "PARTE DE TRABAJO" / etc.) lanzan el
   // autodiagnóstico de push. Sin esto, en iPhone sin Mac cerca es
   // imposible ejecutar diagnosePush() manualmente (no hay consola).
+  // BUG CORREGIDO: un <div> normal (sin cursor:pointer ni onclick inline)
+  // no dispara el evento "click" de forma fiable ante un toque en Safari
+  // iOS — es un comportamiento documentado de WebKit. Por eso los toques
+  // no hacían nada. Ahora escuchamos "touchend" además de "click" (con
+  // guarda para no contar doble el mismo toque en navegadores que sí
+  // disparan ambos) y forzamos cursor:pointer para máxima compatibilidad.
   (function() {
     var navTitleEl = document.getElementById('navTitle');
     if (!navTitleEl) return;
-    var tapCount = 0, tapTimer = null;
-    navTitleEl.addEventListener('click', function() {
+    navTitleEl.style.cursor = 'pointer';
+    var tapCount = 0, tapTimer = null, lastHandledAt = 0;
+    function registerTap() {
+      var now = Date.now();
+      if (now - lastHandledAt < 300) return; // evita doble conteo si click Y touchend disparan para el mismo toque
+      lastHandledAt = now;
       tapCount++;
       if (tapTimer) clearTimeout(tapTimer);
       tapTimer = setTimeout(function(){ tapCount = 0; }, 2000);
@@ -4427,7 +4437,9 @@ if ('serviceWorker' in navigator) {
         clearTimeout(tapTimer);
         diagnosePush();
       }
-    });
+    }
+    navTitleEl.addEventListener('click', registerTap);
+    navTitleEl.addEventListener('touchend', function(e) { e.preventDefault(); registerTap(); }, { passive: false });
   })();
 
   // ═══ NAVBAR HIDE-ON-SCROLL (estilo Tinkoff) ═══
