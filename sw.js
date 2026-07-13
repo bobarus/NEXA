@@ -1,19 +1,22 @@
-// v4 — kill all caches, always network first
-const CACHE_NAME = 'parte-v4';
-
+// DEPRECADO — sustituido por OneSignalSDKWorker.js (ver ese archivo:
+// ahora un único service worker en la raíz gestiona tanto el push de
+// OneSignal como el cache-busting que antes hacía este sw.js).
+//
+// Este archivo se mantiene en el servidor solo para que los clientes que
+// ya lo tuvieran registrado de una instalación anterior de la PWA puedan
+// recibir esta actualización y auto-desregistrarse — index.html ya no lo
+// registra en instalaciones nuevas. No borrar sin confirmar que ya no
+// queda ningún usuario con la versión antigua activa.
 self.addEventListener('install', function(e) {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', function(e) {
   e.waitUntil(
-    caches.keys().then(function(keys) {
-      return Promise.all(keys.map(function(k) { return caches.delete(k); }));
-    }).then(function() { return self.clients.claim(); })
+    self.registration.unregister().then(function() {
+      return self.clients.matchAll();
+    }).then(function(clients) {
+      clients.forEach(function(client) { client.navigate(client.url); });
+    })
   );
-});
-
-// Всегда сеть, никакого кеша
-self.addEventListener('fetch', function(e) {
-  e.respondWith(fetch(e.request).catch(function() { return caches.match(e.request); }));
 });

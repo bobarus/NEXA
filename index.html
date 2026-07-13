@@ -20,8 +20,20 @@
       await OneSignal.init({
         appId: "9a409dcc-a927-47e6-a37b-7955d5ef84f2",
         allowLocalhostAsSecureOrigin: true,
-        serviceWorkerPath: "push/onesignal/OneSignalSDKWorker.js",
-        serviceWorkerParam: { scope: "/AEDIS_APP/push/onesignal/" },
+        // ANTES: worker anidado en push/onesignal/ con su propio scope,
+        // registrado en paralelo a otro service worker independiente
+        // (sw.js) en la raíz — dos registros de SW casi simultáneos al
+        // cargar la app. Sospecha confirmada por datos reales del
+        // Dashboard de OneSignal: en iPhone, permiso concedido = sí,
+        // pero 0 suscripciones con push token real en decenas de intentos
+        // (mientras que en Chrome sí llegaba a suscribirse) — un patrón
+        // consistente con Safari/iOS gestionando mal el registro
+        // concurrente de varios service workers. Ahora solo hay UN
+        // service worker, en la raíz, con un único scope que cubre toda
+        // la app (ver OneSignalSDKWorker.js: combina el push de OneSignal
+        // con la lógica de cache-busting que antes vivía en sw.js aparte).
+        serviceWorkerPath: "OneSignalSDKWorker.js",
+        serviceWorkerParam: { scope: "/AEDIS_APP/" },
         // FIX REAL (confirmado en la documentación oficial de OneSignal
         // Web SDK v16 y en un issue reportado del propio SDK): dejar
         // `prompts: []` vacío NO desactiva el slidedown automático — el
@@ -147,9 +159,13 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);pad
 .rchev{margin-left:4px}.rchev svg{width:7px;height:12px;stroke:#c7c7cc;fill:none;stroke-width:2.5;stroke-linecap:round}
 .tarow{flex-direction:column;align-items:flex-start;padding:12px 14px;min-height:auto}
 .tarow .sub-label{font-size:11px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+/* Etiquetas de campo del modal "Editar informe" — antes sin definir: se
+   renderizaban con el tamaño/peso por defecto del navegador (~16px negro),
+   rompiendo el estilo uniforme de etiqueta compacta usado en el resto de
+   la app (mismo patrón que .tarow .sub-label). */
+.s-label{font-size:11px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:.5px}
 .rta{width:100%;border:none;outline:none;background:#f2f2f7;border-radius:12px;padding:12px 14px;margin-top:2px;font-size:15px;color:#000;font-family:inherit;resize:none;min-height:70px;line-height:1.6;transition:background .15s}
 .rta:focus{background:#e8effe}
-.rta::placeholder{color:#8e8e93}
 .rta::placeholder{color:#c7c7cc}
 
 /* MODE TOGGLE */
@@ -162,7 +178,6 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);pad
 .mode-text-row{padding:10px 14px;border-bottom:.5px solid #f2f2f7;display:none}
 .mode-text-input{width:100%;border:none;outline:none;background:#f2f2f7;border-radius:10px;padding:10px 12px;font-size:15px;color:#000;font-family:inherit;transition:background .15s}
 .mode-text-input:focus{background:#e8effe}
-.mode-text-input::placeholder{color:#8e8e93}
 .mode-text-input::placeholder{color:#c7c7cc}
 
 /* HORAS */
@@ -279,6 +294,10 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 .mi-sub{font-size:11px;color:#8e8e93;margin-bottom:8px}
 .mi-comment{background:#fff0f0;border-radius:8px;padding:9px 12px;font-size:12px;color:#ff3b30;margin-bottom:10px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .mi-comment b{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;color:#ff3b30;font-weight:700}
+/* Vista completa (modales de detalle): el comentario del manager no debe
+   truncarse a 2 líneas — esa limitación solo tiene sentido como preview
+   en las tarjetas de lista (.mi-comment sin .full, ver renderMyReports). */
+.mi-comment.full{display:block;-webkit-line-clamp:unset;overflow:visible}
 .mi-edit-btn{width:100%;background:#007AFF;color:#fff;border:none;border-radius:10px;padding:10px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation;margin-top:auto !important}
 .mi-empty{padding:48px 24px;text-align:center;color:#8e8e93;font-size:14px}
 
@@ -329,10 +348,10 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 .ad-card:active{background:#f9f9f9}
 .ad-status-badge{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;padding:3px 8px;border-radius:20px;margin-bottom:6px}
 .ad-status-badge.st-pending{background:#e5f0ff;color:#007AFF}
-.ad-status-badge.st-approved{background:#e5f9ec;color:#1c7c35}
+.ad-status-badge.st-approved{background:#e5f9ec;color:#34c759}
 .ad-status-badge.st-rejected{background:#fff0f0;color:#ff3b30}
 .ad-manager-line{font-size:11px;color:#8e8e93;margin-top:6px;text-align:right}
-.ad-manager-line.approved{color:#1c7c35}
+.ad-manager-line.approved{color:#34c759}
 .ad-manager-line.rejected{color:#ff3b30}
 .ad-month-header{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;cursor:pointer;touch-action:manipulation}
 .ad-month-header:active{opacity:.7}
@@ -515,7 +534,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
       <div class="mg-modal-title" id="erTitle">Editar informe</div>
       <div class="mg-modal-sub" id="erSub">—</div>
 
-      <div class="mi-comment" style="margin:12px 0" id="erCommentBlock"><b>Comentario del manager</b><span id="erComment"></span></div>
+      <div class="mi-comment full" style="margin:12px 0" id="erCommentBlock"><b>Comentario del manager</b><span id="erComment"></span></div>
 
       <div class="s-label" style="padding:8px 0 6px">Cliente</div>
       <input type="text" id="erCliente" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
@@ -659,7 +678,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
       <div class="row">
         <div class="rbadge b-green"><svg viewBox="0 0 24 24"><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/><path d="M5 17H3v-6l2-5h12l2 5v6h-2M5 17h10M3 11h18"/></svg></div>
         <span class="rlabel" id="lbl-vehiculo">Vehículo</span>
-        <input class="rinput" id="vehiculo" id="input-vehiculo" placeholder="Matrícula / modelo">
+        <input class="rinput" id="vehiculo" placeholder="Matrícula / modelo">
       </div>
     </div>
 
@@ -679,7 +698,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
         <span class="rchev"><svg viewBox="0 0 8 14"><polyline points="1,1 7,7 1,13"/></svg></span>
       </div>
       <div class="mode-text-row" id="tipoTextRow">
-        <input class="mode-text-input" id="tipoNew" id="input-tipo-new" placeholder="Describir tipo..." oninput="clearErr('rTipo');updateBtn()">
+        <input class="mode-text-input" id="tipoNew" placeholder="Describir tipo..." oninput="clearErr('rTipo');updateBtn()">
       </div>
       <div class="row" id="rHoras">
         <div class="rbadge b-orange"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
@@ -698,7 +717,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
       </div>
       <div class="row tarow">
         <span class="sub-label" id="sub-trabajos">Trabajos realizados</span>
-        <textarea class="rta" id="trabajos" id="input-trabajos" placeholder="Describir los trabajos..."></textarea>
+        <textarea class="rta" id="trabajos" placeholder="Describir los trabajos..."></textarea>
       </div>
       <div class="photo-row">
         <div class="photo-row-head">
@@ -730,11 +749,11 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
         <span class="rchev"><svg viewBox="0 0 8 14"><polyline points="1,1 7,7 1,13"/></svg></span>
       </div>
       <div class="mode-text-row" id="compTextRow">
-        <input class="mode-text-input" id="companiaNew" id="input-compania-new" placeholder="Nombre de la compañía...">
+        <input class="mode-text-input" id="companiaNew" placeholder="Nombre de la compañía...">
       </div>
       <div class="row tarow">
         <span class="sub-label" id="sub-materiales">Materiales utilizados</span>
-        <textarea class="rta" id="materiales" id="input-materiales" placeholder="Listar materiales..."></textarea>
+        <textarea class="rta" id="materiales" placeholder="Listar materiales..."></textarea>
       </div>
       <div class="row" style="min-height:60px">
         <span class="rlabel" id="lbl-precio" style="font-weight:700">Precio</span>
@@ -804,7 +823,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
   <div class="mg-modal">
     <div class="mg-modal-title" id="reject-modal-title">Rechazar informe</div>
     <div class="mg-modal-sub" id="reject-modal-sub">Explica al operario qué hay que corregir</div>
-    <textarea class="mg-modal-textarea" id="mgRejectComment" id="reject-comment-input" placeholder="Ej: Falta indicar el número de horas extra..." oninput="onRejectCommentInput()"></textarea>
+    <textarea class="mg-modal-textarea" id="mgRejectComment" placeholder="Ej: Falta indicar el número de horas extra..." oninput="onRejectCommentInput()"></textarea>
     <div class="mg-reject-hint" id="mgRejectHint">El comentario es obligatorio para rechazar un informe</div>
     <div class="mg-modal-actions">
       <button class="mg-modal-cancel" id="btn-cancelar" onclick="closeRejectModal()">Cancelar</button>
@@ -875,26 +894,26 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
     <!-- Строка: поле поиска + иконка фильтра -->
     <div style="display:flex;gap:8px;align-items:center">
       <div style="flex:1;position:relative">
-        <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:rgba(40,60,120,0.45);fill:none;stroke-width:2;stroke-linecap:round;pointer-events:none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:#8e8e93;fill:none;stroke-width:2;stroke-linecap:round;pointer-events:none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" id="adSearch" placeholder="Buscar..." oninput="applyAdminFilters()"
-          style="width:100%;padding:9px 12px 9px 33px;border-radius:12px;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.45);font-family:inherit;font-size:14px;color:#1a2a4a;outline:none">
+          style="width:100%;padding:9px 12px 9px 33px;border-radius:12px;border:none;background:#f2f2f7;font-family:inherit;font-size:14px;color:#000;outline:none">
       </div>
       <button onclick="toggleAdNewOnly()" id="adNewBtn"
-        style="height:40px;padding:0 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.45);font-family:inherit;font-size:11px;font-weight:800;color:rgba(40,60,120,0.5);cursor:pointer;touch-action:manipulation;flex-shrink:0;letter-spacing:0.3px">
+        style="height:40px;padding:0 12px;border-radius:12px;border:none;background:#f2f2f7;font-family:inherit;font-size:11px;font-weight:800;color:#8e8e93;cursor:pointer;touch-action:manipulation;flex-shrink:0;letter-spacing:0.3px">
         NUEVO
       </button>
       <button onclick="toggleAdFilters()" id="adFilterToggle"
-        style="width:40px;height:40px;border-radius:12px;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.45);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;touch-action:manipulation">
-        <svg id="adFilterIcon" style="width:18px;height:18px;stroke:#1a3080;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+        style="width:40px;height:40px;border-radius:12px;border:none;background:#f2f2f7;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;touch-action:manipulation">
+        <svg id="adFilterIcon" style="width:18px;height:18px;stroke:#007AFF;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
       </button>
     </div>
 
     <!-- Раскрывающаяся панель фильтров (скрыта по умолчанию) -->
-    <div id="adFilterPanel" style="display:none;margin-top:10px;background:rgba(255,255,255,0.3);border-radius:14px;border:1px solid rgba(255,255,255,0.6);padding:12px;display:none">
+    <div id="adFilterPanel" style="display:none;margin-top:10px;background:#fff;border-radius:14px;border:.5px solid #e5e5ea;box-shadow:0 2px 10px rgba(0,0,0,.07);padding:12px;display:none">
 
       <!-- Статус -->
       <div style="margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px"><span id="flt-estado-lbl">Estado</span></div>
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:5px"><span id="flt-estado-lbl">Estado</span></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="ad-flt-btn active" data-ftype="status" data-val="" onclick="setFilterBtn(this,'status')" id="flt-st-all">Todos</button>
           <button class="ad-flt-btn" data-ftype="status" data-val="pending" onclick="setFilterBtn(this,'status')" id="flt-st-pending">Pendiente</button>
@@ -905,58 +924,58 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 
       <!-- Клиент -->
       <div style="margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px"><span id="flt-lbl-cliente">Cliente</span></div>
-        <input type="text" id="adFCliente" list="adFClienteList" id="adFClientePlaceholder" placeholder="Todos los clientes" oninput="applyAdminFilters()"
-          style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.5);font-family:inherit;font-size:13px;color:#1a2a4a;outline:none">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:5px"><span id="flt-lbl-cliente">Cliente</span></div>
+        <input type="text" id="adFCliente" list="adFClienteList" placeholder="Todos los clientes" oninput="applyAdminFilters()"
+          style="width:100%;padding:8px 10px;border-radius:10px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;color:#000;outline:none">
         <datalist id="adFClienteList"></datalist>
       </div>
 
       <!-- Obra -->
       <div style="margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px"><span id="flt-lbl-obra">Obra</span></div>
-        <input type="text" id="adFObra" list="adFObraList" id="adFObraPlaceholder" placeholder="Todas las obras" oninput="applyAdminFilters()"
-          style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.5);font-family:inherit;font-size:13px;color:#1a2a4a;outline:none">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:5px"><span id="flt-lbl-obra">Obra</span></div>
+        <input type="text" id="adFObra" list="adFObraList" placeholder="Todas las obras" oninput="applyAdminFilters()"
+          style="width:100%;padding:8px 10px;border-radius:10px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;color:#000;outline:none">
         <datalist id="adFObraList"></datalist>
       </div>
 
       <!-- Rабочий -->
       <div style="margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px"><span id="flt-lbl-operario">Operario</span></div>
-        <input type="text" id="adFOperario" list="adFOperarioList" id="adFOperarioPlaceholder" placeholder="Todos los operarios" oninput="applyAdminFilters()"
-          style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.5);font-family:inherit;font-size:13px;color:#1a2a4a;outline:none">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:5px"><span id="flt-lbl-operario">Operario</span></div>
+        <input type="text" id="adFOperario" list="adFOperarioList" placeholder="Todos los operarios" oninput="applyAdminFilters()"
+          style="width:100%;padding:8px 10px;border-radius:10px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;color:#000;outline:none">
         <datalist id="adFOperarioList"></datalist>
       </div>
 
       <!-- Тип работы -->
       <div style="margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px"><span id="flt-lbl-tipo">Tipo de trabajo</span></div>
-        <input type="text" id="adFTipo" list="adFTipoList" id="adFTipoPlaceholder" placeholder="Todos los tipos" oninput="applyAdminFilters()"
-          style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.5);font-family:inherit;font-size:13px;color:#1a2a4a;outline:none">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:5px"><span id="flt-lbl-tipo">Tipo de trabajo</span></div>
+        <input type="text" id="adFTipo" list="adFTipoList" placeholder="Todos los tipos" oninput="applyAdminFilters()"
+          style="width:100%;padding:8px 10px;border-radius:10px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;color:#000;outline:none">
         <datalist id="adFTipoList"></datalist>
       </div>
 
       <!-- Компания -->
       <div style="margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px"><span id="flt-lbl-compania">Compañía</span></div>
-        <input type="text" id="adFCompania" list="adFCompaniaList" id="adFCompaniaPlaceholder" placeholder="Todas las compañías" oninput="applyAdminFilters()"
-          style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.5);font-family:inherit;font-size:13px;color:#1a2a4a;outline:none">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:5px"><span id="flt-lbl-compania">Compañía</span></div>
+        <input type="text" id="adFCompania" list="adFCompaniaList" placeholder="Todas las compañías" oninput="applyAdminFilters()"
+          style="width:100%;padding:8px 10px;border-radius:10px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;color:#000;outline:none">
         <datalist id="adFCompaniaList"></datalist>
       </div>
 
       <!-- Интервал дат -->
       <div style="margin-bottom:4px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(40,60,120,0.5);margin-bottom:5px"><span id="flt-lbl-periodo">Período</span></div>
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:5px"><span id="flt-lbl-periodo">Período</span></div>
         <div style="display:flex;gap:8px;align-items:center">
           <input type="date" id="adFDateFrom" oninput="applyAdminFilters()"
-            style="flex:1;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.5);font-family:inherit;font-size:13px;color:#1a2a4a;outline:none">
-          <span style="font-size:12px;color:rgba(40,60,120,0.5);flex-shrink:0">—</span>
+            style="flex:1;padding:8px 10px;border-radius:10px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;color:#000;outline:none">
+          <span style="font-size:12px;color:#8e8e93;flex-shrink:0">—</span>
           <input type="date" id="adFDateTo" oninput="applyAdminFilters()"
-            style="flex:1;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.5);font-family:inherit;font-size:13px;color:#1a2a4a;outline:none">
+            style="flex:1;padding:8px 10px;border-radius:10px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;color:#000;outline:none">
         </div>
       </div>
 
       <!-- Сброс фильтров -->
-      <button onclick="resetAdminFilters()" style="width:100%;margin-top:10px;padding:9px;border-radius:10px;border:1px solid rgba(224,67,58,0.3);background:rgba(224,67,58,0.08);color:#a02018;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">Resetear filtros</button>
+      <button onclick="resetAdminFilters()" style="width:100%;margin-top:10px;padding:9px;border-radius:10px;border:none;background:rgba(255,59,48,.1);color:#ff3b30;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">Resetear filtros</button>
     </div>
 
   </div>
@@ -1181,15 +1200,10 @@ function applyLang() {
 
   // Placeholders
   setPh('vehiculo',        t('ph_vehiculo'));
-  setPh('input-vehiculo',  t('ph_vehiculo'));
   setPh('tipoNew',         t('ph_tipo_new'));
-  setPh('input-tipo-new',  t('ph_tipo_new'));
   setPh('trabajos',        t('ph_trabajos'));
-  setPh('input-trabajos',  t('ph_trabajos'));
   setPh('companiaNew',     t('ph_compania_new'));
-  setPh('input-compania-new', t('ph_compania_new'));
   setPh('materiales',      t('ph_materiales'));
-  setPh('input-materiales',t('ph_materiales'));
 
   // Photo hints
   setEl('hint-obra', t('hint_obra'));
@@ -1209,7 +1223,6 @@ function applyLang() {
   setEl('reject-modal-title', t('reject_title'));
   setEl('reject-modal-sub',   t('reject_sub'));
   setPh('mgRejectComment',    t('reject_ph'));
-  setPh('reject-comment-input', t('reject_ph'));
   setEl('mgRejectHint',       t('reject_hint'));
   setEl('btn-cancelar',       t('btn_cancelar'));
 
@@ -1928,10 +1941,13 @@ function loadMyReports() {
   } else {
     document.getElementById('miList').innerHTML = '<div class="mi-empty"><span class="spinner-inline"></span> Cargando...</div>';
   }
+  if (myReportsSyncing) return; // ya hay un fetch de esta misma lista en curso (p.ej. refreshMyReportsBackground)
+  myReportsSyncing = true;
   fetch(WEBAPP_URL + '?action=getMyReports&operario=' + encodeURIComponent(currentUser.nombre) + '&t=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(result){
       myReportsLoaded = true;
+      myReportsSyncing = false;
       if (!result || result.status !== 'ok') {
         if (!cached) document.getElementById('miList').innerHTML = '<div class="mi-empty">Error al cargar</div>';
         return;
@@ -1940,6 +1956,7 @@ function loadMyReports() {
       renderMyReports(result.data || []);
     })
     .catch(function(){
+      myReportsSyncing = false;
       if (!cached) document.getElementById('miList').innerHTML = '<div class="mi-empty">Error de conexión</div>';
     });
 }
@@ -2010,7 +2027,7 @@ function openReportDetail(id) {
 
   var html = buildDetailHtml(r, false); // рабочий не видит Total
   if (r.STATUS === 'rejected' && r.COMENTARIO_MANAGER) {
-    html += '<div class="mi-comment" style="margin-top:10px"><b>Comentario del manager</b>'+r.COMENTARIO_MANAGER+'</div>';
+    html += '<div class="mi-comment full" style="margin-top:10px"><b>Comentario del manager</b>'+r.COMENTARIO_MANAGER+'</div>';
   }
 
   document.getElementById('rdBody').innerHTML = html;
@@ -2149,13 +2166,13 @@ function submitEditReport() {
         OBRA: document.getElementById('erObra').value,
         OPERARIO: erCurrentReport.OPERARIO,
         AYUDANTE: document.getElementById('erAyudante').value,
-        VEHICULO: document.getElementById('erVehiculo').value,
+        'VEHÍCULO': document.getElementById('erVehiculo').value,
         'TRABAJOS REALIZADOS': document.getElementById('erTrabajos').value,
         'TIPO DE TRABAJO': document.getElementById('erTipo').value,
         HORAS: horas,
         COMPAÑÍA: document.getElementById('erCompania').value,
         'MATERIALES UTILIZADOS': document.getElementById('erMateriales').value,
-        PRECIO: precio,
+        'PRECIO (EUR)': precio,
         'FOTOS DE OBRA': erCurrentReport['FOTOS DE OBRA'],
         'FOTO MATERIALES / RECIBO': erCurrentReport['FOTO MATERIALES / RECIBO'],
         TIMESTAMP: nowIso,
@@ -2306,6 +2323,8 @@ function loadManagerQueue() {
       document.getElementById('mgList').innerHTML = '<div class="mi-empty"><span class="spinner-inline"></span> Cargando...</div>';
     }
   }
+  if (mgPendingSyncing) return Promise.resolve(); // ya hay un fetch de esta misma cola en curso (p.ej. refreshPendingBackground)
+  mgPendingSyncing = true;
   return fetch(WEBAPP_URL + '?action=getPending&codigo=' + encodeURIComponent(currentPin) + '&t=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(result){
@@ -2669,9 +2688,9 @@ function renderHistorial(reports) {
   listEl.innerHTML = reports.map(function(r){
     var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
     var isApproved = r.STATUS === 'approved';
-    var statusColor = isApproved ? '#2a9a55' : '#e0433a';
+    var statusColor = isApproved ? '#34c759' : '#ff3b30';
     var statusLabel = isApproved ? '✓ ' + t('status_approved') : '✗ ' + t('status_rejected');
-    return '<div class="mg-card" style="border-left-color:'+statusColor+';cursor:pointer" data-hid="'+r.ID+'" onclick="openHistorialDetail(\''+r.ID+'\')">'
+    return '<div class="mg-card" style="border-left-width:3px;border-left-color:'+statusColor+';cursor:pointer" data-hid="'+r.ID+'" onclick="openHistorialDetail(\''+r.ID+'\')">'
       + '<div class="mg-head"><span class="mg-id">'+r.ID+'</span><span class="mg-id" style="color:'+statusColor+';font-weight:700">'+statusLabel+'</span></div>'
       + '<div class="mg-obra">'+r.OBRA+'</div>'
       + '<div class="mg-cliente">'+r.CLIENTE+' · '+r.OPERARIO+' · '+fecha+'</div>'
@@ -2682,6 +2701,7 @@ function renderHistorial(reports) {
 function openHistorialDetail(id) {
   var r = mgHistorialCache.find(function(x){ return x.ID === id; });
   if (!r) return;
+  mgDetailId = id;
   var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
   var isApproved = r.STATUS === 'approved';
   document.getElementById('mgdTitle').textContent = r.OBRA || '—';
@@ -2689,7 +2709,7 @@ function openHistorialDetail(id) {
 
   var html = buildDetailHtml(r, true);
   if (!isApproved && r['COMENTARIO_MANAGER']) {
-    html += '<div class="mi-comment" style="margin-top:10px"><b>Comentario del manager</b>'+r['COMENTARIO_MANAGER']+'</div>';
+    html += '<div class="mi-comment full" style="margin-top:10px"><b>Comentario del manager</b>'+r['COMENTARIO_MANAGER']+'</div>';
   }
   document.getElementById('mgdBody').innerHTML = html;
 
@@ -2805,9 +2825,8 @@ var adShowNewOnly = false;
 function toggleAdNewOnly() {
   adShowNewOnly = !adShowNewOnly;
   var btn = document.getElementById('adNewBtn');
-  btn.style.background = adShowNewOnly ? 'rgba(224,67,58,0.18)' : 'rgba(255,255,255,0.45)';
-  btn.style.borderColor = adShowNewOnly ? 'rgba(224,67,58,0.5)' : 'rgba(255,255,255,0.7)';
-  btn.style.color = adShowNewOnly ? '#a02018' : 'rgba(40,60,120,0.5)';
+  btn.style.background = adShowNewOnly ? 'rgba(255,59,48,.12)' : '#f2f2f7';
+  btn.style.color = adShowNewOnly ? '#ff3b30' : '#8e8e93';
   applyAdminFilters();
 }
 
@@ -2957,7 +2976,7 @@ function renderAdminJournal() {
     html += '<span style="font-size:13px;font-weight:700;color:#1a2a4a">'+g.label+'</span>';
     html += '<span style="font-size:11px;color:rgba(40,60,120,0.5)">'+g.records.length+' reg.</span>';
     html += '</div>';
-    if (newCount > 0) html += '<span style="font-size:10px;font-weight:800;color:#e0433a;letter-spacing:0.3px">'+newCount+' NUEVO'+(newCount>1?'S':'')+'</span>';
+    if (newCount > 0) html += '<span style="font-size:10px;font-weight:800;color:#ff3b30;letter-spacing:0.3px">'+newCount+' NUEVO'+(newCount>1?'S':'')+'</span>';
     html += '</div>';
 
     // Карточки группы
@@ -2971,7 +2990,7 @@ function renderAdminJournal() {
       html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">';
       html += '<span style="font-size:12px;color:rgba(40,60,120,0.55);font-weight:600">'+fecha+'</span>';
       var rightEl = isNew
-        ? '<span style="font-size:11px;font-weight:800;color:#e0433a;letter-spacing:0.3px">NUEVO</span>'
+        ? '<span style="font-size:11px;font-weight:800;color:#ff3b30;letter-spacing:0.3px">NUEVO</span>'
         : '<span class="ad-status-badge st-'+st+'" style="margin-bottom:0">'+statusLabels[st]+'</span>';
       html += rightEl + '</div>';
       html += '<div style="font-size:12px;color:rgba(40,60,120,0.55);font-weight:600;margin-bottom:10px">'+r.OPERARIO+'</div>';
@@ -2985,17 +3004,17 @@ function renderAdminJournal() {
       }
       if ((st === 'approved' || st === 'rejected') && r.MANAGER_NOMBRE) {
         var mgLabel = st === 'approved' ? 'Aprobó' : 'Rechazó';
-        var bgClr = st === 'approved' ? 'rgba(42,154,85,0.12)' : 'rgba(224,67,58,0.12)';
-        var bdClr = st === 'approved' ? 'rgba(42,154,85,0.3)' : 'rgba(224,67,58,0.3)';
-        var txClr = st === 'approved' ? '#1a6a35' : '#a02018';
+        var bgClr = st === 'approved' ? 'rgba(52,199,89,.12)' : 'rgba(255,59,48,.12)';
+        var bdClr = st === 'approved' ? 'rgba(52,199,89,.3)' : 'rgba(255,59,48,.3)';
+        var txClr = st === 'approved' ? '#34c759' : '#ff3b30';
         html += '<div style="background:'+bgClr+';border:1px solid '+bdClr+';border-radius:12px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">';
         html += '<span style="font-size:12px;font-weight:700;color:'+txClr+';text-transform:uppercase;letter-spacing:0.3px">'+mgLabel+'</span>';
         html += '<span style="font-size:13px;font-weight:600;color:'+txClr+'">'+r.MANAGER_NOMBRE+'</span>';
         html += '</div>';
       }
       if (r.COMENTARIO_MANAGER && String(r.COMENTARIO_MANAGER).trim()) {
-        html += '<div style="margin-top:8px;background:rgba(224,67,58,0.08);border-radius:10px;padding:8px 10px;font-size:12px;color:#8a2018;line-height:1.45">'
-          + '<span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;display:block;margin-bottom:3px;color:#a02018">Comentario</span>'
+        html += '<div class="mi-comment full" style="margin-top:8px;margin-bottom:0">'
+          + '<b>Comentario</b>'
           + r.COMENTARIO_MANAGER + '</div>';
       }
       html += '</div>';
@@ -3049,7 +3068,7 @@ function openAdminDetail(id) {
   var card = document.querySelector('.ad-card[onclick*="\''+id+'\'"]');
   if (card) {
     card.classList.remove('card-shadow-new');
-    var newLabel = card.querySelector('span[style*="e0433a"]');
+    var newLabel = card.querySelector('span[style*="ff3b30"]');
     if (newLabel && newLabel.textContent.includes('NUEVO')) {
       // Заменяем NUEVO на статус-бейдж
       var st = r.STATUS || 'pending';
@@ -3066,13 +3085,13 @@ function openAdminDetail(id) {
   document.getElementById('mgdSub').textContent = r.CLIENTE + ' · ' + r.ID + ' · ' + fecha + ' · ' + statusLabels[st];
   var html = buildDetailHtml(r, true);
   if (r.COMENTARIO_MANAGER && String(r.COMENTARIO_MANAGER).trim()) {
-    html += '<div class="mi-comment" style="margin-top:10px"><b>'+(st==='rejected'?'Motivo del rechazo':'Comentario del manager')+'</b>'+r.COMENTARIO_MANAGER+'</div>';
+    html += '<div class="mi-comment full" style="margin-top:10px"><b>'+(st==='rejected'?'Motivo del rechazo':'Comentario del manager')+'</b>'+r.COMENTARIO_MANAGER+'</div>';
   }
   if (r.MANAGER_NOMBRE) {
     var mgLabel = st === 'approved' ? 'Aprobó' : (st === 'rejected' ? 'Rechazó' : 'Procesó');
-    var bgClr = st === 'approved' ? 'rgba(42,154,85,0.12)' : (st === 'rejected' ? 'rgba(224,67,58,0.12)' : 'rgba(40,80,200,0.08)');
-    var bdClr = st === 'approved' ? 'rgba(42,154,85,0.3)' : (st === 'rejected' ? 'rgba(224,67,58,0.3)' : 'rgba(40,80,200,0.2)');
-    var txClr = st === 'approved' ? '#1a6a35' : (st === 'rejected' ? '#a02018' : '#1a3080');
+    var bgClr = st === 'approved' ? 'rgba(52,199,89,.12)' : (st === 'rejected' ? 'rgba(255,59,48,.12)' : 'rgba(0,122,255,.08)');
+    var bdClr = st === 'approved' ? 'rgba(52,199,89,.3)' : (st === 'rejected' ? 'rgba(255,59,48,.3)' : 'rgba(0,122,255,.2)');
+    var txClr = st === 'approved' ? '#34c759' : (st === 'rejected' ? '#ff3b30' : '#007AFF');
     var fDecision = r.FECHA_DECISION ? fmtDate(r.FECHA_DECISION) : '';
     html += '<div style="margin-top:12px;background:'+bgClr+';border:1px solid '+bdClr+';border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center">';
     html += '<span style="font-size:12px;font-weight:700;color:'+txClr+';text-transform:uppercase;letter-spacing:0.3px">'+mgLabel+'</span>';
@@ -3096,9 +3115,9 @@ function openAdminInformeDetail(id) {
   var html = buildDetailHtml(r, true);
   if (r.MANAGER_NOMBRE) {
     var fDecision = r.FECHA_DECISION ? fmtDate(r.FECHA_DECISION) : '';
-    html += '<div style="margin-top:12px;background:rgba(42,154,85,0.12);border:1px solid rgba(42,154,85,0.3);border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center">';
-    html += '<span style="font-size:12px;font-weight:700;color:#1a6a35;text-transform:uppercase;letter-spacing:0.3px">Aprobó</span>';
-    html += '<span style="font-size:13px;font-weight:600;color:#1a6a35">'+r.MANAGER_NOMBRE+(fDecision?' · '+fDecision:'')+'</span>';
+    html += '<div style="margin-top:12px;background:rgba(52,199,89,.12);border:1px solid rgba(52,199,89,.3);border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center">';
+    html += '<span style="font-size:12px;font-weight:700;color:#34c759;text-transform:uppercase;letter-spacing:0.3px">Aprobó</span>';
+    html += '<span style="font-size:13px;font-weight:600;color:#34c759">'+r.MANAGER_NOMBRE+(fDecision?' · '+fDecision:'')+'</span>';
     html += '</div>';
   }
   document.getElementById('mgdBody').innerHTML = html;
@@ -3525,6 +3544,9 @@ function showPermissionBanner() {
 
 /* ════════ AUTODIAGNÓSTICO — sin necesidad de depuración remota ════════
    Ejecutar en la consola: diagnosePush()
+   También accesible desde la UI: 5 toques rápidos sobre el título de la
+   barra superior (ver el listener más abajo) — útil en iPhone sin Mac
+   a mano para depurar Safari remoto.
    Muestra en un solo alert() el estado de cada requisito para push. */
 window.diagnosePush = function() {
   var lines = [];
@@ -3532,17 +3554,45 @@ window.diagnosePush = function() {
   lines.push('Notification API: ' + ('Notification' in window ? 'OK' : 'NO SOPORTADO'));
   lines.push('Permiso: ' + (('Notification' in window) ? Notification.permission : 'n/a'));
   lines.push('Display mode: ' + (window.matchMedia('(display-mode: standalone)').matches ? 'standalone (correcto)' : 'navegador (INCORRECTO — abre desde el icono)'));
+  lines.push('PIN vinculado: ' + (oneSignalLinkedPin || '(ninguno todavía)'));
+
+  // Estado interno del SDK — más fiable que inspeccionar el Service Worker
+  // a mano, porque es justo lo que OneSignal usa para decidir a quién
+  // enviar. Si esto no coincide con lo que se ve en el Dashboard, el
+  // problema está en la sincronización SDK → backend de OneSignal.
+  try {
+    if (typeof OneSignal !== 'undefined' && OneSignal.User && OneSignal.User.PushSubscription) {
+      var ps = OneSignal.User.PushSubscription;
+      lines.push('OneSignal.User.PushSubscription.id: ' + (ps.id || '(sin id)'));
+      lines.push('OneSignal.User.PushSubscription.token: ' + (ps.token ? ps.token.substring(0,24) + '...' : '(sin token)'));
+      lines.push('OneSignal.User.PushSubscription.optedIn: ' + ps.optedIn);
+    } else {
+      lines.push('OneSignal.User.PushSubscription: no disponible (SDK no listo)');
+    }
+  } catch(e) { lines.push('Error leyendo OneSignal.User: ' + e.message); }
 
   navigator.serviceWorker.getRegistrations().then(function(regs) {
     lines.push('Service Workers registrados: ' + regs.length);
     regs.forEach(function(r, i) {
-      lines.push('  [' + i + '] scope=' + r.scope + ' active=' + !!r.active);
+      var scriptUrl = (r.active && r.active.scriptURL) || (r.installing && r.installing.scriptURL) || (r.waiting && r.waiting.scriptURL) || '(desconocido)';
+      var state = (r.active && 'active') || (r.installing && 'installing') || (r.waiting && 'waiting') || 'sin worker';
+      lines.push('  [' + i + '] scope=' + r.scope + ' script=' + scriptUrl + ' estado=' + state);
     });
-    return navigator.serviceWorker.getRegistration();
-  }).then(function(reg) {
-    if (!reg) { lines.push('Suscripción push: SIN SERVICE WORKER'); alert(lines.join('\n')); return; }
-    return reg.pushManager.getSubscription().then(function(sub) {
-      lines.push('Suscripción push: ' + (sub ? 'ACTIVA (' + sub.endpoint.substring(0,40) + '...)' : 'NO EXISTE'));
+    // IMPORTANTE: navigator.serviceWorker.getRegistration() (sin argumentos)
+    // devuelve el registro que controla la PÁGINA actual — con la versión
+    // anterior de dos service workers eso normalmente era sw.js, NO el de
+    // OneSignal (que vivía en un scope anidado aparte). Este diagnóstico
+    // comprobaba pushManager en el registro equivocado y SIEMPRE mostraba
+    // "NO EXISTE" aunque la suscripción real (la de OneSignal) sí
+    // existiera o no. Ahora solo hay un worker, pero mantenemos la
+    // búsqueda explícita por si queda algún registro viejo sin limpiar.
+    var oneSignalReg = regs.find(function(r) {
+      var url = (r.active && r.active.scriptURL) || (r.installing && r.installing.scriptURL) || (r.waiting && r.waiting.scriptURL) || '';
+      return url.indexOf('OneSignalSDKWorker') !== -1 || r.scope.indexOf('push/onesignal') !== -1;
+    });
+    if (!oneSignalReg) { lines.push('Suscripción push (SW OneSignal): SERVICE WORKER DE ONESIGNAL NO ENCONTRADO'); alert(lines.join('\n')); return; }
+    return oneSignalReg.pushManager.getSubscription().then(function(sub) {
+      lines.push('Suscripción push (SW OneSignal): ' + (sub ? 'ACTIVA (' + sub.endpoint.substring(0,40) + '...)' : 'NO EXISTE'));
       alert(lines.join('\n'));
     });
   }).catch(function(e) {
@@ -3668,8 +3718,21 @@ function openNotifModal() {
     }
   });
   if (changed) { saveNotifLog(log); updateBellUI(); }
-  // Quitamos también el resaltado azul de las tarjetas correspondientes
-  reportIdsToMark.forEach(function(rid){ markAsSeen(rid); });
+  // Quitamos también el resaltado azul de las tarjetas correspondientes.
+  // markAsSeen() espera la clave compuesta "ID@TIMESTAMP" (ver seenKey()),
+  // igual que la usan renderManagerQueue/renderAdminJournal para decidir
+  // "isNew" — pasar solo el ID (sin timestamp) nunca hacía match ahí y el
+  // badge "NUEVO" volvía a aparecer en el próximo render.
+  var allKnownRecords = [].concat(
+    typeof mgReportsCache !== 'undefined' ? mgReportsCache : [],
+    typeof mgHistorialCache !== 'undefined' ? mgHistorialCache : [],
+    typeof adAllRecords !== 'undefined' ? adAllRecords : [],
+    typeof adInformeRecords !== 'undefined' ? adInformeRecords : []
+  );
+  reportIdsToMark.forEach(function(rid){
+    var rec = allKnownRecords.find(function(r){ return r.ID === rid; });
+    markAsSeen(rec ? seenKey(rec) : rid);
+  });
   document.querySelectorAll('.card-shadow-new').forEach(function(card){
     var cardId = card.getAttribute('data-id');
     if (cardId && reportIdsToMark.indexOf(cardId) !== -1) card.classList.remove('card-shadow-new');
@@ -4240,89 +4303,66 @@ document.addEventListener('visibilitychange', function() {
    fuera del modal. El contenido desplaza con el scroll nativo del propio
    navegador, sin ningún listener interceptando el touch — por eso nunca
    se "engancha" ni compite con nada.
-   Mientras un modal está abierto, se bloquea el scroll del fondo (con la
-   técnica position:fixed en body) para que la página de detrás nunca se
-   mueva ni dispare su propio hide-on-scroll del navbar superior. */
-(function() {
-  var overlayIds = ['mgRejectModal', 'reportDetailModal', 'mgDetailModal', 'editReportModal'];
-  var savedScrollY = 0;
-  var openCount = 0;
-
-  function lockBodyScroll() {
-    if (openCount === 0) {
-      savedScrollY = window.scrollY || document.documentElement.scrollTop || 0;
-      document.body.style.position = 'fixed';
-      document.body.style.top = '-' + savedScrollY + 'px';
-      document.body.style.left = '0';
-      document.body.style.right = '0';
-    }
-    openCount++;
-  }
-  function unlockBodyScroll() {
-    openCount = Math.max(0, openCount - 1);
-    if (openCount === 0) {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.left = '';
-      document.body.style.right = '';
-      window.scrollTo(0, savedScrollY);
-    }
-  }
-
-  overlayIds.forEach(function(overlayId) {
-    var overlay = document.getElementById(overlayId);
-    if (!overlay) return;
-    new MutationObserver(function(muts) {
-      muts.forEach(function(m) {
-        if (m.attributeName !== 'class') return;
-        var isOpen = overlay.classList.contains('show');
-        var wasOpen = m.oldValue ? m.oldValue.indexOf('show') !== -1 : false;
-        if (isOpen && !wasOpen) lockBodyScroll();
-        else if (!isOpen && wasOpen) unlockBodyScroll();
-      });
-    }).observe(overlay, { attributes: true, attributeOldValue: true, attributeFilter: ['class'] });
-  });
-})();
+   El bloqueo del scroll de fondo mientras un modal está abierto lo
+   gestiona el único MutationObserver de "SCROLL LOCK" más arriba (ya
+   cubre los 6 modales). Antes había aquí un segundo mecanismo redundante
+   para solo 4 de los 6, con su propio contador independiente: al pisarse
+   ambos el mismo document.body.style.position, cerrar un modal podía
+   desbloquear el scroll de fondo mientras otro modal seguía abierto. */
 </script>
 
 <script>
 if ('serviceWorker' in navigator) {
-  // ═══ REGISTRO REAL DEL SERVICE WORKER RAÍZ (sw.js) ═══
-  // ANTES: nada en el código registraba sw.js — el comentario decía que
-  // "OneSignal se encarga de ello", pero OneSignal registra su PROPIO
-  // worker en push/onesignal/OneSignalSDKWorker.js con un scope distinto
-  // (subcarpeta), no el sw.js raíz. Resultado: sin SW controlando la app,
-  // iOS PWA podía quedarse pegado a versiones antiguas del HTML/CSS
-  // indefinidamente, incluso tras "actualizar" — esto explica por qué
-  // cambios de código no se reflejaban en el teléfono pese a redeploys.
-  navigator.serviceWorker.register('sw.js').then(function(reg) {
-    // Si ya había un SW controlando la página y llega uno nuevo (activate
-    // de una versión más reciente de sw.js), recargamos UNA vez para que
-    // la pestaña/PWA abierta tome inmediatamente el HTML/CSS/JS nuevos.
-    var reloading = false;
-    navigator.serviceWorker.addEventListener('controllerchange', function() {
-      if (reloading) return;
-      reloading = true;
-      window.location.reload();
-    });
-    reg.update();
-  }).catch(function(e) { console.log('[SW] registro raíz falló:', e && e.message); });
+  // ═══ SERVICE WORKER ÚNICO ═══
+  // OneSignal.init() (arriba, con serviceWorkerPath:"OneSignalSDKWorker.js")
+  // ya registra el único service worker de la app en la raíz — no hay que
+  // registrar nada aparte aquí. Solo necesitamos: (1) recargar la pestaña
+  // cuando llega una versión nueva del worker, y (2) limpiar registros
+  // viejos que puedan quedar de la versión anterior con DOS workers.
+  var reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    if (reloading) return;
+    reloading = true;
+    window.location.reload();
+  });
 
-  // ═══ LIMPIEZA DE REGISTROS HUÉRFANOS ═══
-  // BUG CORREGIDO: la condición anterior comparaba scriptURL contra la
-  // substring 'sw.js', pero el worker de OneSignal se llama
-  // "OneSignalSDKWorker.js" (NO contiene "sw.js") — así que esta limpieza
-  // desregistraba el worker de OneSignal EN CADA CARGA DE PÁGINA, matando
-  // la suscripción push silenciosamente. Ahora se conservan ambos workers
-  // legítimos (el raíz y el de push/onesignal/) y solo se elimina
-  // cualquier otro registro realmente huérfano (de versiones muy antiguas).
+  // ═══ LIMPIEZA DE REGISTROS DE LA VERSIÓN ANTERIOR (dos workers) ═══
+  // Antes había sw.js en la raíz + OneSignalSDKWorker.js anidado en
+  // push/onesignal/ con scope propio — dos registros. Ahora solo debe
+  // quedar UNO: OneSignalSDKWorker.js con scope exactamente "/AEDIS_APP/".
+  // A los usuarios que ya tenían la app instalada con la versión anterior
+  // hay que limpiarles activamente los registros viejos (scope antiguo
+  // /AEDIS_APP/push/onesignal/, o el sw.js suelto) para que no seguir
+  // compitiendo por el control de la página.
+  var expectedScope = location.origin + '/AEDIS_APP/';
   navigator.serviceWorker.getRegistrations().then(function(regs) {
     regs.forEach(function(reg) {
-      var url = (reg.active && reg.active.scriptURL) || '';
-      var isKnown = url.indexOf('/sw.js') !== -1 || url.indexOf('OneSignalSDKWorker.js') !== -1;
-      if (url && !isKnown) reg.unregister();
+      var url = (reg.active && reg.active.scriptURL) || (reg.installing && reg.installing.scriptURL) || (reg.waiting && reg.waiting.scriptURL) || '';
+      var isCurrent = url.indexOf('OneSignalSDKWorker.js') !== -1 && reg.scope === expectedScope;
+      if (!isCurrent) reg.unregister();
     });
   });
+
+  // ═══ ACCESO A diagnosePush() DESDE LA UI ═══
+  // 5 toques rápidos (menos de 2s entre cada uno) sobre el título de la
+  // barra superior ("AEDIS" / "PARTE DE TRABAJO" / etc.) lanzan el
+  // autodiagnóstico de push. Sin esto, en iPhone sin Mac cerca es
+  // imposible ejecutar diagnosePush() manualmente (no hay consola).
+  (function() {
+    var navTitleEl = document.getElementById('navTitle');
+    if (!navTitleEl) return;
+    var tapCount = 0, tapTimer = null;
+    navTitleEl.addEventListener('click', function() {
+      tapCount++;
+      if (tapTimer) clearTimeout(tapTimer);
+      tapTimer = setTimeout(function(){ tapCount = 0; }, 2000);
+      if (tapCount >= 5) {
+        tapCount = 0;
+        clearTimeout(tapTimer);
+        diagnosePush();
+      }
+    });
+  })();
 
   // ═══ NAVBAR HIDE-ON-SCROLL (estilo Tinkoff) ═══
   // Al hacer scroll hacia abajo, la barra superior se oculta deslizándose
