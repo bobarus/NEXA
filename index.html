@@ -115,6 +115,11 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);pad
 .nav.nav-hidden{transform:translateY(-100%);}
 .nav-center{flex:1;text-align:center}
 .nav-title{font-size:17px;font-weight:800;color:#000;letter-spacing:.3px;text-transform:uppercase}
+/* Pedido: mostrar el nombre del usuario en negrita en la cabecera de
+   todas las pantallas — antes solo se veía el título genérico de la
+   pantalla ("PARTE DE TRABAJO"/"Aprobaciones"/"Panel admin"). Ahora ese
+   título pasa a subtítulo pequeño debajo del nombre. */
+.nav-subtitle{font-size:11px;font-weight:600;color:#8e8e93;letter-spacing:.2px;text-transform:uppercase;margin-top:1px}
 .nav-side{width:112px;display:flex;justify-content:center;align-items:center}
 .nav-side.right{justify-content:flex-end;gap:4px}
 .globe-btn{width:52px;height:44px;border-radius:15px;background:transparent;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;touch-action:manipulation;transition:background .15s}
@@ -275,7 +280,11 @@ body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);pad
 
 /* PIN */
 .pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:0 24px;text-align:center;width:100%;gap:0;overflow:hidden}
-body.pin-mode{padding-top:0 !important;overflow:hidden}
+/* BUG CORREGIDO: solo se anulaba el padding-top del body en modo PIN — el
+   padding-bottom (reservado para la barra de pestañas inferior, que en
+   esta pantalla no existe) seguía aplicado, así que el contenido
+   centrado quedaba desplazado hacia arriba en vez de centrado real. */
+body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidden}
 .pin-logo{display:none}
 .pin-title{font-size:22px;font-weight:700;color:#000;margin-bottom:4px}
 .pin-sub{font-size:14px;color:#8e8e93;font-weight:400;margin-bottom:28px}
@@ -349,12 +358,12 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 .mg-photos{display:flex;gap:8px;margin-bottom:10px}
 .mg-photo-link{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#f2f2f7;border:.5px solid #e5e5ea;border-radius:10px;padding:10px;font-size:12px;font-weight:500;color:#007AFF;text-decoration:none}
 .mg-photo-link svg,.mg-photo-link i{width:14px;height:14px;font-size:14px;stroke:#007AFF;fill:none;stroke-width:2;stroke-linecap:round;color:#007AFF}
-.mg-actions{display:flex;gap:8px}
-.mg-btn{flex:1;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation}
-.mg-btn-approve{background:#34c759;color:#fff}
+.mg-actions{display:flex;gap:10px}
+.mg-btn{flex:1;border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation}
+.mg-btn-approve{background:linear-gradient(160deg,#1c8a49,#22b862);color:#fff;box-shadow:0 10px 20px -8px rgba(34,184,98,.5)}
 .mg-btn-approve:active{opacity:.88}
-.mg-btn-reject{background:#fff0f0;color:#ff3b30;border:.5px solid #ffd0cc}
-.mg-btn-reject:active{background:#ffe0dc}
+.mg-btn-reject{background:#fdece9;color:#e0433a;border:none}
+.mg-btn-reject:active{background:#fadcd7}
 
 /* MODALS */
 .mg-modal-overlay{display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.35);align-items:flex-end;justify-content:center}
@@ -394,21 +403,30 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 .ad-month-body{margin-bottom:2px}
 .ad-flt-btn{padding:5px 12px;border-radius:20px;border:none;background:#f2f2f7;font-family:inherit;font-size:12px;font-weight:500;color:#636366;cursor:pointer;touch-action:manipulation}
 .ad-flt-btn.active{background:#007AFF;color:#fff}
+.mi-seg{display:flex;gap:4px;background:#f2f2f7;border-radius:12px;padding:3px;margin:0 16px 14px}
+.mi-seg-btn{flex:1;padding:8px 0;border:none;border-radius:9px;background:transparent;font-family:inherit;font-size:13px;font-weight:600;color:#8e8e93;cursor:pointer;touch-action:manipulation;transition:background .15s,color .15s}
+.mi-seg-btn.active{background:#fff;color:#000;box-shadow:0 1px 3px rgba(0,0,0,.12)}
 #adFilterToggle.has-filters{background:#e5f0ff;border-color:#007AFF}
 #adFilterToggle.has-filters i,#adFilterToggle.has-filters svg{color:#007AFF;stroke:#007AFF}
 
-/* DETAIL MODAL CONTENT */
-.det-group{background:#fff;border-radius:12px;border:.5px solid #e5e5ea;margin-bottom:10px;overflow:hidden;padding:12px}
-.det-group-title{font-size:13px;font-weight:600;color:#000;margin-bottom:10px;letter-spacing:-.1px}
+/* DETAIL MODAL CONTENT — estilo "Soft Elevated" (referencias aprobadas) */
+.det-group{background:#fff;border-radius:20px;border:.5px solid #ececee;margin-bottom:12px;overflow:hidden;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.03),0 10px 24px -14px rgba(0,0,0,.12)}
+.det-group-title{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:#000;margin-bottom:12px;letter-spacing:-.1px}
+.det-group-icon{width:22px;height:22px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.det-group-icon.ic-trabajo{background:#e8f0ff}
+.det-group-icon.ic-trabajo i{color:#3a7afe}
+.det-group-icon.ic-materiales{background:#fdf2e3}
+.det-group-icon.ic-materiales i{color:#e8930c}
+.det-group-icon i{font-size:13px}
 .det-group-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 .rd-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-.rd-field{background:#f9f9f9;border-radius:10px;padding:9px 12px}
-.rd-field b{display:block;color:#8e8e93;font-weight:600;text-transform:uppercase;font-size:9px;letter-spacing:.3px;margin-bottom:2px}
-.rd-field span{color:#000;font-weight:500;font-size:13px}
-.rd-field-full{background:#f9f9f9;border-radius:10px;padding:10px 12px;margin-bottom:8px}
-.rd-text{background:#f9f9f9;border-radius:10px;padding:10px 12px;font-size:13px;color:#000;line-height:1.5;margin-bottom:8px}
-.rd-text b{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;margin-bottom:3px;font-weight:700}
-.rd-photo-link{display:flex;align-items:center;justify-content:center;gap:6px;background:#f2f2f7;border:.5px solid #e5e5ea;border-radius:10px;padding:10px;font-size:13px;font-weight:500;color:#007AFF;text-decoration:none;margin-top:6px;width:100%;font-family:inherit;cursor:pointer;touch-action:manipulation}
+.rd-field{background:#f7f7f8;border-radius:14px;padding:11px 13px}
+.rd-field b{display:block;color:#9a9a9e;font-weight:600;text-transform:uppercase;font-size:9px;letter-spacing:.3px;margin-bottom:3px}
+.rd-field span{color:#111;font-weight:600;font-size:13px}
+.rd-field-full{background:#f7f7f8;border-radius:14px;padding:12px 13px;margin-bottom:8px}
+.rd-text{background:#f7f7f8;border-radius:14px;padding:12px 13px;font-size:13px;color:#111;line-height:1.5;margin-bottom:8px}
+.rd-text b{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#9a9a9e;margin-bottom:4px;font-weight:700}
+.rd-photo-link{display:flex;align-items:center;justify-content:center;gap:6px;background:#f7f7f8;border:.5px solid #ececee;border-radius:14px;padding:11px;font-size:13px;font-weight:600;color:#007AFF;text-decoration:none;margin-top:6px;width:100%;font-family:inherit;cursor:pointer;touch-action:manipulation}
 .rd-photo-link svg,.rd-photo-link i{width:15px;height:15px;font-size:15px;stroke:#007AFF;fill:none;stroke-width:2;stroke-linecap:round;color:#007AFF}
 
 /* TABBAR — cápsula flotante estilo Uber/Ride, con acento azul.
@@ -444,11 +462,19 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
   padding:11px 16px;min-height:auto;border-radius:999px;transition:background .2s;
 }
 .bottom-tab .tab-icon{width:auto;height:auto;border-radius:0;display:flex;align-items:center;justify-content:center;transition:none;background:transparent !important}
-.bottom-tab i{font-size:22px;color:#98989d;line-height:1;display:block;font-style:normal;transition:color .15s}
-.bottom-tab span{font-size:14px;font-weight:600;color:#98989d;display:none;transition:color .15s;white-space:nowrap}
-.bottom-tab.active{background:#007AFF;padding:11px 18px}
+.bottom-tab i{font-size:20px;color:#98989d;line-height:1;display:block;font-style:normal;transition:color .15s}
+/* BUG CORREGIDO: la etiqueta de texto solo se mostraba en la pestaña
+   activa (display:none en las demás) — al cambiar de pestaña, el ancho
+   total de la píldora cambiaba (una gana texto, otra lo pierde), y como
+   toda la barra se centra con left:0;right:0;margin:0 auto, el cambio de
+   ancho hacía que TODA la barra "saltara" horizontalmente en cada tap,
+   con scroll o al abrir una pestaña nueva. Mostrando el texto siempre en
+   todas las pestañas, el ancho de la píldora es constante — solo cambia
+   el color, nunca la posición. */
+.bottom-tab span{font-size:13px;font-weight:600;color:#98989d;transition:color .15s;white-space:nowrap}
+.bottom-tab.active{background:#007AFF;padding:11px 16px}
 .bottom-tab.active i{color:#fff}
-.bottom-tab.active span{color:#fff;display:block}
+.bottom-tab.active span{color:#fff}
 .bottom-tab:active{opacity:.75}
 .tab-icon{position:relative}
 .tab-badge{
@@ -511,6 +537,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
   </div>
   <div class="nav-center">
     <div class="nav-title" id="navTitle">AEDIS</div>
+    <div class="nav-subtitle" id="navSubtitle"></div>
   </div>
   <div class="nav-side right" style="position:relative">
     <div class="globe-btn notif-bell" id="notifBellWrap" onclick="openNotifModal()">
@@ -566,12 +593,25 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 </div>
 
 <!-- ═══ MODAL: EDITAR INFORME RECHAZADO (in-place, sin cambiar de pantalla) ═══ -->
+<!-- BUG CORREGIDO / pedido: antes era una hoja inferior limitada a 88vh
+     con un "modal-handle" decorativo que sugería arrastrar para cerrar,
+     pero ese gesto se quitó hace tiempo (ver comentario más abajo, bloque
+     "MODALES") — el handle se quedó ahí sin función, y el scroll interno
+     limitado a 88vh dentro de un body con scroll bloqueado (SCROLL LOCK)
+     daba lugar a comportamientos de scroll poco fiables. Ahora es un
+     diálogo a pantalla completa (100dvh) con cierre explícito por botón. -->
 <div id="editReportModal" class="mg-modal-overlay" onclick="if(event.target===this)closeEditReportModal()">
-  <div class="mg-modal" style="max-height:88vh;overflow:hidden;display:flex;flex-direction:column;padding:0">
+  <div class="mg-modal mg-modal-full" style="height:100dvh;max-height:100dvh;border-radius:0;overflow:hidden;display:flex;flex-direction:column;padding:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 14px) 18px 12px;border-bottom:.5px solid #f0f0f0;flex-shrink:0">
+      <div>
+        <div class="mg-modal-title" id="erTitle" style="margin-bottom:0">Editar informe</div>
+        <div class="mg-modal-sub" id="erSub" style="margin-bottom:0">—</div>
+      </div>
+      <button type="button" onclick="closeEditReportModal()" aria-label="Cerrar" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#f2f2f7;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation">
+        <i class="ti ti-x" style="font-size:17px;color:#000"></i>
+      </button>
+    </div>
     <div style="overflow-y:auto;flex:1;padding:16px 18px 8px;-webkit-overflow-scrolling:touch">
-      <div class="modal-handle" style="width:36px;height:4px;background:#c7c7cc;border-radius:2px;margin:0 auto 16px"></div>
-      <div class="mg-modal-title" id="erTitle">Editar informe</div>
-      <div class="mg-modal-sub" id="erSub">—</div>
 
       <div class="mi-comment full" style="margin:12px 0" id="erCommentBlock"><b id="erCommentLabel">Comentario del manager</b><span id="erComment"></span></div>
 
@@ -676,21 +716,37 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 
     <div class="slabel"><span id="sl-ident">Identificación</span><span class="req-badge" id="req-badge-obligatorio">• obligatorio</span></div>
     <div class="card">
-      <div class="row" id="rCliente">
+      <div class="mode-header" id="rCliente">
         <div class="rbadge b-blue"><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></div>
         <span class="rlabel"><span id="lbl-cliente">Cliente</span> <span class="req-dot"></span></span>
-        <div class="sel-wrap">
-          <select class="rselect" id="cliente" onchange="onSel(this,'rCliente')"></select>
-          <span class="rchev"><svg viewBox="0 0 8 14"><polyline points="1,1 7,7 1,13"/></svg></span>
+        <div class="mode-toggle">
+          <button class="ct on" id="ctClL" onclick="setClienteMode('list')"><span id="ct-cll-lbl">Lista</span></button>
+          <button class="ct" id="ctClN" onclick="setClienteMode('new')"><span id="ct-cln-lbl">Nuevo</span></button>
         </div>
       </div>
-      <div class="row" id="rObra">
+      <div class="mode-list-row" id="clienteListRow">
+        <span style="flex:1"></span>
+        <select class="rselect" id="cliente" onchange="onSel(this,'rCliente')"></select>
+        <span class="rchev"><svg viewBox="0 0 8 14"><polyline points="1,1 7,7 1,13"/></svg></span>
+      </div>
+      <div class="mode-text-row" id="clienteTextRow">
+        <input class="mode-text-input" id="clienteNew" placeholder="Nombre del cliente..." oninput="clearErr('rCliente');updateBtn()">
+      </div>
+      <div class="mode-header" id="rObra">
         <div class="rbadge b-blue"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
         <span class="rlabel"><span id="lbl-obra">Obra</span> <span class="req-dot"></span></span>
-        <div class="sel-wrap">
-          <select class="rselect" id="obra" onchange="onSel(this,'rObra')"></select>
-          <span class="rchev"><svg viewBox="0 0 8 14"><polyline points="1,1 7,7 1,13"/></svg></span>
+        <div class="mode-toggle">
+          <button class="ct on" id="ctObL" onclick="setObraMode('list')"><span id="ct-obl-lbl">Lista</span></button>
+          <button class="ct" id="ctObN" onclick="setObraMode('new')"><span id="ct-obn-lbl">Nueva</span></button>
         </div>
+      </div>
+      <div class="mode-list-row" id="obraListRow">
+        <span style="flex:1"></span>
+        <select class="rselect" id="obra" onchange="onSel(this,'rObra')"></select>
+        <span class="rchev"><svg viewBox="0 0 8 14"><polyline points="1,1 7,7 1,13"/></svg></span>
+      </div>
+      <div class="mode-text-row" id="obraTextRow">
+        <input class="mode-text-input" id="obraNew" placeholder="Nombre de la obra..." oninput="clearErr('rObra');updateBtn()">
       </div>
       <div class="row" id="rFecha">
         <div class="rbadge b-blue"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
@@ -701,11 +757,12 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 
     <div class="slabel"><span id="sl-personal">Personal</span></div>
     <div class="card">
-      <div class="row">
-        <div class="rbadge b-green"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M6.168 18.849A4 4 0 0 1 10 16h4a4 4 0 0 1 3.834 2.855"/></svg></div>
-        <span class="rlabel" id="lbl-operario">Operario</span>
-        <span class="rinput" id="operarioDisplay" style="font-weight:600">—</span>
-      </div>
+      <!-- BUG CORREGIDO / pedido: se quitó la fila "Operario" (siempre
+           mostraba el propio nombre del usuario logueado — redundante,
+           él ya sabe quién es). El valor real que se envía al guardar el
+           informe sigue siendo currentUser.nombre directamente en el
+           payload (ver saveReport), así que quitar esta fila puramente
+           visual no afecta el envío. -->
       <div class="row">
         <div class="rbadge b-green"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M16 11h6m-3-3v6"/></svg></div>
         <span class="rlabel" id="lbl-ayudante">Ayudante</span>
@@ -821,7 +878,12 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 
   <!-- ── SUBPANTALLA: MIS INFORMES ── -->
   <div id="opPanelMine" style="display:none">
+    <div class="mi-seg">
+      <button class="mi-seg-btn active" id="miSegPending" onclick="switchMiSubtab('pending')"></button>
+      <button class="mi-seg-btn" id="miSegApproved" onclick="switchMiSubtab('approved')"></button>
+    </div>
     <div id="miList"></div>
+    <div id="miListApproved" style="display:none"></div>
   </div>
 
 </div>
@@ -837,13 +899,13 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
       <div class="success-sub" id="successSub">El parte ha sido registrado correctamente</div>
     </div>
     <div class="success-details-card"><div id="detailRows"></div></div>
-  </div>
   <div class="ss-footer">
     <button class="btn-share" onclick="shareRecord()">
       <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
       Compartir
     </button>
     <button class="btn-new" onclick="startNew()">+ Nuevo informe</button>
+  </div>
   </div>
 </div>
 
@@ -875,8 +937,7 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 
 <!-- MODAL: DETALLE DE INFORME (Mis informes) -->
 <div class="mg-modal-overlay" id="reportDetailModal" onclick="if(event.target===this)closeReportDetail()">
-  <div class="mg-modal" style="max-height:88vh;overflow-y:auto">
-    <div class="modal-handle" style="width:36px;height:4px;background:#c7c7cc;border-radius:2px;margin:0 auto 16px"></div>
+  <div class="mg-modal" style="height:100dvh;max-height:100dvh;border-radius:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:calc(env(safe-area-inset-top,0px) + 20px)">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
       <div style="min-width:0">
         <div class="mg-modal-title" id="rdTitle">—</div>
@@ -895,10 +956,9 @@ body.pin-mode{padding-top:0 !important;overflow:hidden}
 
 <!-- MODAL: DETALLE Y DECISIÓN (Manager) -->
 <div class="mg-modal-overlay" id="mgDetailModal" onclick="if(event.target===this)closeManagerDetail()">
-  <div class="mg-modal" style="max-height:88vh;overflow:hidden;display:flex;flex-direction:column;padding:0">
+  <div class="mg-modal" style="height:100dvh;max-height:100dvh;border-radius:0;overflow:hidden;display:flex;flex-direction:column;padding:0">
     <!-- Скроллируемый контент -->
-    <div style="overflow-y:auto;flex:1;padding:16px 18px 8px;-webkit-overflow-scrolling:touch">
-      <div class="modal-handle" style="width:36px;height:4px;background:#c7c7cc;border-radius:2px;margin:0 auto 16px"></div>
+    <div style="overflow-y:auto;flex:1;padding:calc(env(safe-area-inset-top,0px) + 20px) 18px 8px;-webkit-overflow-scrolling:touch">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
         <div style="min-width:0">
           <div class="mg-modal-title" id="mgdTitle">—</div>
@@ -1133,11 +1193,19 @@ var LANGS = {
     status_pending:'Pendiente', status_approved:'Aprobado', status_rejected:'Rechazado',
     greet_worker:'Operario', greet_manager:'Manager', greet_admin:'Administrador',
     ph_select:'Seleccione', ph_no_assistant:'Sin ayudante', lbl_periodo:'Período',
-    ct_lista:'Lista', ct_otro:'Otro', ct_nueva:'Nueva',
+    ct_lista:'Lista', ct_otro:'Otro', ct_nueva:'Nueva', ct_nuevo:'Nuevo', ct_nueva_obra:'Nueva',
+    ph_cliente_new:'Nombre del cliente...', ph_obra_new:'Nombre de la obra...',
+    mi_subtab_pending:'Esperando', mi_subtab_approved:'Aprobados', no_approved:'No tienes informes aprobados',
+    perm_banner_title:'Activa las notificaciones',
+    perm_banner_worker:'Te avisaremos en cuanto tu informe sea aprobado o rechazado',
+    perm_banner_manager:'Te avisaremos cada vez que un operario envíe un informe para aprobar',
+    perm_banner_admin:'Te avisaremos de cada informe nuevo, aprobado o rechazado',
+    perm_banner_btn:'Activar', install_banner_title:'Instala la app para recibir avisos',
+    install_banner_body:'Pulsa Compartir y luego "Añadir a pantalla de inicio" para no perderte ninguna novedad',
   },
   ru: {
     pin_title:'Введите код', pin_sub:'PIN из 4 цифр', pin_ok:'OK', pin_error:'Неверный код',
-    nav_new:'ЧАСТЬ РАБОТЫ', nav_manager:'Согласования', nav_admin:'Панель админа',
+    nav_new:'ОТЧЁТ', nav_manager:'Согласования', nav_admin:'Панель админа',
     tab_nuevo:'Новый', tab_mis:'Мои отчёты', tab_pending:'На согласовании', tab_hist:'История',
     tab_journal:'Журнал', tab_analisis:'Аналитика',
     grp_ident:'Идентификация', grp_personal:'Персонал', grp_trabajo:'Работа', grp_materiales:'Материалы',
@@ -1167,7 +1235,15 @@ var LANGS = {
     status_pending:'Ожидает', status_approved:'Одобрено', status_rejected:'Отклонено',
     greet_worker:'Рабочий', greet_manager:'Менеджер', greet_admin:'Администратор',
     ph_select:'Выбрать', ph_no_assistant:'Без помощника', lbl_periodo:'Период',
-    ct_lista:'Список', ct_otro:'Другой', ct_nueva:'Новая',
+    ct_lista:'Список', ct_otro:'Другой', ct_nueva:'Новая', ct_nuevo:'Новый', ct_nueva_obra:'Новый',
+    ph_cliente_new:'Название клиента...', ph_obra_new:'Название объекта...',
+    mi_subtab_pending:'Ожидают', mi_subtab_approved:'Одобрены', no_approved:'Нет одобренных отчётов',
+    perm_banner_title:'Включите уведомления',
+    perm_banner_worker:'Мы сообщим, как только ваш отчёт одобрят или отклонят',
+    perm_banner_manager:'Мы сообщим, когда рабочий отправит отчёт на согласование',
+    perm_banner_admin:'Мы сообщим о каждом новом, одобренном или отклонённом отчёте',
+    perm_banner_btn:'Включить', install_banner_title:'Установите приложение, чтобы получать уведомления',
+    install_banner_body:'Нажмите «Поделиться», затем «На экран «Домой»» — так вы не пропустите ни одного уведомления',
   },
   en: {
     pin_title:'Enter your code', pin_sub:'4-digit PIN', pin_ok:'OK', pin_error:'Incorrect code',
@@ -1201,7 +1277,15 @@ var LANGS = {
     status_pending:'Pending', status_approved:'Approved', status_rejected:'Rejected',
     greet_worker:'Worker', greet_manager:'Manager', greet_admin:'Administrator',
     ph_select:'Select', ph_no_assistant:'No assistant', lbl_periodo:'Period',
-    ct_lista:'List', ct_otro:'Other', ct_nueva:'New',
+    ct_lista:'List', ct_otro:'Other', ct_nueva:'New', ct_nuevo:'New', ct_nueva_obra:'New',
+    ph_cliente_new:'Client name...', ph_obra_new:'Site name...',
+    mi_subtab_pending:'Pending', mi_subtab_approved:'Approved', no_approved:'You have no approved reports',
+    perm_banner_title:'Turn on notifications',
+    perm_banner_worker:"We'll let you know as soon as your report is approved or rejected",
+    perm_banner_manager:"We'll let you know whenever a worker submits a report for approval",
+    perm_banner_admin:"We'll let you know about every new, approved or rejected report",
+    perm_banner_btn:'Turn on', install_banner_title:'Install the app to get notified',
+    install_banner_body:'Tap Share, then "Add to Home Screen" so you never miss an update',
   }
 };
 
@@ -1221,10 +1305,12 @@ function applyLang() {
   if (pinSub)   pinSub.textContent   = t('pin_sub');
   setEl('pinOkBtn', t('pin_ok'));
 
-  // Nav
+  // Nav — el nombre del usuario va en navTitle (no se traduce, es un
+  // nombre propio); el título de pantalla que antes iba ahí ahora es el
+  // subtítulo pequeño debajo, y ese sí se traduce al cambiar de idioma.
   if (currentUser) {
     var roleKey = {operario:'nav_new', manager:'nav_manager', admin:'nav_admin'};
-    setEl('navTitle', t(roleKey[currentUser.rol] || 'nav_new'));
+    setEl('navSubtitle', t(roleKey[currentUser.rol] || 'nav_new'));
   }
 
   // Tabbar
@@ -1233,6 +1319,9 @@ function applyLang() {
     var el = document.getElementById(id);
     if (el) { var s = el.querySelector('span'); if (s) s.textContent = t(tabs[id]); }
   });
+
+  setEl('miSegPending',  t('mi_subtab_pending'));
+  setEl('miSegApproved', t('mi_subtab_approved'));
 
   // Section labels
   setEl('sl-ident',      t('grp_ident'));
@@ -1244,7 +1333,6 @@ function applyLang() {
   setEl('lbl-cliente',   t('lbl_cliente'));
   setEl('lbl-obra',      t('lbl_obra'));
   setEl('lbl-fecha',     t('lbl_fecha'));
-  setEl('lbl-operario',  t('lbl_operario'));
   setEl('lbl-ayudante',  t('lbl_ayudante'));
   setEl('lbl-vehiculo',  t('lbl_vehiculo'));
   setEl('lbl-tipo',      t('lbl_tipo'));
@@ -1276,6 +1364,8 @@ function applyLang() {
 
   // Placeholders
   setPh('vehiculo',        t('ph_vehiculo'));
+  setPh('clienteNew',      t('ph_cliente_new'));
+  setPh('obraNew',         t('ph_obra_new'));
   setPh('tipoNew',         t('ph_tipo_new'));
   setPh('trabajos',        t('ph_trabajos'));
   setPh('companiaNew',     t('ph_compania_new'));
@@ -1340,6 +1430,10 @@ function applyLang() {
   setEl('ct-tn-lbl', t('ct_otro'));
   setEl('ct-cl-lbl', t('ct_lista'));
   setEl('ct-cn-lbl', t('ct_nueva'));
+  setEl('ct-cll-lbl', t('ct_lista'));
+  setEl('ct-cln-lbl', t('ct_nuevo'));
+  setEl('ct-obl-lbl', t('ct_lista'));
+  setEl('ct-obn-lbl', t('ct_nueva_obra'));
 
   // Лейблы фильтров (раскрывающаяся панель)
   setEl('flt-estado-lbl',   t('flt_label_estado'));
@@ -1548,6 +1642,7 @@ function changeUser() {
 
   document.getElementById('navExit').style.visibility = 'hidden';
   document.getElementById('navTitle').textContent = 'AEDIS';
+  document.getElementById('navSubtitle').textContent = '';
   document.getElementById('mainNav').style.display = 'none';
   document.body.classList.add('pin-mode');
   renderPinDots();
@@ -1640,8 +1735,12 @@ function routeToRoleScreen() {
   // que aunque el usuario tuviera ruso o inglés seleccionado, el título
   // de la barra superior siempre volvía a aparecer en español en cada
   // login/ruteo. Usa las mismas claves que applyLang() (nav_new/nav_manager/nav_admin).
+  // Pedido: la cabecera ahora muestra el NOMBRE del usuario en negrita
+  // (navTitle) — el título de pantalla que antes iba ahí pasa a ser el
+  // subtítulo pequeño (navSubtitle), igual en las tres pantallas/roles.
   var titleKeys = { operario: 'nav_new', manager: 'nav_manager', admin: 'nav_admin' };
-  document.getElementById('navTitle').textContent = t(titleKeys[currentUser.rol] || 'nav_new');
+  document.getElementById('navTitle').textContent = currentUser.nombre || 'AEDIS';
+  document.getElementById('navSubtitle').textContent = t(titleKeys[currentUser.rol] || 'nav_new');
 
   var initPromise = Promise.resolve();
   if (currentUser.rol === 'operario') {
@@ -1768,7 +1867,32 @@ function refreshMyReportsBackground() {
 }
 
 /* ════════ OPERARIO: MODES (tipo / compania) ════════ */
-var tipoMode = 'list', compMode = 'list';
+var tipoMode = 'list', compMode = 'list', clienteMode = 'list', obraMode = 'list';
+
+function setClienteMode(m) {
+  clienteMode = m;
+  document.getElementById('ctClL').classList.toggle('on', m==='list');
+  document.getElementById('ctClN').classList.toggle('on', m!=='list');
+  document.getElementById('clienteListRow').style.display = m==='list' ? 'flex' : 'none';
+  document.getElementById('clienteTextRow').style.display = m==='new' ? 'block' : 'none';
+  clearErr('rCliente');
+  if (m==='list') document.getElementById('clienteNew').value='';
+  else { document.getElementById('cliente').selectedIndex=0; document.getElementById('cliente').classList.remove('has-val'); }
+  updateBtn();
+}
+function setObraMode(m) {
+  obraMode = m;
+  document.getElementById('ctObL').classList.toggle('on', m==='list');
+  document.getElementById('ctObN').classList.toggle('on', m!=='list');
+  document.getElementById('obraListRow').style.display = m==='list' ? 'flex' : 'none';
+  document.getElementById('obraTextRow').style.display = m==='new' ? 'block' : 'none';
+  clearErr('rObra');
+  if (m==='list') document.getElementById('obraNew').value='';
+  else { document.getElementById('obra').selectedIndex=0; document.getElementById('obra').classList.remove('has-val'); }
+  updateBtn();
+}
+function getCliente() { return clienteMode==='list' ? document.getElementById('cliente').value : document.getElementById('clienteNew').value.trim(); }
+function getObra()    { return obraMode==='list'    ? document.getElementById('obra').value    : document.getElementById('obraNew').value.trim(); }
 
 function setTipoMode(m) {
   tipoMode = m;
@@ -1800,8 +1924,8 @@ function clearErr(id) { var el=document.getElementById(id); if(el) el.classList.
 function updateBtn() {
   var horas = parseInt(document.getElementById('horas').value)||0;
   var ok = !!(
-    document.getElementById('cliente').value &&
-    document.getElementById('obra').value &&
+    getCliente() &&
+    getObra() &&
     document.getElementById('fecha').value &&
     getTipo() && horas > 0
   );
@@ -1854,8 +1978,15 @@ function compressImage(file, maxDim, quality) {
 function handlePhotoSelect(input, group) {
   var files = Array.from(input.files || []);
   var targetArr = group === 'obra' ? photosObraSelected : photosMatSelected;
+  // Se reduce de 1600 a 1280px / calidad 0.7: el backend sube cada foto a
+  // Drive en una llamada de red separada y secuencial (no hay subida en
+  // paralelo posible desde Apps Script) — cuanto más pesa cada foto, más
+  // tarda esa llamada y más probable que el conjunto entero tarde tanto
+  // que se sienta "colgado". Para ver el estado de una obra en el móvil
+  // 1280px es de sobra; el ahorro de peso se nota directamente en la
+  // velocidad de subida.
   var promises = files.map(function(file) {
-    return compressImage(file, 1600, 0.75).then(function(base64) {
+    return compressImage(file, 1280, 0.7).then(function(base64) {
       return { name: file.name.replace(/\.(heic|HEIC)$/, '.jpg'), type:'image/jpeg', data: base64 };
     });
   });
@@ -1904,8 +2035,8 @@ var _sharePayload = null;
 function saveRecord() {
   if (!document.getElementById('btnSave').classList.contains('ready')) {
     [
-      {id:'rCliente', v:document.getElementById('cliente').value},
-      {id:'rObra',    v:document.getElementById('obra').value},
+      {id:'rCliente', v:getCliente()},
+      {id:'rObra',    v:getObra()},
       {id:'rFecha',   v:document.getElementById('fecha').value},
       {id:'rTipo',    v:getTipo()},
       {id:'rHoras',   v:(parseInt(document.getElementById('horas').value)||0)>0?'1':''}
@@ -1925,8 +2056,8 @@ function saveRecord() {
   var payload = {
     action: 'save',
     fecha:      document.getElementById('fecha').value,
-    cliente:    document.getElementById('cliente').value,
-    obra:       document.getElementById('obra').value,
+    cliente:    getCliente(),
+    obra:       getObra(),
     operario:   currentUser.nombre,
     ayudante:   document.getElementById('ayudante').value,
     vehiculo:   document.getElementById('vehiculo').value,
@@ -1958,22 +2089,52 @@ function saveRecord() {
     var realId = result.id;
     // Если есть фото — загружаем в фоне с реальным ID
     if (photosObraSelected.length || photosMatSelected.length) {
-      fetch(WEBAPP_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: 'uploadReportPhotos',
-          id: realId,
-          fecha: payload.fecha,
-          operario: payload.operario,
-          photosObra: photosObraSelected,
-          photosMateriales: photosMatSelected
-        })
-      }).catch(function(){});
+      uploadPhotosWithRetry(realId, payload.fecha, payload.operario, photosObraSelected, photosMatSelected, 2);
     }
   })
   .catch(function(err){
     showToast(err.message || 'Error de conexión', true);
+  });
+}
+
+// BUG CORREGIDO: la subida de fotos se lanzaba con fetch(...).catch(function(){})
+// — un error o timeout (fotos grandes + varias fotos = payload pesado y
+// varias llamadas a Drive del lado del servidor, nada raro que tarde o
+// falle una vez) se ignoraba en silencio: el informe ya se había marcado
+// como "enviado con éxito" (UI optimista) y el trabajador nunca se
+// enteraba de que las fotos no llegaron a guardarse. Ahora se reintenta
+// automáticamente y, si aun así falla, se avisa explícitamente para que
+// el trabajador sepa que debe volver a intentarlo.
+function uploadPhotosWithRetry(id, fecha, operario, photosObra, photosMat, retriesLeft) {
+  fetch(WEBAPP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({
+      action: 'uploadReportPhotos',
+      id: id,
+      fecha: fecha,
+      operario: operario,
+      photosObra: photosObra,
+      photosMateriales: photosMat
+    })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(result){
+    if (!result || result.status !== 'ok') throw new Error(result && result.message || 'upload failed');
+    // Éxito: si el trabajador tiene la lista "Mis informes" abierta,
+    // refrescamos para que las fotos ya aparezcan sin que tenga que hacerlo él.
+    myReportsLoaded = false;
+    if (document.getElementById('opPanelMine') && document.getElementById('opPanelMine').style.display !== 'none') {
+      loadMyReports();
+    }
+  })
+  .catch(function(err){
+    if (retriesLeft > 0) {
+      setTimeout(function(){ uploadPhotosWithRetry(id, fecha, operario, photosObra, photosMat, retriesLeft - 1); }, 1500);
+    } else {
+      console.log('[fotos] fallo definitivo al subir fotos de ' + id + ':', err && err.message);
+      showToast('No se pudieron subir las fotos de ' + id + ' — vuelve a intentarlo desde el informe', true);
+    }
   });
 }
 
@@ -2049,7 +2210,7 @@ function startNew() {
 
 function clearForm(skip) {
   if (!skip && !confirm('¿Borrar todo?')) return;
-  ['vehiculo','trabajos','materiales','tipoNew','companiaNew','precio'].forEach(function(id){ document.getElementById(id).value=''; });
+  ['vehiculo','trabajos','materiales','tipoNew','companiaNew','clienteNew','obraNew','precio'].forEach(function(id){ document.getElementById(id).value=''; });
   ['cliente','obra','ayudante','tipo','compania'].forEach(function(id){
     var el = document.getElementById(id); el.selectedIndex=0; el.classList.remove('has-val');
   });
@@ -2058,7 +2219,7 @@ function clearForm(skip) {
   var d = new Date();
   document.getElementById('fecha').value = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   ['rCliente','rObra','rFecha','rTipo','rHoras'].forEach(clearErr);
-  setTipoMode('list'); setCompMode('list');
+  setTipoMode('list'); setCompMode('list'); setClienteMode('list'); setObraMode('list');
   photosObraSelected = []; photosMatSelected = [];
   renderThumbs('obra'); renderThumbs('materiales');
   updateBtn();
@@ -2105,6 +2266,91 @@ function shareReportDetailFromModal() {
   if (r) doShare(buildShareText(r));
 }
 
+var miActiveSubtab = 'pending';
+
+function switchMiSubtab(tab) {
+  miActiveSubtab = tab;
+  document.getElementById('miSegPending').classList.toggle('active', tab === 'pending');
+  document.getElementById('miSegApproved').classList.toggle('active', tab === 'approved');
+  document.getElementById('miList').style.display = tab === 'pending' ? 'block' : 'none';
+  document.getElementById('miListApproved').style.display = tab === 'approved' ? 'block' : 'none';
+}
+
+// Agrupa una lista de informes por mes (más reciente arriba, dentro de
+// cada mes también más reciente arriba) y devuelve el HTML — misma
+// lógica visual que renderAdminJournal, reutilizada aquí para que el
+// trabajador vea sus informes con la misma estructura que ve el admin.
+function buildMiGroupedHtml(list, groupPrefix, showRejectComment) {
+  if (!list.length) return '';
+  var now = new Date();
+  var curYear = now.getFullYear(), curMonth = now.getMonth();
+
+  var groups = {}, groupOrder = [];
+  list.forEach(function(r) {
+    var d = r.FECHA ? new Date(r.FECHA) : new Date(r.TIMESTAMP||0);
+    var key = d.getFullYear() + '-' + String(d.getMonth()).padStart(2,'0');
+    var label = MONTH_NAMES[d.getMonth()] + ' ' + d.getFullYear();
+    if (!groups[key]) { groups[key] = { label: label, records: [], year: d.getFullYear(), month: d.getMonth() }; groupOrder.push(key); }
+    groups[key].records.push(r);
+  });
+  groupOrder.sort(function(a, b){ return a < b ? 1 : -1; });
+  groupOrder.forEach(function(key){ groups[key].records.sort(function(a,b){ return new Date(b.TIMESTAMP||0) - new Date(a.TIMESTAMP||0); }); });
+
+  var collapsedKey = 'parte_mi_collapsed_' + currentPin;
+  var collapsed = {};
+  try { collapsed = JSON.parse(localStorage.getItem(collapsedKey) || '{}'); } catch(e) {}
+
+  var html = '';
+  groupOrder.forEach(function(key) {
+    var g = groups[key];
+    var domKey = groupPrefix + key;
+    var isCurMonth = (g.year === curYear && g.month === curMonth);
+    var isCollapsed = collapsed[domKey] !== undefined ? collapsed[domKey] : !isCurMonth;
+
+    html += '<div class="ad-month-header" onclick="toggleMiMonth(\''+domKey+'\')" data-key="'+domKey+'">';
+    html += '<div style="display:flex;align-items:center;gap:8px">';
+    html += '<svg style="width:14px;height:14px;stroke:#8e8e93;fill:none;stroke-width:2.5;stroke-linecap:round;transition:transform .2s;transform:rotate('+(isCollapsed?'-90deg':'0deg')+')" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>';
+    html += '<span style="font-size:13px;font-weight:700;color:#000">'+g.label+'</span>';
+    html += '<span style="font-size:11px;color:#8e8e93">'+g.records.length+'</span>';
+    html += '</div></div>';
+
+    html += '<div class="ad-month-body" id="mim_'+domKey+'" style="display:'+(isCollapsed?'none':'block')+'">';
+    g.records.forEach(function(r){
+      var statusLabel = r.STATUS === 'pending' ? t('status_pending') : (r.STATUS === 'approved' ? t('status_approved') : t('status_rejected'));
+      var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
+      html += '<div class="mi-card st-'+r.STATUS+(r.STATUS==='rejected'?' card-shadow-rejected':'')+'" onclick="openReportDetail(\''+r.ID+'\')">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">';
+      html += '<span style="font-size:11px;color:#8e8e93">'+fecha+'</span>';
+      html += '<span class="mi-badge st-'+r.STATUS+'">'+statusLabel+'</span>';
+      html += '</div>';
+      html += '<div style="font-size:11px;color:#8e8e93;margin-bottom:8px">'+r.OPERARIO+'</div>';
+      html += '<div style="font-size:20px;font-weight:700;color:#000;letter-spacing:-.3px;margin-bottom:3px">'+r.ID+'</div>';
+      html += '<div style="font-size:12px;color:#8e8e93">'+r.CLIENTE+' · '+r.OBRA+'</div>';
+      if (showRejectComment && r.STATUS === 'rejected' && r.COMENTARIO_MANAGER) {
+        html += '<div class="mi-comment" style="margin-top:8px"><b>'+t('lbl_comentario')+'</b>'+r.COMENTARIO_MANAGER+'</div>';
+        html += '<button class="mi-edit-btn" style="margin-top:8px" onclick="event.stopPropagation();openEditReport(\''+r.ID+'\')">'+t('btn_editar_reenviar')+'</button>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  return html;
+}
+
+function toggleMiMonth(domKey) {
+  var body = document.getElementById('mim_' + domKey);
+  var header = document.querySelector('.ad-month-header[data-key="'+domKey+'"]');
+  var arrow = header ? header.querySelector('svg') : null;
+  var isNowCollapsed = body && body.style.display === 'none';
+  if (body) body.style.display = isNowCollapsed ? 'block' : 'none';
+  if (arrow) arrow.style.transform = isNowCollapsed ? 'rotate(0deg)' : 'rotate(-90deg)';
+  var collapsedKey = 'parte_mi_collapsed_' + currentPin;
+  var collapsed = {};
+  try { collapsed = JSON.parse(localStorage.getItem(collapsedKey) || '{}'); } catch(e) {}
+  collapsed[domKey] = !isNowCollapsed;
+  try { localStorage.setItem(collapsedKey, JSON.stringify(collapsed)); } catch(e) {}
+}
+
 function renderMyReports(reports) {
   // Se actualiza aquí (no solo en checkWorkerNotifications) para que la
   // firma refleje SIEMPRE lo que hay realmente en pantalla, venga el
@@ -2114,45 +2360,15 @@ function renderMyReports(reports) {
   lastMyReportsSig = reportsSignature(reports);
   myReportsCache = capReports(reports);
   reports = myReportsCache;
-  var visible = reports.filter(function(r){ return r.STATUS === 'pending' || r.STATUS === 'rejected'; });
+
+  var pendingList = reports.filter(function(r){ return r.STATUS === 'pending' || r.STATUS === 'rejected'; });
+  var approvedList = reports.filter(function(r){ return r.STATUS === 'approved'; });
+
   var listEl = document.getElementById('miList');
+  var listApprovedEl = document.getElementById('miListApproved');
 
-  if (!visible.length) {
-    listEl.innerHTML = '<div class="mi-empty">No tienes informes pendientes</div>';
-    return;
-  }
-
-  // Lo más reciente arriba según la última acción (misma lógica que
-  // manager/admin — ver comentario en renderManagerQueue).
-  visible.sort(function(a, b) {
-    return new Date(b.TIMESTAMP||0) - new Date(a.TIMESTAMP||0);
-  });
-
-  listEl.innerHTML = visible.map(function(r){
-    var statusLabel = r.STATUS === 'pending' ? t('status_pending') : t('status_rejected');
-    var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
-    var html = '<div class="mi-card st-'+r.STATUS+(r.STATUS==='rejected'?' card-shadow-rejected':'')+'" onclick="openReportDetail(\''+r.ID+'\')">';
-    // Единый стиль карточки: дата + статус
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">';
-    html += '<span style="font-size:11px;color:#8e8e93">'+fecha+'</span>';
-    html += '<span class="mi-badge st-'+r.STATUS+'">'+statusLabel+'</span>';
-    html += '</div>';
-    // Рабочий мелко
-    html += '<div style="font-size:11px;color:#8e8e93;margin-bottom:8px">'+r.OPERARIO+'</div>';
-    // PT-номер крупно
-    html += '<div style="font-size:20px;font-weight:700;color:#000;letter-spacing:-.3px;margin-bottom:3px">'+r.ID+'</div>';
-    // Клиент · объект
-    html += '<div style="font-size:12px;color:#8e8e93">'+r.CLIENTE+' · '+r.OBRA+'</div>';
-    if (r.STATUS === 'rejected' && r.COMENTARIO_MANAGER) {
-      html += '<div class="mi-comment" style="margin-top:8px"><b>'+t('lbl_comentario')+'</b>'+r.COMENTARIO_MANAGER+'</div>';
-      html += '<button class="mi-edit-btn" style="margin-top:8px" onclick="event.stopPropagation();openEditReport(\''+r.ID+'\')">'+t('btn_editar_reenviar')+'</button>';
-    }
-    // STATUS 'pending' → sin botón de editar. Mientras el manager no lo
-    // rechace, el informe queda bloqueado en solo-lectura (evita que el
-    // trabajador siga re-editando algo que ya está esperando revisión).
-    html += '</div>';
-    return html;
-  }).join('');
+  listEl.innerHTML = pendingList.length ? buildMiGroupedHtml(pendingList, 'p_', true) : '<div class="mi-empty">'+t('no_mine')+'</div>';
+  listApprovedEl.innerHTML = approvedList.length ? buildMiGroupedHtml(approvedList, 'a_', false) : '<div class="mi-empty">'+t('no_approved')+'</div>';
 }
 
 function openReportDetail(id) {
@@ -2411,7 +2627,6 @@ function resubmitRecord() {
 
 /* ════════ OPERARIO: INIT ════════ */
 function initOperarioScreen() {
-  document.getElementById('operarioDisplay').textContent = currentUser.nombre;
   var d = new Date();
   document.getElementById('fecha').value = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   var p = loadLists();
@@ -2617,7 +2832,7 @@ function buildDetailHtml(r, showTotal) {
   var hasTrabajo = trabajoFields.length || trabajos || fotosObra || horas > 0;
   if (hasTrabajo) {
     html += '<div class="det-group">';
-    html += '<div class="det-group-title">' + t('grp_trabajo') + '</div>';
+    html += '<div class="det-group-title"><span class="det-group-icon ic-trabajo"><i class="ti ti-briefcase"></i></span>' + t('grp_trabajo') + '</div>';
     if (trabajoFields.length) {
       html += '<div class="det-group-grid">';
       trabajoFields.forEach(function(f){
@@ -2646,7 +2861,7 @@ function buildDetailHtml(r, showTotal) {
   var hasMateriales = compania || materiales || precio > 0 || fotosMat;
   if (hasMateriales) {
     html += '<div class="det-group">';
-    html += '<div class="det-group-title">' + t('grp_materiales') + '</div>';
+    html += '<div class="det-group-title"><span class="det-group-icon ic-materiales"><i class="ti ti-package"></i></span>' + t('grp_materiales') + '</div>';
     if (compania) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:2px">'+t('lbl_compania')+'</b><span style="font-size:14px;font-weight:500;color:#000">'+compania+'</span></div>';
     if (materiales) html += '<div class="rd-field-full"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:4px">'+t('lbl_descripcion')+'</b><span style="font-size:13px;color:#000;line-height:1.5">'+materiales+'</span></div>';
     if (precio > 0) {
@@ -2661,7 +2876,7 @@ function buildDetailHtml(r, showTotal) {
 
   // ── TOTAL ── (только для менеджера/админа)
   if (showTotal && r.TOTAL && parseFloat(r.TOTAL) > 0) {
-    html += '<div style="text-align:center;margin:14px 0 4px;background:linear-gradient(135deg,#1a7f37,#34c759);border-radius:14px;padding:18px 12px">'
+    html += '<div style="text-align:center;margin:14px 0 4px;background:linear-gradient(160deg,#1c8a49,#22b862);border-radius:18px;padding:20px 12px;box-shadow:0 14px 28px -10px rgba(34,184,98,.45)">'
       + '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.75);margin-bottom:6px">'+t('lbl_total_caption')+'</div>'
       + '<div style="font-size:36px;font-weight:700;color:#fff;letter-spacing:-.5px">'+parseFloat(r.TOTAL).toFixed(2)+' €</div>'
       + '</div>';
@@ -3719,7 +3934,7 @@ function showInstallBanner() {
   b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);z-index:6000;background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 6px 24px rgba(0,0,0,.18);display:flex;align-items:center;gap:12px;border:.5px solid #e5e5ea;opacity:0;transform:translateY(10px);transition:opacity .25s,transform .25s';
   b.innerHTML =
     '<i class="ti ti-square-plus" style="font-size:22px;color:#007AFF;flex-shrink:0"></i>' +
-    '<div style="flex:1;font-size:12.5px;color:#000;line-height:1.4">Para recibir notificaciones: pulsa <b>Compartir</b> <span style="display:inline-block">⬆️</span> y luego <b>"Añadir a pantalla de inicio"</b></div>' +
+    '<div style="flex:1;font-size:12.5px;color:#000;line-height:1.4"><b style="display:block;font-size:13px;margin-bottom:2px">'+t('install_banner_title')+'</b>'+t('install_banner_body')+'</div>' +
     '<button id="notifyPermClose" style="background:none;border:none;color:#8e8e93;font-size:18px;padding:2px;flex-shrink:0;cursor:pointer;touch-action:manipulation">×</button>';
   document.body.appendChild(b);
   requestAnimationFrame(function(){ b.style.opacity = '1'; b.style.transform = 'translateY(0)'; });
@@ -3736,10 +3951,12 @@ function showPermissionBanner() {
   var b = document.createElement('div');
   b.id = 'notifyPermBanner';
   b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);z-index:6000;background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 6px 24px rgba(0,0,0,.18);display:flex;align-items:center;gap:12px;border:.5px solid #e5e5ea;opacity:0;transform:translateY(10px);transition:opacity .25s,transform .25s';
+  var roleBannerKey = { operario:'perm_banner_worker', manager:'perm_banner_manager', admin:'perm_banner_admin' };
+  var bannerBody = t(roleBannerKey[(currentUser||{}).rol] || 'perm_banner_worker');
   b.innerHTML =
     '<i class="ti ti-bell-ringing" style="font-size:22px;color:#007AFF;flex-shrink:0"></i>' +
-    '<div style="flex:1;font-size:13px;color:#000;line-height:1.35">Activa las notificaciones para no perderte novedades</div>' +
-    '<button id="notifyPermBtn" style="background:#007AFF;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;font-family:inherit;flex-shrink:0;cursor:pointer;touch-action:manipulation">Activar</button>' +
+    '<div style="flex:1;font-size:12.5px;color:#000;line-height:1.4"><b style="display:block;font-size:13px;margin-bottom:2px">'+t('perm_banner_title')+'</b>'+bannerBody+'</div>' +
+    '<button id="notifyPermBtn" style="background:#007AFF;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;font-family:inherit;flex-shrink:0;cursor:pointer;touch-action:manipulation">'+t('perm_banner_btn')+'</button>' +
     '<button id="notifyPermClose" style="background:none;border:none;color:#8e8e93;font-size:18px;padding:2px;flex-shrink:0;cursor:pointer;touch-action:manipulation">×</button>';
   document.body.appendChild(b);
   requestAnimationFrame(function(){ b.style.opacity = '1'; b.style.transform = 'translateY(0)'; });
@@ -4212,12 +4429,17 @@ function updatePgCounter() {
 }
 
 function closePhotoGallery() {
-  document.getElementById('photoGalleryModal').style.display = 'none';
+  var modal = document.getElementById('photoGalleryModal');
+  modal.style.display = 'none';
+  // Reseteamos el transform/opacity que deja el gesto de "arrastrar para
+  // cerrar" (ver bindPgGestures) — si no, la próxima vez que se abra la
+  // galería podía quedar invisible o desplazada fuera de pantalla,
+  // arrastrando el estado del cierre anterior.
+  modal.style.transform = '';
+  modal.style.opacity = '';
   document.documentElement.style.background = '';
   var track = document.getElementById('pgTrack');
   track.innerHTML = '';
-  track.style.transform = '';
-  track.style.opacity = '';
 }
 
 function togglePgChrome() {
@@ -4249,7 +4471,18 @@ function bindPgGestures() {
   pgGesturesBound = true;
 
   var track = document.getElementById('pgTrack');
-  var startX = 0, startY = 0, startScrollLeft = 0;
+  // BUG CORREGIDO ("el visor de fotos glitchea"): el transform de arrastre
+  // para cerrar se aplicaba directamente sobre #pgTrack — el MISMO
+  // elemento que gestiona el scroll horizontal nativo con scroll-snap
+  // entre fotos. Aplicar CSS transform a un contenedor con scroll nativo
+  // es una combinación conocida por causar comportamiento errático en
+  // Safari/iOS (el navegador puede perder la posición de scroll o el
+  // snap deja de ser fiable). Ahora el transform de "arrastrar para
+  // cerrar" se aplica al modal completo (#photoGalleryModal), que no
+  // tiene scroll propio — #pgTrack queda intacto y solo se ocupa de
+  // deslizar entre fotos.
+  var modal = document.getElementById('photoGalleryModal');
+  var startX = 0, startY = 0;
   var isVerticalDrag = false, isHorizontalScroll = false, gestureDecided = false;
   var tapCandidate = false;
 
@@ -4257,12 +4490,11 @@ function bindPgGestures() {
     if (e.touches.length !== 1) return;
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
-    startScrollLeft = track.scrollLeft;
     isVerticalDrag = false;
     isHorizontalScroll = false;
     gestureDecided = false;
     tapCandidate = true;
-    track.style.transition = 'none';
+    modal.style.transition = 'none';
   }, { passive: true });
 
   track.addEventListener('touchmove', function(e) {
@@ -4285,29 +4517,25 @@ function bindPgGestures() {
     if (isVerticalDrag) {
       e.preventDefault();
       var progress = Math.min(Math.abs(dy) / 300, 1);
-      track.style.transform = 'translateY(' + dy + 'px)';
-      track.style.opacity = String(1 - progress * 0.6);
-      var top = document.getElementById('pgTopBar');
-      var bottom = document.getElementById('pgBottomBar');
-      top.style.opacity = String(1 - progress);
-      bottom.style.opacity = String(1 - progress);
+      modal.style.transform = 'translateY(' + dy + 'px)';
+      modal.style.opacity = String(1 - progress * 0.6);
     }
     // Если это горизонтальный скролл — не мешаем нативному scroll-snap
   }, { passive: false });
 
   track.addEventListener('touchend', function(e) {
-    track.style.transition = 'transform .25s ease, opacity .25s ease';
+    modal.style.transition = 'transform .25s ease, opacity .25s ease';
 
     if (isVerticalDrag) {
       var dy = e.changedTouches[0].clientY - startY;
       if (Math.abs(dy) > 100) {
         // Свайп вниз/вверх достаточно большой — закрываем галерею
-        track.style.transform = 'translateY(' + (dy > 0 ? '100%' : '-100%') + ')';
-        track.style.opacity = '0';
+        modal.style.transform = 'translateY(' + (dy > 0 ? '100%' : '-100%') + ')';
+        modal.style.opacity = '0';
         setTimeout(closePhotoGallery, 200);
       } else {
-        track.style.transform = 'translateY(0)';
-        track.style.opacity = '1';
+        modal.style.transform = 'translateY(0)';
+        modal.style.opacity = '1';
         var top = document.getElementById('pgTopBar');
         var bottom = document.getElementById('pgBottomBar');
         top.style.opacity = pgChromeVisible ? '1' : '0';
@@ -4447,7 +4675,16 @@ function checkWorkerNotifications() {
 
 // Firma barata para detectar cambios reales sin comparar objetos enteros.
 function reportsSignature(reports) {
-  return reports.map(function(r){ return r.ID + ':' + r.STATUS + ':' + (r.TIMESTAMP||''); }).join('|');
+  // BUG CORREGIDO: la firma solo miraba ID+STATUS+TIMESTAMP — pero subir
+  // las fotos (uploadReportPhotos, en segundo plano tras guardar el
+  // informe) NO toca ni STATUS ni TIMESTAMP, solo las columnas de fotos.
+  // Como esta firma decide si hace falta repintar la lista tras cada
+  // sondeo, las fotos podían terminar de subirse en el servidor sin que
+  // la tarjeta llegara a mostrar nunca el botón para verlas, hasta que
+  // algún otro cambio disparara un repintado por otra razón.
+  return reports.map(function(r){
+    return r.ID + ':' + r.STATUS + ':' + (r.TIMESTAMP||'') + ':' + (r['FOTOS DE OBRA']||'') + ':' + (r['FOTO MATERIALES / RECIBO']||'');
+  }).join('|');
 }
 var lastMyReportsSig = null;
 var lastMgQueueSig = null;
