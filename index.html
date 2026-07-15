@@ -109,10 +109,10 @@ html,body{background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,"SF Pr
    Android puede aparecer y da un aspecto poco pulido). */
 *{scrollbar-width:none;-ms-overflow-style:none}
 *::-webkit-scrollbar{display:none;width:0;height:0}
-body{min-height:100dvh;padding-top:var(--nav-h, calc(env(safe-area-inset-top,0px) + 68px));padding-bottom:calc(env(safe-area-inset-bottom,0px) + 84px)}
+body{min-height:100dvh;padding-top:var(--nav-h, calc(env(safe-area-inset-top,0px) + 68px));padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
 
 /* NAV */
-.nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;background:rgba(255,255,255,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid #e5e5ea;transition:transform .25s ease;}
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;background:rgba(255,255,255,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid #e5e5ea;transition:transform .25s ease;transform:translateZ(0);-webkit-transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;}
 .nav.nav-hidden{transform:translateY(-100%);}
 .nav-center{flex:1;text-align:center;min-width:0}
 /* Pedido: el nombre del usuario debe verse SIEMPRE completo, nunca
@@ -250,7 +250,8 @@ body{min-height:100dvh;padding-top:var(--nav-h, calc(env(safe-area-inset-top,0px
 .photo-add-mini svg{width:20px;height:20px;stroke:#8e8e93;fill:none;stroke-width:2;stroke-linecap:round}
 .photo-add-mini:active{background:#e5e5ea}
 
-/* SAVE BTN — фиксированы над таббаром */
+/* SAVE BTN — pedido: en el flujo normal de la página, al final del
+   formulario (NO flotando sobre el tabbar como una capa aparte). */
 .btn-save{display:block;width:calc(100% - 32px);margin:20px 16px 8px;background:#8e8e93;border:none;color:#fff;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:inherit;cursor:not-allowed;transition:background .2s;touch-action:manipulation;box-shadow:0 3px 10px rgba(0,0,0,.15)}
 .btn-save.ready{background:#34c759;cursor:pointer;box-shadow:0 3px 12px rgba(52,199,89,.35)}
 .btn-save.ready:active{opacity:.88}
@@ -263,9 +264,9 @@ body{min-height:100dvh;padding-top:var(--nav-h, calc(env(safe-area-inset-top,0px
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* SUCCESS SCREEN */
-#successScreen{display:none;position:fixed;inset:0;z-index:9999;background:#f2f2f7;flex-direction:column;align-items:center;justify-content:flex-start}
+#successScreen{display:none;position:fixed;inset:0;z-index:9999;background:#fff;flex-direction:column;align-items:center;justify-content:flex-start}
 #successScreen.show{display:flex}
-.ss-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;width:100%;display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 52px) 20px 16px;gap:16px}
+.ss-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;width:100%;display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 52px) 20px calc(env(safe-area-inset-bottom,0px) + 140px);gap:16px}
 .success-icon{width:72px;height:72px;border-radius:50%;background:#34c759;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .success-icon svg{width:36px;height:36px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
 .success-title{font-size:22px;font-weight:700;color:#000;text-align:center}
@@ -276,7 +277,14 @@ body{min-height:100dvh;padding-top:var(--nav-h, calc(env(safe-area-inset-top,0px
 .detail-row.long{flex-direction:column;align-items:flex-start;gap:4px}
 .detail-key{font-size:12px;color:#8e8e93}
 .detail-val{font-size:14px;color:#000;font-weight:500}
-.ss-footer{width:100%;flex-shrink:0;padding:12px 20px calc(env(safe-area-inset-bottom,0px) + 20px);display:flex;flex-direction:column;gap:10px}
+/* BUG CORREGIDO ("Compartir no está fijo abajo"): antes vivía DENTRO de
+   .ss-scroll (para pegarlo justo debajo de la tarjeta y no dejar un
+   hueco enorme cuando el contenido era corto) — pero eso significaba que
+   scrolleaba con el resto de la página en vez de quedarse fijo, al
+   contrario de lo que se pedía. Ahora es realmente position:fixed (igual
+   que el tabbar), y .ss-scroll reserva espacio abajo (padding-bottom)
+   para que el contenido nunca quede tapado detrás. */
+.ss-footer{position:fixed;left:0;right:0;bottom:0;width:100%;background:#fff;border-top:.5px solid #f0f0f0;padding:12px 20px calc(env(safe-area-inset-bottom,0px) + 20px);display:flex;flex-direction:column;gap:10px;z-index:10}
 .btn-share{width:100%;background:#f2f2f7;border:.5px solid #e5e5ea;color:#000;border-radius:14px;padding:14px;font-size:15px;font-weight:500;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;touch-action:manipulation}
 .btn-share svg{width:17px;height:17px;stroke:#000;fill:none;stroke-width:2;stroke-linecap:round}
 .btn-new{width:100%;background:#34c759;color:#fff;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation}
@@ -313,8 +321,8 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
 
 /* GREET */
 .greet-screen{position:fixed;inset:0;z-index:7000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;background:#fff}
-.greet-name{font-size:20px;font-weight:700;color:#000;margin-top:14px}
-.greet-role{font-size:14px;color:#8e8e93;font-weight:400;margin-top:4px}
+.greet-name{font-size:28px;font-weight:800;color:#000;margin-top:22px;letter-spacing:-.4px}
+.greet-role{font-size:12.5px;color:#007AFF;font-weight:700;margin-top:12px;text-transform:uppercase;letter-spacing:.5px;background:#e8f0ff;padding:7px 18px;border-radius:20px;display:inline-block}
 
 /* APP ICON (pantallas de instalación / bienvenida) */
 .app-icon-tile{width:84px;height:84px;border-radius:20px;overflow:hidden;box-shadow:0 10px 26px rgba(0,0,0,.28);margin-bottom:18px;flex-shrink:0}
@@ -391,6 +399,9 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
 .mg-actions{display:flex;gap:10px}
 .mg-btn{flex:1;border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation}
 .mg-btn-approve{background:linear-gradient(160deg,#1c8a49,#22b862);color:#fff;box-shadow:0 10px 20px -8px rgba(34,184,98,.5)}
+.mg-btn:disabled{opacity:.4;box-shadow:none;cursor:not-allowed}
+.mg-btn-delete{width:100%;margin-top:8px;background:none;border:none;color:#ff3b30;font-size:14px;font-weight:600;font-family:inherit;padding:10px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;touch-action:manipulation}
+.mg-btn-delete:active{opacity:.6}
 .mg-btn-approve:active{opacity:.88}
 .mg-btn-reject{background:#fdece9;color:#e0433a;border:none}
 .mg-btn-reject:active{background:#fadcd7}
@@ -473,7 +484,7 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
    con la versión antigua (mostraba texto en todas, o ninguna). */
 .bottom-tabbar{
   position:fixed;left:0;right:0;
-  bottom:calc(env(safe-area-inset-bottom,0px) + 8px);
+  bottom:calc(env(safe-area-inset-bottom,0px) + 14px);
   z-index:200;
   display:flex;
   justify-content:center;
@@ -484,7 +495,10 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
   padding:6px;
   background:#1c1c1e;
   border-radius:999px;
-  box-shadow:0 8px 24px rgba(0,0,0,.32);
+  /* Pedido: sin sombra pronunciada — un borde muy sutil basta para
+     separarlo visualmente del contenido, como en apps modernas (Uber,
+     Airbnb) en vez del halo oscuro de antes. */
+  box-shadow:0 1px 3px rgba(0,0,0,.12);
   /* Fuerza una capa de composición GPU propia — evita el "salto"/jitter
      que WebKit produce en elementos position:fixed durante el scroll con
      inercia (rubber-band) en iOS Safari/PWA standalone. */
@@ -529,7 +543,7 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
 /* SPLASH SCREEN */
 #splashScreen{
   position:fixed;inset:0;z-index:9999;
-  background:#f2f2f7;
+  background:#fff;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
   transition:opacity .35s ease;
 }
@@ -687,6 +701,19 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
       <div class="s-label" style="padding:14px 0 6px" id="erLblTrabajos">Trabajos realizados</div>
       <textarea id="erTrabajos" rows="3" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;resize:none"></textarea>
 
+      <div class="photo-row" style="margin:14px 0 0;padding:14px;background:#f9f9fb;border-radius:14px">
+        <div class="photo-row-head">
+          <span class="rlabel" id="erLblFotoObra">Fotos de obra</span>
+          <label class="photo-input-btn" id="erAddBtnObra">
+            <svg viewBox="0 0 24 24"><path d="M5 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2l-2-3H7L5 7z"/><circle cx="10" cy="13" r="3"/></svg>
+            Añadir
+            <input type="file" accept="image/*" multiple style="display:none" id="erInputPhotosObra" onchange="erHandlePhotoSelect(this,'obra')">
+          </label>
+        </div>
+        <div class="photo-thumbs" id="erExistingThumbsObra"></div>
+        <div class="photo-thumbs" id="erThumbsObra"></div>
+      </div>
+
       <div class="s-label" style="padding:14px 0 6px" id="erLblCompania">Compañía (materiales)</div>
       <input type="text" id="erCompania" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
 
@@ -695,6 +722,19 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
 
       <div class="s-label" style="padding:14px 0 6px" id="erLblPrecio">Precio materiales (€)</div>
       <input type="number" id="erPrecio" step="0.01" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
+
+      <div class="photo-row" style="margin:14px 0 0;padding:14px;background:#f9f9fb;border-radius:14px">
+        <div class="photo-row-head">
+          <span class="rlabel" id="erLblFotoMat">Materiales / recibo</span>
+          <label class="photo-input-btn" id="erAddBtnMat">
+            <svg viewBox="0 0 24 24"><path d="M5 7H3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2l-2-3H7L5 7z"/><circle cx="10" cy="13" r="3"/></svg>
+            Añadir
+            <input type="file" accept="image/*" multiple style="display:none" id="erInputPhotosMat" onchange="erHandlePhotoSelect(this,'materiales')">
+          </label>
+        </div>
+        <div class="photo-thumbs" id="erExistingThumbsMat"></div>
+        <div class="photo-thumbs" id="erThumbsMat"></div>
+      </div>
 
       <div style="height:12px"></div>
     </div>
@@ -768,9 +808,7 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
 
 <!-- ═══ PANTALLA: SALUDO TRAS LOGIN (breve, luego redirige al rol) ═══ -->
 <div id="screenGreet" class="greet-screen" style="display:none">
-  <div class="pin-logo">
-    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-  </div>
+  <div class="app-icon-tile"><img src="icon-192.png" alt="AEDIS"></div>
   <div class="greet-name" id="greetName">—</div>
   <div class="greet-role" id="greetRole">—</div>
 </div>
@@ -966,13 +1004,13 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
       <div class="success-sub" id="successSub">El parte ha sido registrado correctamente</div>
     </div>
     <div class="success-details-card"><div id="detailRows"></div></div>
+  </div>
   <div class="ss-footer">
     <button class="btn-share" onclick="shareRecord()">
       <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
       Compartir
     </button>
     <button class="btn-new" onclick="startNew()">+ Nuevo informe</button>
-  </div>
   </div>
 </div>
 
@@ -1019,6 +1057,9 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
       <button class="mg-modal-cancel" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px" onclick="shareReportDetailFromModal()">
         <i class="ti ti-send" style="font-size:16px"></i> Compartir
       </button>
+      <button class="mg-btn-delete" id="rdDeleteBtn" style="display:none" onclick="deleteReportFromOperario()">
+        <i class="ti ti-trash" style="font-size:15px"></i> <span id="rdDeleteBtnLbl">Eliminar informe</span>
+      </button>
     </div>
   </div>
 </div>
@@ -1048,6 +1089,9 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
         <button class="mg-btn mg-btn-reject" onclick="rejectFromDetail()">Rechazar</button>
         <button class="mg-btn mg-btn-approve" onclick="approveFromDetail()">Aprobar</button>
       </div>
+      <button class="mg-btn-delete" id="mgDeleteBtn" style="display:none" onclick="deleteReportFromMgModal()">
+        <i class="ti ti-trash" style="font-size:15px"></i> <span id="mgDeleteBtnLbl">Eliminar informe</span>
+      </button>
     </div>
   </div>
 </div>
@@ -1249,7 +1293,8 @@ var LANGS = {
     ph_vehiculo:'Matrícula / modelo', ph_tipo_new:'Describir tipo...', ph_trabajos:'Describir los trabajos...',
     ph_compania_new:'Nombre de la compañía...', ph_materiales:'Listar materiales...',
     hint_obra:'Añade fotos del estado de la obra', hint_mat:'Añade fotos del recibo o albarán de materiales',
-    btn_anadir:'Añadir', btn_guardar:'Guardar registro', btn_clear:'Borrar todo',
+    btn_anadir:'Añadir', btn_guardar:'Guardar registro', btn_clear:'Borrar todo', btn_enviando:'Enviando…',
+    btn_reenviar:'Reenviar', btn_guardar_cambios:'Guardar cambios',
     btn_aprobar:'Aprobar', btn_rechazar:'Rechazar', btn_compartir:'Compartir', btn_cancelar:'Cancelar',
     lbl_obligatorio:'• obligatorio', reject_title:'Rechazar informe', reject_sub:'Explica al operario qué hay que corregir',
     reject_ph:'Ej: Falta indicar el número de horas extra...', reject_hint:'El comentario es obligatorio',
@@ -1274,6 +1319,8 @@ var LANGS = {
     install_step_ios1:'Toca el botón Compartir', install_step_ios2:'Selecciona "Añadir a pantalla de inicio"', install_step_ios3:'Toca "Añadir" y listo',
     install_step_and1:'Toca el menú ⋮ del navegador', install_step_and2:'Selecciona "Instalar app" o "Añadir a pantalla de inicio"',
     lw_continue:'Continuar',
+    btn_eliminar_informe:'Eliminar informe', confirm_eliminar:'¿Eliminar este informe? Esta acción no se puede deshacer.',
+    toast_eliminado:'Informe eliminado', toast_eliminar_error:'No se pudo eliminar el informe',
   },
   ru: {
     pin_title:'Введите код', pin_sub:'PIN из 4 цифр', pin_ok:'OK', pin_error:'Неверный код',
@@ -1295,7 +1342,8 @@ var LANGS = {
     ph_vehiculo:'Номер / модель', ph_tipo_new:'Описать тип...', ph_trabajos:'Описать выполненные работы...',
     ph_compania_new:'Название компании...', ph_materiales:'Список материалов...',
     hint_obra:'Добавьте фото хода работ', hint_mat:'Добавьте фото чека или накладной',
-    btn_anadir:'Добавить', btn_guardar:'Сохранить запись', btn_clear:'Очистить всё',
+    btn_anadir:'Добавить', btn_guardar:'Сохранить запись', btn_clear:'Очистить всё', btn_enviando:'Отправка…',
+    btn_reenviar:'Отправить снова', btn_guardar_cambios:'Сохранить изменения',
     btn_aprobar:'Одобрить', btn_rechazar:'Отклонить', btn_compartir:'Поделиться', btn_cancelar:'Отмена',
     lbl_obligatorio:'• обязательно', reject_title:'Отклонить отчёт', reject_sub:'Объясните рабочему что нужно исправить',
     reject_ph:'Например: не указаны сверхурочные часы...', reject_hint:'Комментарий обязателен',
@@ -1320,6 +1368,8 @@ var LANGS = {
     install_step_ios1:'Нажмите кнопку «Поделиться»', install_step_ios2:'Выберите «На экран «Домой»»', install_step_ios3:'Нажмите «Добавить» — готово',
     install_step_and1:'Откройте меню ⋮ браузера', install_step_and2:'Выберите «Установить приложение» или «Добавить на главный экран»',
     lw_continue:'Продолжить',
+    btn_eliminar_informe:'Удалить отчёт', confirm_eliminar:'Удалить этот отчёт? Действие необратимо.',
+    toast_eliminado:'Отчёт удалён', toast_eliminar_error:'Не удалось удалить отчёт',
   },
   en: {
     pin_title:'Enter your code', pin_sub:'4-digit PIN', pin_ok:'OK', pin_error:'Incorrect code',
@@ -1341,7 +1391,8 @@ var LANGS = {
     ph_vehiculo:'Plate / model', ph_tipo_new:'Describe type...', ph_trabajos:'Describe work done...',
     ph_compania_new:'Company name...', ph_materiales:'List materials...',
     hint_obra:'Add photos of the work progress', hint_mat:'Add photos of the receipt or delivery note',
-    btn_anadir:'Add', btn_guardar:'Save record', btn_clear:'Clear all',
+    btn_anadir:'Add', btn_guardar:'Save record', btn_clear:'Clear all', btn_enviando:'Sending…',
+    btn_reenviar:'Resend', btn_guardar_cambios:'Save changes',
     btn_aprobar:'Approve', btn_rechazar:'Reject', btn_compartir:'Share', btn_cancelar:'Cancel',
     lbl_obligatorio:'• required', reject_title:'Reject report', reject_sub:'Explain to the worker what needs to be corrected',
     reject_ph:'E.g.: Missing overtime hours...', reject_hint:'Comment is required',
@@ -1366,6 +1417,8 @@ var LANGS = {
     install_step_ios1:'Tap the Share button', install_step_ios2:'Select "Add to Home Screen"', install_step_ios3:'Tap "Add" — done',
     install_step_and1:'Open the browser’s ⋮ menu', install_step_and2:'Select "Install app" or "Add to Home Screen"',
     lw_continue:'Continue',
+    btn_eliminar_informe:'Delete report', confirm_eliminar:'Delete this report? This action cannot be undone.',
+    toast_eliminado:'Report deleted', toast_eliminar_error:'Could not delete the report',
   }
 };
 
@@ -1437,6 +1490,10 @@ function applyLang() {
   setEl('erLblCompania',  t('lbl_compania_mat'));
   setEl('erLblMateriales',t('sub_materiales'));
   setEl('erLblPrecio',    t('lbl_precio_mat'));
+  setEl('erLblFotoObra',  t('lbl_foto_obra'));
+  setEl('erLblFotoMat',   t('lbl_fotos_materiales'));
+  setEl('rdDeleteBtnLbl', t('btn_eliminar_informe'));
+  setEl('mgDeleteBtnLbl', t('btn_eliminar_informe'));
 
   // Sub-labels
   setEl('sub-trabajos',    t('sub_trabajos'));
@@ -1880,7 +1937,7 @@ function routeToRoleScreen() {
   ensureNotifyPermission();
   updateBellUI();
   linkOneSignalUser();
-  return initPromise || Promise.resolve();
+  return (initPromise || Promise.resolve()).then(function(v){ tryOpenDeepLinkedReport(); return v; });
 }
 
 /* ════════ OPERARIO: LISTAS (servicio) ════════ */
@@ -2149,6 +2206,75 @@ function removePhoto(group, idx) {
   renderThumbs(group);
 }
 
+/* ════════ EDICIÓN DE INFORME RECHAZADO: fotos (mismo patrón que arriba,
+   con su propio estado — pedido: "añadir posibilidad de adjuntar fotos"
+   también al reenviar un informe rechazado, no solo al crearlo) ════════ */
+var erPhotosObraSelected = [];
+var erPhotosMatSelected = [];
+
+function erHandlePhotoSelect(input, group) {
+  var files = Array.from(input.files || []);
+  var targetArr = group === 'obra' ? erPhotosObraSelected : erPhotosMatSelected;
+  var promises = files.map(function(file) {
+    return compressImage(file, 1280, 0.7).then(function(base64) {
+      return { name: file.name.replace(/\.(heic|HEIC)$/, '.jpg'), type:'image/jpeg', data: base64 };
+    });
+  });
+  Promise.all(promises).then(function(results) {
+    results.forEach(function(r){ targetArr.push(r); });
+    erRenderThumbs(group);
+    checkErDirty();
+  });
+  input.value = '';
+}
+
+function erRenderThumbs(group) {
+  var arr = group === 'obra' ? erPhotosObraSelected : erPhotosMatSelected;
+  var wrap = document.getElementById(group === 'obra' ? 'erThumbsObra' : 'erThumbsMat');
+  var bigBtn = document.getElementById(group === 'obra' ? 'erAddBtnObra' : 'erAddBtnMat');
+
+  wrap.innerHTML = '';
+  arr.forEach(function(photo, idx) {
+    var div = document.createElement('div');
+    div.className = 'photo-thumb';
+    div.innerHTML = '<img src="'+photo.data+'"><div class="rm" onclick="erRemovePhoto(\''+group+'\','+idx+')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>';
+    wrap.appendChild(div);
+  });
+
+  if (arr.length > 0) {
+    bigBtn.classList.add('hidden');
+    var addMini = document.createElement('label');
+    addMini.className = 'photo-add-mini';
+    addMini.innerHTML = '<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><input type="file" accept="image/*" multiple style="display:none" onchange="erHandlePhotoSelect(this,\''+group+'\')">';
+    wrap.appendChild(addMini);
+  } else {
+    bigBtn.classList.remove('hidden');
+  }
+}
+
+function erRemovePhoto(group, idx) {
+  var arr = group === 'obra' ? erPhotosObraSelected : erPhotosMatSelected;
+  arr.splice(idx, 1);
+  erRenderThumbs(group);
+  checkErDirty();
+}
+
+// Fotos YA subidas (de antes de rechazar) — solo lectura, un enlace que
+// abre la galería, igual que en el detalle de solo lectura del informe.
+function erRenderExistingPhotos(report) {
+  var svgCam = '<i class="ti ti-camera" style="font-size:15px;color:#007AFF;margin-right:5px"></i>';
+  var obraEl = document.getElementById('erExistingThumbsObra');
+  var matEl = document.getElementById('erExistingThumbsMat');
+  var fotosObra = report['FOTOS DE OBRA'] || '';
+  var fotosMat = report['FOTO MATERIALES / RECIBO'] || '';
+  obraEl.innerHTML = fotosObra
+    ? '<button type="button" class="rd-photo-link" onclick="openPhotoGallery(this)" data-photos=\''+encodeURIComponent(fotosObra)+'\'>'+svgCam+t('lbl_foto_obra')+'</button>'
+    : '';
+  matEl.innerHTML = fotosMat
+    ? '<button type="button" class="rd-photo-link" onclick="openPhotoGallery(this)" data-photos=\''+encodeURIComponent(fotosMat)+'\'>'+svgCam+t('lbl_fotos_materiales')+'</button>'
+    : '';
+}
+
 /* ════════ OPERARIO: SAVE RECORD (отчёт + фото единым действием) ════════ */
 var _sharePayload = null;
 
@@ -2346,8 +2472,6 @@ function clearForm(skip) {
 }
 
 /* ════════ OPERARIO: MIS INFORMES ════════ */
-var editingReportId = null;
-
 function loadMyReports() {
   var cached = dataCacheGet('myReports');
   if (cached) {
@@ -2508,6 +2632,10 @@ function openReportDetail(id) {
   }
 
   document.getElementById('rdBody').innerHTML = html;
+  // Pedido: solo se puede eliminar mientras el informe está "en
+  // revisión" (pending) — ni aprobado ni ya rechazado (ver deleteRecord
+  // en Code_v5.gs, que valida esto también del lado del servidor).
+  document.getElementById('rdDeleteBtn').style.display = (r.STATUS === 'pending') ? 'flex' : 'none';
   document.getElementById('reportDetailModal').classList.add('show');
 }
 
@@ -2533,6 +2661,50 @@ function openEditReport(id) {
   }
   fillEditReportModal(report);
 }
+
+// Pedido: si el operario no cambió nada respecto al informe rechazado
+// original, no debe poder reenviarlo (no tiene sentido reenviar lo mismo
+// que ya se rechazó). erOriginalSnapshot guarda los valores tal como
+// llegaron; checkErDirty() los compara contra los valores actuales del
+// formulario en cada cambio y activa/desactiva el botón de guardar.
+var erOriginalSnapshot = null;
+
+function getErFormValues() {
+  return {
+    cliente: document.getElementById('erCliente').value,
+    obra: document.getElementById('erObra').value,
+    fecha: document.getElementById('erFecha').value,
+    ayudante: document.getElementById('erAyudante').value,
+    vehiculo: document.getElementById('erVehiculo').value,
+    tipo: document.getElementById('erTipo').value,
+    horas: document.getElementById('erHorasVal').textContent,
+    trabajos: document.getElementById('erTrabajos').value,
+    compania: document.getElementById('erCompania').value,
+    materiales: document.getElementById('erMateriales').value,
+    precio: document.getElementById('erPrecio').value,
+    fotosObra: erPhotosObraSelected.length,
+    fotosMat: erPhotosMatSelected.length
+  };
+}
+
+function checkErDirty() {
+  var saveBtn = document.getElementById('erSaveBtn');
+  if (!saveBtn || !erOriginalSnapshot) return;
+  var now = getErFormValues();
+  var dirty = Object.keys(erOriginalSnapshot).some(function(k){ return String(erOriginalSnapshot[k]||'') !== String(now[k]||''); });
+  saveBtn.disabled = !dirty;
+}
+
+// Delegación de eventos: UN solo listener para todos los campos del
+// formulario de edición, en vez de uno por campo — se registra una sola
+// vez (no en cada fillEditReportModal) y cubre cualquier campo nuevo que
+// se añada en el futuro sin tener que tocar este código de nuevo.
+(function setupErDirtyWatcher() {
+  var container = document.getElementById('editReportModal');
+  if (!container) return;
+  container.addEventListener('input', checkErDirty);
+  container.addEventListener('change', checkErDirty);
+})();
 
 function fillEditReportModal(report) {
   erCurrentReport = report;
@@ -2560,8 +2732,19 @@ function fillEditReportModal(report) {
   document.getElementById('erMateriales').value = report['MATERIALES UTILIZADOS'] || '';
   document.getElementById('erPrecio').value = report['PRECIO (EUR)'] || '';
 
+  erPhotosObraSelected = [];
+  erPhotosMatSelected = [];
+  erRenderThumbs('obra');
+  erRenderThumbs('materiales');
+  erRenderExistingPhotos(report);
+
   var saveBtn = document.getElementById('erSaveBtn');
-  saveBtn.textContent = isRejected ? 'Reenviar' : 'Guardar cambios';
+  saveBtn.textContent = isRejected ? t('btn_reenviar') : t('btn_guardar_cambios');
+
+  // Snapshot DESPUÉS de rellenar — así el botón arranca deshabilitado
+  // (nada ha cambiado todavía) hasta que el usuario toque algo de verdad.
+  erOriginalSnapshot = getErFormValues();
+  checkErDirty();
 
   document.getElementById('editReportModal').classList.add('show');
 }
@@ -2569,19 +2752,25 @@ function fillEditReportModal(report) {
 function closeEditReportModal() {
   document.getElementById('editReportModal').classList.remove('show');
   erCurrentReport = null;
+  erPhotosObraSelected = [];
+  erPhotosMatSelected = [];
+  erOriginalSnapshot = null;
 }
 
 function erChangeHoras(delta) {
   var el = document.getElementById('erHorasVal');
   var v = Math.max(0, (parseInt(el.textContent) || 0) + delta);
   el.textContent = v;
+  checkErDirty();
 }
 
 function submitEditReport() {
   if (!erCurrentReport) return;
   var btn = document.getElementById('erSaveBtn');
+  if (btn.disabled) return; // defensa extra: nada cambió, no hay nada que reenviar
   var originalText = btn.textContent;
-  btn.textContent = '...';
+  btn.textContent = t('btn_enviando');
+  btn.disabled = true;
   btn.style.pointerEvents = 'none';
 
   var horas  = parseInt(document.getElementById('erHorasVal').textContent) || 0;
@@ -2626,9 +2815,22 @@ function submitEditReport() {
   attempt(1)
   .then(function(result){
     btn.style.pointerEvents = '';
+    btn.disabled = false;
     btn.textContent = originalText;
     if (result && result.status === 'ok') {
       showToast('Informe reenviado para aprobación');
+
+      // Si el operario adjuntó fotos nuevas al corregir el informe, se
+      // suben AHORA (con el mismo ID) — uploadReportPhotos() reutiliza la
+      // misma carpeta de Drive del informe, así que se AÑADEN a las fotos
+      // que ya hubiera, nunca las reemplaza ni las pierde.
+      var idForPhotos = erCurrentReport.ID;
+      var fechaForPhotos = document.getElementById('erFecha').value;
+      var operarioForPhotos = erCurrentReport.OPERARIO;
+      if (erPhotosObraSelected.length || erPhotosMatSelected.length) {
+        uploadPhotosWithRetry(idForPhotos, fechaForPhotos, operarioForPhotos, erPhotosObraSelected, erPhotosMatSelected, 2);
+      }
+
       closeEditReportModal();
 
       // Actualización optimista INMEDIATA: parcheamos localmente el
@@ -2668,6 +2870,7 @@ function submitEditReport() {
   })
   .catch(function(){
     btn.style.pointerEvents = '';
+    btn.disabled = false;
     btn.textContent = originalText;
     // BUG CORREGIDO: antes se asumía directamente que había fallado y se
     // mostraba un error que asustaba al trabajador — pero Apps Script a
@@ -2699,51 +2902,6 @@ function submitEditReport() {
   });
 }
 
-function resubmitRecord() {
-  var btn = document.getElementById('btnSave');
-  btn.innerHTML = '<span class="spinner-inline"></span>Reenviando...';
-  btn.style.pointerEvents = 'none';
-
-  var horas  = parseInt(document.getElementById('horas').value)||0;
-  var precio = parseFloat(document.getElementById('precio').value)||0;
-
-  fetch(WEBAPP_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({
-      action: 'resubmit',
-      id: editingReportId,
-      fecha: document.getElementById('fecha').value,
-      trabajos: document.getElementById('trabajos').value,
-      tipo: getTipo(),
-      horas: horas,
-      compania: getComp(),
-      materiales: document.getElementById('materiales').value,
-      precio: precio
-    })
-  })
-  .then(function(r){ return r.json(); })
-  .then(function(result){
-    btn.style.pointerEvents = '';
-    if (result && result.status === 'ok') {
-      showToast('Informe reenviado para aprobación');
-      editingReportId = null;
-      var btn2 = document.getElementById('btnSave');
-      btn2.textContent = 'Guardar registro';
-      btn2.setAttribute('onclick', 'saveRecord()');
-      clearForm(true);
-      switchOpTab('mine');
-    } else {
-      showToast(result && result.message ? result.message : 'Error al reenviar', true);
-      btn.innerHTML = 'Reenviar informe';
-    }
-  })
-  .catch(function(){
-    btn.style.pointerEvents = '';
-    btn.innerHTML = 'Reenviar informe';
-    showToast('Error de conexión', true);
-  });
-}
 
 /* ════════ OPERARIO: INIT ════════ */
 function initOperarioScreen() {
@@ -3023,11 +3181,25 @@ function openManagerDetail(id) {
   document.getElementById('mgdTitle').textContent = r.OBRA || '—';
   document.getElementById('mgdSub').textContent = (r.CLIENTE||'') + ' · ' + r.ID + ' · ' + fecha;
   document.getElementById('mgdBody').innerHTML = buildDetailHtml(r, true);
+  // BUG CORREGIDO (latente): antes esta función NUNCA reactivaba
+  // .mg-actions por sí misma — dependía por completo de que
+  // closeManagerDetail() se hubiera llamado antes para restaurarlo. Si
+  // este modal se abre sin pasar por ahí (p.ej. desde un deep-link de
+  // push, ver tryOpenDeepLinkedReport), podía heredar el "display:none"
+  // dejado por un openHistorialDetail/openAdminDetail anterior y
+  // aparecer SIN los botones Aprobar/Rechazar.
+  var actionsMg = document.querySelector('#mgDetailModal .mg-actions');
+  if (actionsMg) actionsMg.style.display = '';
+  // Pedido: el manager SÍ puede borrar, pero solo mientras está en la cola
+  // de Pendientes (esta función solo se usa para eso — nunca para
+  // aprobados/rechazados, que van por openHistorialDetail y ahí se oculta).
+  document.getElementById('mgDeleteBtn').style.display = 'flex';
   document.getElementById('mgDetailModal').classList.add('show');
 }
 
 function closeManagerDetail() {
   document.getElementById('mgDetailModal').classList.remove('show');
+  document.getElementById('mgDeleteBtn').style.display = 'none';
   // восстанавливаем кнопки решения (могли быть скрыты в режиме Historial)
   var actions = document.querySelector('#mgDetailModal .mg-actions');
   if (actions) actions.style.display = '';
@@ -3054,6 +3226,64 @@ function removeCardFromQueue(id) {
   if (!document.querySelector('.mg-card')) {
     document.getElementById('mgList').innerHTML = '<div class="mi-empty">No hay informes pendientes de aprobación</div>';
   }
+}
+
+/* ════════ ELIMINAR INFORME (soft-delete, ver deleteRecord en Code_v5.gs) ════════
+ * Un solo helper de red compartido por operario y admin — cada uno decide
+ * qué hacer con sus propias cachés/listas al terminar (onSuccess). */
+function callDeleteReport(id, onSuccess) {
+  if (!confirm(t('confirm_eliminar'))) return;
+  fetch(WEBAPP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action:'deleteRecord', codigo: currentPin, id: id })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(result){
+    if (result && result.status === 'ok') {
+      showToast(t('toast_eliminado'));
+      onSuccess();
+    } else {
+      showToast(result && result.message ? result.message : t('toast_eliminar_error'), true);
+    }
+  })
+  .catch(function(){
+    showToast(t('toast_eliminar_error'), true);
+  });
+}
+
+// Compartida por manager (desde la cola de Pendientes) y admin (desde el
+// diario) — ambos usan el mismo #mgDetailModal, así que basta con mirar
+// cuál de los dos ids de contexto está activo (igual que shareManagerDetail).
+function deleteReportFromMgModal() {
+  var id = mgDetailId || adDetailCurrentId;
+  if (!id) return;
+  var wasManager = !!mgDetailId;
+  callDeleteReport(id, function() {
+    closeManagerDetail();
+    if (wasManager) {
+      mgReportsCache = mgReportsCache.filter(function(r){ return r.ID !== id; });
+      removeCardFromQueue(id);
+    } else {
+      adAllRecords = adAllRecords.filter(function(r){ return r.ID !== id; });
+      adInformeRecords = adInformeRecords.filter(function(r){ return r.ID !== id; });
+      adFilteredRecords = adFilteredRecords.filter(function(r){ return r.ID !== id; });
+      renderAdminJournal();
+    }
+  });
+}
+
+// Operario: borra su propio informe (solo pending/rejected, el backend
+// también valida esto por seguridad) desde el modal de detalle.
+function deleteReportFromOperario() {
+  if (!rdCurrentId) return;
+  var id = rdCurrentId;
+  callDeleteReport(id, function() {
+    closeReportDetail();
+    myReportsCache = myReportsCache.filter(function(r){ return r.ID !== id; });
+    renderMyReports(myReportsCache);
+    dataCacheSet('myReports', myReportsCache);
+  });
 }
 
 function approveReport(id) {
@@ -3249,6 +3479,7 @@ function openHistorialDetail(id) {
   // В режиме истории — только просмотр, без кнопок решения
   var actions = document.querySelector('#mgDetailModal .mg-actions');
   if (actions) actions.style.display = 'none';
+  document.getElementById('mgDeleteBtn').style.display = 'none';
   document.getElementById('mgDetailModal').classList.add('show');
 }
 
@@ -3650,6 +3881,7 @@ function openAdminDetail(id) {
   document.getElementById('mgdBody').innerHTML = html;
   var actions = document.querySelector('#mgDetailModal .mg-actions');
   if (actions) actions.style.display = 'none';
+  document.getElementById('mgDeleteBtn').style.display = 'flex';
   document.getElementById('mgDetailModal').classList.add('show');
 }
 
@@ -3672,6 +3904,7 @@ function openAdminInformeDetail(id) {
   document.getElementById('mgdBody').innerHTML = html;
   var actions = document.querySelector('#mgDetailModal .mg-actions');
   if (actions) actions.style.display = 'none';
+  document.getElementById('mgDeleteBtn').style.display = 'flex';
   document.getElementById('mgDetailModal').classList.add('show');
 }
 
@@ -4354,6 +4587,44 @@ function openReportFromNotif(baseId) {
   }
 }
 
+// BUG CORREGIDO ("al tocar el push se abre un 404" / "no abre el informe
+// correcto"): el push ahora incluye ?openReport=ID&mode=view|edit en su
+// URL (ver buildAppUrl en Code_v5.gs). Esta función lee esos parámetros
+// y abre DIRECTAMENTE el informe correspondiente — en modo lectura, o en
+// modo edición si el push era de un rechazo dirigido al propio operario.
+// Se llama tras cada routeToRoleScreen() (login normal o recuperado de
+// caché) — es segura de llamar varias veces: solo actúa una vez gracias
+// a deepLinkHandled, y limpia la query string para que un refresco
+// posterior no vuelva a reabrir el mismo informe.
+var deepLinkHandled = false;
+function tryOpenDeepLinkedReport() {
+  if (deepLinkHandled || !currentUser) return;
+  var params = new URLSearchParams(window.location.search);
+  var id = params.get('openReport');
+  if (!id) return;
+  var mode = params.get('mode') || 'view';
+
+  var found = false;
+  if (currentUser.rol === 'operario') {
+    var r = myReportsCache.find(function(x){ return x.ID === id; });
+    if (r) {
+      found = true;
+      if (mode === 'edit' && r.STATUS === 'rejected') openEditReport(id);
+      else openReportDetail(id);
+    }
+  } else if (currentUser.rol === 'manager') {
+    if (mgReportsCache.some(function(x){ return x.ID === id; })) { found = true; openManagerDetail(id); }
+    else if (mgHistorialCache.some(function(x){ return x.ID === id; })) { found = true; openHistorialDetail(id); }
+  } else if (currentUser.rol === 'admin') {
+    if (adAllRecords.some(function(x){ return x.ID === id; })) { found = true; openAdminDetail(id); }
+  }
+
+  if (found) {
+    deepLinkHandled = true;
+    try { window.history.replaceState({}, '', window.location.pathname); } catch(e) {}
+  }
+}
+
 function openNotifModal() {
   var langDrop = document.getElementById('langDrop');
   if (langDrop) langDrop.classList.remove('open');
@@ -4971,11 +5242,22 @@ document.addEventListener('visibilitychange', function() {
       document.body.style.right = '0';
       isLocked = true;
     } else if (!shouldLock && isLocked) {
+      // BUG CORREGIDO ("el tabbar se desplaza al cerrar un modal"): quitar
+      // body.position:fixed y hacer scrollTo() en el MISMO frame deja a
+      // Safari/iOS un instante a mitad de la transición en el que los
+      // elementos position:fixed (tabbar, nav) pueden "arrastrarse"
+      // visualmente con el scroll restaurado — un bug conocido de iOS al
+      // combinar el destrabado de scroll con un scrollTo() inmediato.
+      // Separar el scrollTo() al siguiente frame (tras el repintado del
+      // destrabado) le da a WebKit un ciclo limpio para asentar los
+      // elementos fijos antes de mover el scroll de fondo.
       document.body.style.position = '';
       document.body.style.top = '';
       document.body.style.left = '';
       document.body.style.right = '';
-      window.scrollTo(0, savedScrollY);
+      requestAnimationFrame(function() {
+        window.scrollTo(0, savedScrollY);
+      });
       isLocked = false;
     }
   }
