@@ -108,23 +108,20 @@ html,body{background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,"SF Pr
    Android puede aparecer y da un aspecto poco pulido). */
 *{scrollbar-width:none;-ms-overflow-style:none}
 *::-webkit-scrollbar{display:none;width:0;height:0}
-body{min-height:100dvh;padding-top:calc(env(safe-area-inset-top,0px) + 68px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
+body{min-height:100dvh;padding-top:var(--nav-h, calc(env(safe-area-inset-top,0px) + 68px));padding-bottom:calc(env(safe-area-inset-bottom,0px) + 84px)}
 
 /* NAV */
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;background:rgba(255,255,255,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid #e5e5ea;transition:transform .25s ease;}
 .nav.nav-hidden{transform:translateY(-100%);}
 .nav-center{flex:1;text-align:center;min-width:0}
-/* BUG CORREGIDO: sin white-space:nowrap, un nombre de usuario largo
-   envolvía a 2 líneas — la barra superior crecía más alta de lo que
-   body{padding-top} preveía (valor fijo), así que la primera tarjeta de
-   la lista quedaba tapada/pisada por la barra. Truncamos con "…" en vez
-   de dejar que la barra crezca. */
-.nav-title{font-size:17px;font-weight:800;color:#000;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* Pedido: mostrar el nombre del usuario en negrita en la cabecera de
-   todas las pantallas — antes solo se veía el título genérico de la
-   pantalla ("PARTE DE TRABAJO"/"Aprobaciones"/"Panel admin"). Ahora ese
-   título pasa a subtítulo pequeño debajo del nombre. */
-.nav-subtitle{font-size:11px;font-weight:600;color:#8e8e93;letter-spacing:.2px;text-transform:uppercase;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Pedido: el nombre del usuario debe verse SIEMPRE completo, nunca
+   cortado con "…" — así que se permite envolver a 2 líneas si hace
+   falta. Para que eso nunca tape la primera tarjeta de la lista, el
+   padding-top de <body> ya no es un valor fijo: se recalcula en JS
+   (ver syncNavHeight()) según la altura REAL renderizada de .nav cada
+   vez que el nombre/idioma cambian, así crezca 1 o 2 líneas. */
+.nav-title{font-size:17px;font-weight:800;color:#000;letter-spacing:.3px;text-transform:uppercase;line-height:1.25}
+.nav-subtitle{font-size:11px;font-weight:600;color:#8e8e93;letter-spacing:.2px;text-transform:uppercase;margin-top:1px}
 .nav-side{width:112px;display:flex;justify-content:center;align-items:center}
 .nav-side.right{justify-content:flex-end;gap:4px}
 .globe-btn{width:52px;height:44px;border-radius:15px;background:transparent;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;touch-action:manipulation;transition:background .15s}
@@ -434,6 +431,11 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
 .rd-photo-link{display:flex;align-items:center;justify-content:center;gap:6px;background:#f7f7f8;border:.5px solid #ececee;border-radius:14px;padding:11px;font-size:13px;font-weight:600;color:#007AFF;text-decoration:none;margin-top:6px;width:100%;font-family:inherit;cursor:pointer;touch-action:manipulation}
 .rd-photo-link svg,.rd-photo-link i{width:15px;height:15px;font-size:15px;stroke:#007AFF;fill:none;stroke-width:2;stroke-linecap:round;color:#007AFF}
 
+/* GALERÍA DE FOTOS — miniaturas */
+.pg-thumb{flex-shrink:0;width:44px;height:44px;border-radius:8px;overflow:hidden;cursor:pointer;touch-action:manipulation;border:2px solid transparent;opacity:.55;transition:opacity .1s,border-color .1s}
+.pg-thumb.active{border-color:#fff;opacity:1}
+.pg-thumb img{width:100%;height:100%;object-fit:cover;-webkit-user-select:none;user-select:none;pointer-events:none}
+
 /* TABBAR — cápsula oscura flotante (referencia: dock tipo app de
    finanzas), separada de los bordes de la pantalla, con la pestaña
    activa como píldora ancha con icono+texto y las inactivas como
@@ -443,7 +445,7 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
    con la versión antigua (mostraba texto en todas, o ninguna). */
 .bottom-tabbar{
   position:fixed;left:0;right:0;
-  bottom:calc(env(safe-area-inset-bottom,0px) + 18px);
+  bottom:calc(env(safe-area-inset-bottom,0px) + 8px);
   z-index:200;
   display:flex;
   justify-content:center;
@@ -591,12 +593,15 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
   <!-- Track deslizable -->
   <div id="pgTrack" style="flex:1;display:flex;height:100%;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;position:relative"></div>
 
-  <!-- Franja de miniaturas — como en la galería de iPhone: se ve de un
-       vistazo cuántas fotos hay y cuál está activa; tocar una salta a ella. -->
-  <div id="pgThumbStrip" style="position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 92px);z-index:2;display:flex;gap:6px;padding:0 12px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch;transition:opacity .25s"></div>
-
-  <!-- Barra inferior: compartir -->
-  <div id="pgBottomBar" style="position:absolute;bottom:0;left:0;right:0;z-index:2;display:flex;align-items:center;justify-content:center;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 16px);background:linear-gradient(to top,rgba(0,0,0,.55),rgba(0,0,0,0));transition:opacity .25s">
+  <!-- Barra inferior: miniaturas + compartir, EN UN SOLO degradado —
+       antes la franja de miniaturas flotaba sin fondo propio encima del
+       track y "se comía" la parte de abajo de fotos verticales que
+       llenaban toda la pantalla. Ahora ambas comparten el mismo fondo
+       oscuro degradado, sin costura entre ellas. -->
+  <div id="pgBottomBar" style="position:absolute;bottom:0;left:0;right:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:12px;padding:36px 16px calc(env(safe-area-inset-bottom,0px) + 16px);background:linear-gradient(to top,rgba(0,0,0,.65) 0%,rgba(0,0,0,.55) 40%,rgba(0,0,0,0) 100%);transition:opacity .25s">
+    <!-- Franja de miniaturas — como en la galería de iPhone: se ve de un
+         vistazo cuántas fotos hay y cuál está activa; tocar una salta a ella. -->
+    <div id="pgThumbStrip" style="display:flex;gap:6px;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch"></div>
     <button type="button" onclick="sharePhotoGalleryCurrent()" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);border:none;border-radius:20px;padding:10px 20px;color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation">
       <i class="ti ti-send" style="font-size:16px"></i> Compartir
     </button>
@@ -612,7 +617,7 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
      daba lugar a comportamientos de scroll poco fiables. Ahora es un
      diálogo a pantalla completa (100dvh) con cierre explícito por botón. -->
 <div id="editReportModal" class="mg-modal-overlay" onclick="if(event.target===this)closeEditReportModal()">
-  <div class="mg-modal mg-modal-full" style="height:100dvh;max-height:100dvh;border-radius:0;overflow:hidden;display:flex;flex-direction:column;padding:0">
+  <div class="mg-modal mg-modal-full" style="height:100%;max-height:100%;border-radius:0;overflow:hidden;display:flex;flex-direction:column;padding:0">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 14px) 18px 12px;border-bottom:.5px solid #f0f0f0;flex-shrink:0">
       <div>
         <div class="mg-modal-title" id="erTitle" style="margin-bottom:0">Editar informe</div>
@@ -948,7 +953,7 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
 
 <!-- MODAL: DETALLE DE INFORME (Mis informes) -->
 <div class="mg-modal-overlay" id="reportDetailModal" onclick="if(event.target===this)closeReportDetail()">
-  <div class="mg-modal" style="height:100dvh;max-height:100dvh;border-radius:0;overflow:hidden;display:flex;flex-direction:column;padding:0">
+  <div class="mg-modal" style="height:100%;max-height:100%;border-radius:0;overflow:hidden;display:flex;flex-direction:column;padding:0">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 20px) 18px 12px;border-bottom:.5px solid #f0f0f0;flex-shrink:0">
       <div style="min-width:0">
         <div class="mg-modal-title" id="rdTitle">—</div>
@@ -969,7 +974,7 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
 
 <!-- MODAL: DETALLE Y DECISIÓN (Manager) -->
 <div class="mg-modal-overlay" id="mgDetailModal" onclick="if(event.target===this)closeManagerDetail()">
-  <div class="mg-modal" style="height:100dvh;max-height:100dvh;border-radius:0;overflow:hidden;display:flex;flex-direction:column;padding:0">
+  <div class="mg-modal" style="height:100%;max-height:100%;border-radius:0;overflow:hidden;display:flex;flex-direction:column;padding:0">
     <!-- Скроллируемый контент -->
     <div style="overflow-y:auto;flex:1;padding:calc(env(safe-area-inset-top,0px) + 20px) 18px 8px;-webkit-overflow-scrolling:touch">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
@@ -1502,6 +1507,27 @@ function setLang(lang) {
       .catch(function(){});
   }
 }
+// Mantiene body{padding-top} exactamente igual a la altura REAL de .nav
+// en todo momento (1 línea o 2, según quepa el nombre del usuario) — así
+// el nombre nunca se recorta y tampoco tapa la primera tarjeta de la
+// lista. ResizeObserver reacciona a cualquier cambio de altura (texto,
+// fuente cargando, rotación) sin tener que llamarlo a mano desde cada
+// sitio que toca navTitle/navSubtitle.
+function syncNavHeight() {
+  var nav = document.querySelector('.nav');
+  if (nav) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px');
+}
+if ('ResizeObserver' in window) {
+  document.addEventListener('DOMContentLoaded', function() {
+    var nav = document.querySelector('.nav');
+    if (nav) new ResizeObserver(syncNavHeight).observe(nav);
+    syncNavHeight();
+  });
+} else {
+  document.addEventListener('DOMContentLoaded', syncNavHeight);
+  window.addEventListener('resize', syncNavHeight);
+}
+
 document.addEventListener('click', function(e) {
   if (!e.target.closest('#globeWrap')) {
     var drop = document.getElementById('langDrop');
@@ -1586,12 +1612,26 @@ function markVisibleQueueAsSeen() {
   // offsetParent es null tanto para elementos con display:none como para
   // cualquier ancestro con display:none — forma barata de detectar "no
   // visible" sin recorrer manualmente la cadena de ancestros.
+  // BUG CORREGIDO ("las notificaciones no leídas vuelven a aparecer aunque
+  // ya las vi"): markAsSeen() solo actualiza el sistema de "NUEVO" en las
+  // tarjetas (seenIds) — la campana usa un log APARTE (notifLog, con su
+  // propio flag "read"). Ver una tarjeta en la lista nunca marcaba como
+  // leída su entrada en la campana, así que el badge se quedaba con el
+  // mismo número para siempre (incluso entre sesiones), aunque el usuario
+  // ya hubiera visto el informe en pantalla. Ahora ambos sistemas se
+  // sincronizan juntos aquí.
+  var notifLogChanged = false;
+  var notifLog = getNotifLog();
   document.querySelectorAll('.mg-card[data-id], .ad-card[data-id]').forEach(function(card) {
     if (card.offsetParent === null) return;
     var id = card.getAttribute('data-id');
     var ts = card.getAttribute('data-ts') || '';
     if (!id) return;
     markAsSeen(id + '@' + ts);
+    var notifSuffix = card.classList.contains('mg-card') ? '_new_mg' : '_new_ad';
+    notifLog.forEach(function(n) {
+      if (!n.read && n.id === id + notifSuffix) { n.read = true; notifLogChanged = true; }
+    });
     // BUG CORREGIDO: markAsSeen() solo actualizaba localStorage — el
     // resaltado "NUEVO" seguía en pantalla hasta el próximo re-render
     // (hasta 10s después, en el siguiente sondeo). Lo quitamos ya del DOM,
@@ -1617,6 +1657,7 @@ function markVisibleQueueAsSeen() {
       }
     }
   });
+  if (notifLogChanged) { saveNotifLog(notifLog); updateBellUI(); }
   // Recalculamos el badge del icono AL INSTANTE con los datos que ya
   // tenemos en memoria, sin esperar al próximo sondeo (hasta 10s de retraso).
   if (currentUser && currentUser.rol === 'manager') {
@@ -4381,6 +4422,8 @@ function showPhotoGalleryLoading() {
   document.getElementById('pgBottomBar').style.opacity = '0';
   document.getElementById('pgTopBar').style.pointerEvents = 'auto';
   document.getElementById('pgBottomBar').style.pointerEvents = 'none';
+  document.documentElement.style.background = '#000';
+  document.body.style.background = '#000';
 }
 
 // Las URL de Drive vienen como .../thumbnail?id=...&sz=w2000 (ver
@@ -4419,13 +4462,17 @@ function renderPhotoGallery(photos) {
   document.getElementById('photoGalleryModal').style.display = 'flex';
   document.getElementById('pgTopBar').style.opacity = '1';
   document.getElementById('pgBottomBar').style.opacity = '1';
-  document.getElementById('pgThumbStrip').style.opacity = '1';
   document.getElementById('pgTopBar').style.pointerEvents = 'auto';
   document.getElementById('pgBottomBar').style.pointerEvents = 'auto';
   // Salvaguarda contra la "franja blanca": si el viewport dinámico de Safari
   // deja un hueco de un frame por el cambio de barra de herramientas, que
   // se vea negro (como la galería) y no el blanco de la página de fondo.
+  // BUG CORREGIDO: solo se pintaba <html> de negro — pero <body> tiene su
+  // PROPIO background:#fff explícito (ver regla html,body{...}), que pinta
+  // POR ENCIMA del de <html> en toda el área que cubre body. Si el hueco
+  // aparecía sobre esa área, seguía viéndose blanco. Ahora se pintan ambos.
   document.documentElement.style.background = '#000';
+  document.body.style.background = '#000';
 
   bindPgGestures();
 }
@@ -4440,17 +4487,29 @@ function renderPgThumbStrip() {
   }
   strip.style.display = 'flex';
   strip.innerHTML = pgPhotos.map(function(url, i){
-    var active = i === pgIndex;
     // click Y touchend: un <div> no interactivo por naturaleza no siempre
     // recibe el "click" sintético tras un tap en iOS Safari, sobre todo
     // dentro de una franja con overflow-x:auto como esta — con touchend
     // como refuerzo el salto a la foto responde de forma fiable. pgJumpTo
     // es idempotente, así que no pasa nada si ambos llegan a disparar.
-    return '<div onclick="pgJumpTo('+i+')" ontouchend="event.preventDefault();pgJumpTo('+i+')" style="flex-shrink:0;width:44px;height:44px;border-radius:8px;overflow:hidden;cursor:pointer;touch-action:manipulation;' +
-      'border:2px solid ' + (active ? '#fff' : 'transparent') + ';opacity:' + (active ? '1' : '.55') + ';transition:opacity .15s,border-color .15s">' +
-      '<img src="'+pgThumbUrl(url)+'" style="width:100%;height:100%;object-fit:cover;-webkit-user-select:none;user-select:none;pointer-events:none" draggable="false">' +
+    return '<div class="pg-thumb'+(i===pgIndex?' active':'')+'" data-idx="'+i+'" onclick="pgJumpTo('+i+')" ontouchend="event.preventDefault();pgJumpTo('+i+')">' +
+      '<img src="'+pgThumbUrl(url)+'" draggable="false">' +
     '</div>';
   }).join('');
+}
+
+// Versión ligera de "resaltar la miniatura activa": solo mueve la clase
+// .active entre nodos existentes (2 cambios de clase) en vez de reconstruir
+// todo el innerHTML de la franja — así puede llamarse en cada frame de
+// scroll sin coste, y el resalte sigue al dedo en tiempo real en vez de
+// esperar a que el swipe termine (antes se notaba "atrasado").
+function setPgActiveThumb(idx) {
+  var strip = document.getElementById('pgThumbStrip');
+  if (!strip) return;
+  var prev = strip.querySelector('.pg-thumb.active');
+  if (prev) prev.classList.remove('active');
+  var next = strip.querySelector('.pg-thumb[data-idx="'+idx+'"]');
+  if (next) next.classList.add('active');
 }
 
 function pgJumpTo(i) {
@@ -4475,6 +4534,7 @@ function closePhotoGallery() {
   modal.style.transform = '';
   modal.style.opacity = '';
   document.documentElement.style.background = '';
+  document.body.style.background = '';
   var track = document.getElementById('pgTrack');
   track.innerHTML = '';
 }
@@ -4483,13 +4543,10 @@ function togglePgChrome() {
   pgChromeVisible = !pgChromeVisible;
   var top = document.getElementById('pgTopBar');
   var bottom = document.getElementById('pgBottomBar');
-  var strip = document.getElementById('pgThumbStrip');
   top.style.opacity = pgChromeVisible ? '1' : '0';
   bottom.style.opacity = pgChromeVisible ? '1' : '0';
-  strip.style.opacity = pgChromeVisible ? '1' : '0';
   top.style.pointerEvents = pgChromeVisible ? 'auto' : 'none';
   bottom.style.pointerEvents = pgChromeVisible ? 'auto' : 'none';
-  strip.style.pointerEvents = pgChromeVisible ? 'auto' : 'none';
 }
 
 function sharePhotoGalleryCurrent() {
@@ -4588,16 +4645,27 @@ function bindPgGestures() {
     gestureDecided = false;
   }, { passive: true });
 
-  // Actualiza el contador cuando el usuario termina de deslizar horizontalmente
-  var scrollTimeout = null;
+  // BUG CORREGIDO ("el resalte de la miniatura va muy atrasado al
+  // deslizar"): antes se recalculaba con un debounce de 80ms DESPUÉS de
+  // que el usuario dejara de deslizar — es decir, el aro blanco solo
+  // saltaba a la miniatura correcta cuando el swipe ya había terminado
+  // del todo. Ahora se recalcula con requestAnimationFrame en cada frame
+  // de scroll, así el resalte se mueve EN VIVO junto con el dedo.
+  var pgScrollTicking = false;
   track.addEventListener('scroll', function() {
-    if (scrollTimeout) clearTimeout(scrollTimeout);
-    scrollTimeout = setTimeout(function() {
+    if (pgScrollTicking) return;
+    pgScrollTicking = true;
+    requestAnimationFrame(function() {
+      pgScrollTicking = false;
       var w = track.clientWidth || 1;
       var idx = Math.round(track.scrollLeft / w);
       idx = Math.max(0, Math.min(idx, pgPhotos.length - 1));
-      if (idx !== pgIndex) { pgIndex = idx; updatePgCounter(); renderPgThumbStrip(); }
-    }, 80);
+      if (idx !== pgIndex) {
+        pgIndex = idx;
+        updatePgCounter();
+        setPgActiveThumb(idx);
+      }
+    });
   }, { passive: true });
 }
 
