@@ -333,7 +333,14 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
 .lw-opt{width:100%;padding:16px;border-radius:16px;border:1.5px solid #e5e5ea;background:#fff;font-size:16px;font-weight:600;color:#000;font-family:inherit;cursor:pointer;touch-action:manipulation;display:flex;align-items:center;gap:10px;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.1);transition:border-color .15s,background .15s,box-shadow .15s,color .15s}
 .lw-opt:active{background:#f2f2f7}
 .lw-opt.selected{background:#007AFF;border-color:#007AFF;color:#fff;box-shadow:0 8px 20px rgba(0,122,255,.35)}
-.lw-continue-btn{width:100%;max-width:320px;margin-top:auto;margin-bottom:calc(env(safe-area-inset-bottom,0px) + 28px);background:#34c759;color:#fff;border:none;border-radius:16px;padding:16px;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation;box-shadow:0 8px 20px rgba(52,199,89,.35);opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .25s ease,transform .25s ease}
+/* BUG CORREGIDO: con margin-top:auto dentro de un .pin-screen a
+   min-height:100dvh, la posición del botón dependía del cálculo de
+   100dvh — en iOS Safari ese valor puede recalcularse (barra de
+   herramientas colapsando/expandiendo) justo después de pintar la
+   pantalla, así que el botón "saltaba" de sitio entre que el usuario lo
+   veía y tocaba, y el tap caía fuera de su posición real. position:fixed
+   lo ancla al viewport visual de verdad, igual que el tabbar inferior. */
+.lw-continue-btn{position:fixed;left:24px;right:24px;max-width:320px;margin:0 auto;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);background:#34c759;color:#fff;border:none;border-radius:16px;padding:16px;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation;box-shadow:0 8px 20px rgba(52,199,89,.35);opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .25s ease,transform .25s ease;z-index:10}
 .lw-continue-btn.show{opacity:1;transform:translateY(0);pointer-events:auto}
 
 /* MIS INFORMES */
@@ -756,7 +763,7 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
     <button class="lw-opt" data-lang="ru" onclick="selectInitialLang('ru')">🇷🇺 Русский</button>
     <button class="lw-opt" data-lang="en" onclick="selectInitialLang('en')">🇬🇧 English</button>
   </div>
-  <button class="lw-continue-btn" id="lwContinueBtn" onclick="confirmInitialLang()">Continuar</button>
+  <button class="lw-continue-btn" id="lwContinueBtn" onclick="confirmInitialLang()" ontouchend="event.preventDefault();confirmInitialLang()">Continuar</button>
 </div>
 
 <!-- ═══ PANTALLA: SALUDO TRAS LOGIN (breve, luego redirige al rol) ═══ -->
@@ -5102,6 +5109,13 @@ function selectInitialLang(lang) {
   var btn = document.getElementById('lwContinueBtn');
   btn.textContent = t('lw_continue');
   btn.classList.add('show');
+}
+
+function confirmInitialLang() {
+  if (!initialLangSelected) return;
+  saveLangToDevice(initialLangSelected);
+  document.getElementById('screenLangWelcome').style.display = 'none';
+  startAppAfterGates();
 }
 
 // ═══ MODO DESARROLLADOR: varios iconos en la pantalla de inicio, cada
