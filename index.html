@@ -123,10 +123,22 @@ html,body{background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,"SF Pr
    elemento que se mueve, WebKit ya no tiene motivo para "temblarlos". */
 html,body{height:100%;overflow:hidden}
 body{height:100dvh}
+/* BUG CORREGIDO ("las secciones quedan tapadas bajo la cabecera"): antes
+   el padding-top dependía SOLO de --nav-h (fijada por JS vía
+   ResizeObserver). Si esa primera medición ocurre con el nav aún
+   display:none (altura 0, pasa en PIN/splash antes del login) y el
+   ResizeObserver no recalcula a tiempo al mostrarse el nav real (no
+   fiable en todo WebKit/PWA standalone), --nav-h queda clavada en "0px"
+   — un valor VÁLIDO para CSS, así que el fallback de var(--nav-h, X) NO
+   se activa (ese fallback solo aplica si la variable no existe, no si
+   vale 0). Resultado: contenido pegado bajo el nav. max() elimina la
+   clase de fallo entera: pase lo que pase con --nav-h, nunca se baja del
+   mínimo estático seguro (altura típica de una sola línea + notch); JS
+   solo puede AUMENTARLo si el nombre ocupa 2 líneas. */
 #appScroll{
   display:none;height:100%;
   overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
-  padding-top:var(--nav-h, calc(env(safe-area-inset-top,0px) + 68px));
+  padding-top:max(var(--nav-h, 0px), calc(env(safe-area-inset-top,0px) + 68px));
   padding-bottom:calc(env(safe-area-inset-bottom,0px) + 66px);
 }
 
@@ -271,8 +283,12 @@ body{height:100dvh}
 .photo-row-head{display:flex;flex-direction:column;align-items:stretch;gap:10px;margin-bottom:4px}
 .photo-row-head .rlabel{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#737687}
 .photo-hint{font-size:12.5px;color:#737687;margin-bottom:14px;line-height:1.4}
-.photo-input-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:#f4f4f7;border:none;border-radius:999px;padding:13px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#4b4d57;cursor:pointer;touch-action:manipulation;transition:opacity .12s;box-shadow:none}
-.photo-input-btn:active{opacity:.7}
+/* Pedido: sombra alrededor de todo el perímetro, como si el botón
+   fuera convexo/abombado — no una sombra "caída" de un solo lado, sino
+   difusa en todas direcciones (offset 0, blur grande) para simular
+   volumen, más un aro sutil que refuerza el borde. */
+.photo-input-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:#f4f4f7;border:none;border-radius:999px;padding:13px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#4b4d57;cursor:pointer;touch-action:manipulation;transition:box-shadow .12s,opacity .12s;box-shadow:0 0 0 1px rgba(0,0,0,.04),0 0 14px rgba(0,0,0,.14),0 3px 8px rgba(0,0,0,.08)}
+.photo-input-btn:active{opacity:.7;box-shadow:0 0 0 1px rgba(0,0,0,.04),0 0 6px rgba(0,0,0,.1),0 1px 3px rgba(0,0,0,.08)}
 .photo-input-btn svg{width:16px;height:16px;stroke:#4b4d57;fill:none;stroke-width:2;stroke-linecap:round}
 .photo-input-btn.hidden{display:none}
 .photo-thumbs{display:flex;flex-wrap:wrap;gap:8px}
@@ -1710,8 +1726,18 @@ function saveUserCache(data) {
 function getUserCache(pin) {
   try {
     var c = JSON.parse(localStorage.getItem('parte_user_cache') || 'null');
-    // Кеш пользователя живёт 24 часа
-    if (c && c.data && c.data.codigo === pin && (Date.now() - c.ts) < 24*60*60*1000) return c.data;
+    // BUG CORREGIDO ("la app no recuerda la sesión, pide el PIN
+    // constantemente"): con un TTL de 24h, cualquier reapertura pasado un
+    // día (lo normal en una app de uso diario) caía en la rama SIN caché
+    // de startAppAfterGates(), que depende de que el fetch de validación
+    // responda — y en iOS, al reabrir la app desde background/terminada,
+    // la red tarda un instante en reconectar, así que ese fetch fallaba
+    // con frecuencia y mandaba al usuario a la pantalla de PIN aunque su
+    // sesión seguía siendo válida. Esta caché es solo para pintar la
+    // pantalla al instante mientras se revalida en segundo plano — la
+    // validación real contra el servidor sigue ocurriendo siempre — así
+    // que no hay motivo de seguridad para expirarla tan pronto. 30 días.
+    if (c && c.data && c.data.codigo === pin && (Date.now() - c.ts) < 30*24*60*60*1000) return c.data;
   } catch(e) {}
   return null;
 }
@@ -1889,6 +1915,13 @@ function submitPin() {
         // dispositivo o reinstale la app.
         if (result.lang) { currentLang = result.lang; saveLangToDevice(result.lang); applyLang(); }
         showGreetThenRoute();
+      } else if (result && result.blocked) {
+        // BUG CORREGIDO: el bloqueo anti-fuerza-bruta del backend (5
+        // intentos fallidos → 15 min) mostraba el mismo "Código incorrecto"
+        // genérico que un PIN mal tecleado — el usuario seguía
+        // reintentando sin saber que está bloqueado un rato. Mostramos el
+        // mensaje real que manda el servidor.
+        showPinError(result.message || 'Demasiados intentos fallidos. Espera unos minutos.');
       } else {
         showPinError('Código incorrecto');
       }
@@ -2087,7 +2120,7 @@ function switchOpTab(tab) {
 function refreshMyReportsBackground() {
   if (myReportsSyncing) return;
   myReportsSyncing = true;
-  fetch(WEBAPP_URL + '?action=getMyReports&operario=' + encodeURIComponent(currentUser.nombre) + '&t=' + Date.now())
+  fetch(WEBAPP_URL + '?action=getMyReports&codigo=' + encodeURIComponent(currentPin) + '&operario=' + encodeURIComponent(currentUser.nombre) + '&t=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(result){
       myReportsSyncing = false;
@@ -2354,6 +2387,7 @@ function saveRecord() {
 
   var payload = {
     action: 'save',
+    codigo:     currentPin,
     fecha:      document.getElementById('fecha').value,
     cliente:    getCliente(),
     obra:       getObra(),
@@ -2410,6 +2444,7 @@ function uploadPhotosWithRetry(id, fecha, operario, photosObra, photosMat, retri
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({
       action: 'uploadReportPhotos',
+      codigo: currentPin,
       id: id,
       fecha: fecha,
       operario: operario,
@@ -2536,7 +2571,7 @@ function loadMyReports() {
   }
   if (myReportsSyncing) return; // ya hay un fetch de esta misma lista en curso (p.ej. refreshMyReportsBackground)
   myReportsSyncing = true;
-  fetch(WEBAPP_URL + '?action=getMyReports&operario=' + encodeURIComponent(currentUser.nombre) + '&t=' + Date.now())
+  fetch(WEBAPP_URL + '?action=getMyReports&codigo=' + encodeURIComponent(currentPin) + '&operario=' + encodeURIComponent(currentUser.nombre) + '&t=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(result){
       myReportsLoaded = true;
@@ -2673,7 +2708,10 @@ function openReportDetail(id) {
   if (!r) return;
   rdCurrentId = id;
 
-  var statusLabel = r.STATUS === 'pending' ? t('status_pending') : (r.STATUS === 'rejected' ? t('status_rejected') : r.STATUS);
+  // BUG CORREGIDO: el caso 'approved' caía en el "else" y mostraba el
+  // STATUS crudo del backend ("approved") en vez de traducirlo, mientras
+  // pending/rejected sí pasaban por t(). Se completan los 3 estados.
+  var statusLabel = r.STATUS === 'pending' ? t('status_pending') : (r.STATUS === 'rejected' ? t('status_rejected') : (r.STATUS === 'approved' ? t('status_approved') : r.STATUS));
   var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
 
   document.getElementById('rdTitle').textContent = (r.OBRA || r.ID);
@@ -2703,7 +2741,7 @@ function openEditReport(id) {
   var report = myReportsCache.find(function(r){ return r.ID === id; });
   if (!report) {
     // Por si acaso no está en caché, lo pedimos al servidor
-    fetch(WEBAPP_URL + '?action=getMyReports&operario=' + encodeURIComponent(currentUser.nombre) + '&t=' + Date.now())
+    fetch(WEBAPP_URL + '?action=getMyReports&codigo=' + encodeURIComponent(currentPin) + '&operario=' + encodeURIComponent(currentUser.nombre) + '&t=' + Date.now())
       .then(function(r){ return r.json(); })
       .then(function(result){
         var r2 = (result.data || []).find(function(x){ return x.ID === id; });
@@ -2830,6 +2868,7 @@ function submitEditReport() {
   var precio = parseFloat(document.getElementById('erPrecio').value) || 0;
   var payload = {
       action: 'resubmit',
+      codigo: currentPin,
       id: erCurrentReport.ID,
       fecha: document.getElementById('erFecha').value,
       cliente: document.getElementById('erCliente').value,
@@ -2932,7 +2971,7 @@ function submitEditReport() {
     // terminado bien del otro lado. Antes de mostrar el error,
     // comprobamos con una lectura si el informe realmente llegó a
     // guardarse (pasó a "pending") — si es así, lo tratamos como éxito.
-    fetch(WEBAPP_URL + '?action=getMyReports&operario=' + encodeURIComponent(currentUser.nombre) + '&t=' + Date.now())
+    fetch(WEBAPP_URL + '?action=getMyReports&codigo=' + encodeURIComponent(currentPin) + '&operario=' + encodeURIComponent(currentUser.nombre) + '&t=' + Date.now())
       .then(function(r){ return r.json(); })
       .then(function(res){
         var landed = res && res.status === 'ok' && res.data && res.data.some(function(r){
@@ -4650,6 +4689,17 @@ function openReportFromNotif(baseId) {
 // a deepLinkHandled, y limpia la query string para que un refresco
 // posterior no vuelva a reabrir el mismo informe.
 var deepLinkHandled = false;
+// BUG CORREGIDO ("tocar una notificación push no abre nada — enlace
+// perdido en silencio"): esta función se llama justo al terminar
+// routeToRoleScreen(), pero para operario esa ruta solo carga las LISTAS
+// de selects (loadLists en initOperarioScreen) — myReportsCache sigue
+// vacío hasta que el usuario visita la pestaña "Mis informes" a mano. Como
+// tocar un push SIEMPRE abre la app "en frío" (recién lanzada), el caché
+// nunca estaba listo a tiempo y el enlace fallaba EN TODOS los casos para
+// operarios. Lo mismo le pasaba a manager si el enlace apuntaba a un
+// informe ya resuelto (pestaña "Historial", con su propio caché
+// perezoso). Ahora, si la búsqueda inicial falla, se fuerza la carga de
+// la lista correspondiente y se reintenta una vez llegan los datos.
 function tryOpenDeepLinkedReport() {
   if (deepLinkHandled || !currentUser) return;
   var params = new URLSearchParams(window.location.search);
@@ -4657,24 +4707,58 @@ function tryOpenDeepLinkedReport() {
   if (!id) return;
   var mode = params.get('mode') || 'view';
 
-  var found = false;
+  function consume() {
+    deepLinkHandled = true;
+    try { window.history.replaceState({}, '', window.location.pathname); } catch(e) {}
+  }
+
   if (currentUser.rol === 'operario') {
     var r = myReportsCache.find(function(x){ return x.ID === id; });
     if (r) {
-      found = true;
+      consume();
       if (mode === 'edit' && r.STATUS === 'rejected') openEditReport(id);
       else openReportDetail(id);
+      return;
     }
-  } else if (currentUser.rol === 'manager') {
-    if (mgReportsCache.some(function(x){ return x.ID === id; })) { found = true; openManagerDetail(id); }
-    else if (mgHistorialCache.some(function(x){ return x.ID === id; })) { found = true; openHistorialDetail(id); }
-  } else if (currentUser.rol === 'admin') {
-    if (adAllRecords.some(function(x){ return x.ID === id; })) { found = true; openAdminDetail(id); }
+    fetch(WEBAPP_URL + '?action=getMyReports&codigo=' + encodeURIComponent(currentPin) + '&operario=' + encodeURIComponent(currentUser.nombre) + '&t=' + Date.now())
+      .then(function(resp){ return resp.json(); })
+      .then(function(result){
+        if (deepLinkHandled || !result || result.status !== 'ok') return;
+        myReportsCache = capReports(result.data || []);
+        myReportsLoaded = true;
+        dataCacheSet('myReports', myReportsCache);
+        var r2 = myReportsCache.find(function(x){ return x.ID === id; });
+        if (!r2) return;
+        consume();
+        if (mode === 'edit' && r2.STATUS === 'rejected') openEditReport(id);
+        else openReportDetail(id);
+      })
+      .catch(function(){});
+    return;
   }
 
-  if (found) {
-    deepLinkHandled = true;
-    try { window.history.replaceState({}, '', window.location.pathname); } catch(e) {}
+  if (currentUser.rol === 'manager') {
+    if (mgReportsCache.some(function(x){ return x.ID === id; })) { consume(); openManagerDetail(id); return; }
+    if (mgHistorialCache.some(function(x){ return x.ID === id; })) { consume(); openHistorialDetail(id); return; }
+    // No está en pendientes (ya cargadas por initManagerScreen) ni en el
+    // historial cacheado — puede que sea un informe ya resuelto y el
+    // historial nunca se haya visitado en esta sesión. Se fuerza su carga.
+    fetch(WEBAPP_URL + '?action=getHistorial&codigo=' + encodeURIComponent(currentPin) + '&t=' + Date.now())
+      .then(function(resp){ return resp.json(); })
+      .then(function(result){
+        if (deepLinkHandled || !result || result.status !== 'ok') return;
+        mgHistorialCache = capReports(result.data || []);
+        mgHistorialLoaded = true;
+        if (!mgHistorialCache.some(function(x){ return x.ID === id; })) return;
+        consume();
+        openHistorialDetail(id);
+      })
+      .catch(function(){});
+    return;
+  }
+
+  if (currentUser.rol === 'admin') {
+    if (adAllRecords.some(function(x){ return x.ID === id; })) { consume(); openAdminDetail(id); }
   }
 }
 
@@ -4769,7 +4853,7 @@ function openPhotoGallery(triggerEl) {
   // Pedimos al backend las fotos individuales de esa carpeta para la galería.
   showPhotoGalleryLoading();
   console.log('[PhotoGallery] pidiendo fotos de:', value);
-  fetch(WEBAPP_URL + '?action=getFolderPhotos&url=' + encodeURIComponent(value))
+  fetch(WEBAPP_URL + '?action=getFolderPhotos&codigo=' + encodeURIComponent(currentPin) + '&url=' + encodeURIComponent(value))
     .then(function(r){ return r.json(); })
     .then(function(result){
       console.log('[PhotoGallery] respuesta del backend:', result);
@@ -5112,7 +5196,7 @@ function saveLastStatuses(obj) {
 }
 
 function checkWorkerNotifications() {
-  fetch(WEBAPP_URL + '?action=getMyReports&operario=' + encodeURIComponent(currentUser.nombre) + '&t=' + Date.now())
+  fetch(WEBAPP_URL + '?action=getMyReports&codigo=' + encodeURIComponent(currentPin) + '&operario=' + encodeURIComponent(currentUser.nombre) + '&t=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(result){
       if (!result || result.status !== 'ok') return;
@@ -5354,7 +5438,15 @@ function startAppAfterGates(){
     currentUser = cached;
     var readyPromise = routeToRoleScreen();
     hideSplashWhenReady(readyPromise, 3000);
-    // Фоновая проверка актуальности PIN
+    // Фоновая проверка актуальности PIN.
+    // BUG CORREGIDO ("la app pide el PIN constantemente"): antes CUALQUIER
+    // respuesta que no fuera exactamente {status:'ok',valid:true} borraba
+    // el PIN guardado y forzaba el login — pero checkUser() en Code_v5.gs
+    // solo devuelve {status:'ok',valid:false} cuando el PIN es REALMENTE
+    // inválido. Cualquier otra forma (p.ej. {status:'error',message:...}
+    // o un cold-start/cuota de Apps Script) es un fallo de infraestructura,
+    // no un "PIN incorrecto", y se trataba igual, cerrando sesión sin
+    // motivo. Ahora solo se cierra sesión ante el "no válido" EXPLÍCITO.
     fetch(WEBAPP_URL + '?action=checkUser&codigo=' + encodeURIComponent(saved) + '&t=' + Date.now())
       .then(function(r){ return r.json(); })
       .then(function(result){
@@ -5362,16 +5454,20 @@ function startAppAfterGates(){
           currentUser = result;
           saveUserCache(result);
           if (result.lang && result.lang !== currentLang) { currentLang = result.lang; saveLangToDevice(result.lang); applyLang(); }
-        } else {
+        } else if (result && result.status === 'ok' && result.valid === false) {
           try { localStorage.removeItem('parte_user_pin'); } catch(e) {}
           changeUser();
         }
+        // cualquier otra forma de respuesta: se ignora, la sesión sigue activa
       })
       .catch(function(){});
     return;
   }
 
-  // Нет кеша — отправляем сохранённый PIN на сервер (splash показывается пока ждём)
+  // Нет кеша — отправляем сохранённый PIN на сервер (splash показывается пока ждём).
+  // Mismo criterio que arriba: solo se pide el PIN de nuevo si el servidor
+  // dice explícitamente que ya no es válido, nunca por un fallo de red o
+  // una respuesta inesperada.
   fetch(WEBAPP_URL + '?action=checkUser&codigo=' + encodeURIComponent(saved) + '&t=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(result){
@@ -5382,12 +5478,44 @@ function startAppAfterGates(){
         if (result.lang) { currentLang = result.lang; saveLangToDevice(result.lang); applyLang(); }
         var readyPromise2 = routeToRoleScreen();
         hideSplashWhenReady(readyPromise2, 3000);
-      } else {
-        // PIN больше не валиден
+      } else if (result && result.status === 'ok' && result.valid === false) {
+        // PIN больше не валиден — de verdad, lo dice el servidor
         try { localStorage.removeItem('parte_user_pin'); } catch(e) {}
         currentPin = '';
         hideSplash(300);
         document.getElementById('screenPin').style.display = 'flex';
+      } else {
+        // Respuesta inesperada (no un "PIN inválido" real): no cerramos
+        // sesión. Reintentamos una vez tras una breve espera por si fue
+        // un cold-start de Apps Script; si vuelve a fallar, dejamos ver
+        // el PIN para que el usuario pueda entrar a mano sin quedar
+        // atascado en el splash — pero SIN borrar el PIN guardado.
+        setTimeout(function(){
+          fetch(WEBAPP_URL + '?action=checkUser&codigo=' + encodeURIComponent(saved) + '&t=' + Date.now())
+            .then(function(r){ return r.json(); })
+            .then(function(retryResult){
+              if (retryResult && retryResult.status === 'ok' && retryResult.valid) {
+                currentUser = retryResult;
+                saveUserCache(retryResult);
+                currentPin = saved;
+                if (retryResult.lang) { currentLang = retryResult.lang; saveLangToDevice(retryResult.lang); applyLang(); }
+                var readyPromise3 = routeToRoleScreen();
+                hideSplashWhenReady(readyPromise3, 3000);
+              } else if (retryResult && retryResult.status === 'ok' && retryResult.valid === false) {
+                try { localStorage.removeItem('parte_user_pin'); } catch(e) {}
+                currentPin = '';
+                hideSplash(300);
+                document.getElementById('screenPin').style.display = 'flex';
+              } else {
+                hideSplash(300);
+                document.getElementById('screenPin').style.display = 'flex';
+              }
+            })
+            .catch(function(){
+              hideSplash(300);
+              document.getElementById('screenPin').style.display = 'flex';
+            });
+        }, 1500);
       }
     })
     .catch(function(){
