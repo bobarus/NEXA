@@ -127,7 +127,7 @@ body{height:100dvh}
   display:none;height:100%;
   overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
   padding-top:var(--nav-h, calc(env(safe-area-inset-top,0px) + 68px));
-  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 76px);
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 66px);
 }
 
 /* NAV */
@@ -516,7 +516,7 @@ body.pin-mode{overflow:hidden}
    con la versión antigua (mostraba texto en todas, o ninguna). */
 .bottom-tabbar{
   position:fixed;left:0;right:0;
-  bottom:calc(env(safe-area-inset-bottom,0px) + 8px);
+  bottom:calc(env(safe-area-inset-bottom,0px) + 2px);
   z-index:200;
   display:flex;
   justify-content:center;
@@ -1937,6 +1937,18 @@ function routeToRoleScreen() {
   document.getElementById('mainNav').style.display = '';
   document.body.classList.remove('pin-mode');
   document.getElementById('screenPin').style.display = 'none';
+  // BUG CORREGIDO ("las secciones quedan tapadas bajo la cabecera"): la
+  // primera medición de syncNavHeight() ocurre en DOMContentLoaded, ANTES
+  // del login, cuando mainNav todavía está display:none (altura 0) — deja
+  // --nav-h clavado en "0px". El ResizeObserver debería recalcularlo al
+  // mostrarse el nav, pero eso no es fiable en todos los WebKit/PWA
+  // standalone. Se fuerza aquí, justo al mostrar el nav real, con doble
+  // llamada (síncrona + tras el siguiente frame) para cubrir el caso en
+  // que el layout aún no esté asentado en el mismo tick.
+  if (typeof syncNavHeight === 'function') {
+    syncNavHeight();
+    requestAnimationFrame(syncNavHeight);
+  }
 
   document.getElementById('screenOperario').style.display = 'none';
   document.getElementById('screenManager').style.display = 'none';
