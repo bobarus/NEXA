@@ -109,7 +109,26 @@ html,body{background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,"SF Pr
    Android puede aparecer y da un aspecto poco pulido). */
 *{scrollbar-width:none;-ms-overflow-style:none}
 *::-webkit-scrollbar{display:none;width:0;height:0}
-body{min-height:100dvh;padding-top:var(--nav-h, calc(env(safe-area-inset-top,0px) + 68px));padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
+/* BUG CORREGIDO ("el tabbar/nav tiembla constantemente en iPhone
+   instalado como PWA"): antes <body> era el propio contenedor con scroll
+   (document scrolling) y nav/tabbar eran position:fixed encima. En modo
+   standalone de iOS, cualquier scroll, cambio de altura de contenido,
+   apertura de teclado o repintado del <body> hace que WebKit "arrastre"
+   visiblemente los elementos fixed durante un frame — es un bug conocido
+   de WebKit con el scroll del documento raíz, no algo que translateZ/
+   backface-visibility puedan arreglar del todo (ya se intentó). La
+   solución real es que <html>/<body> NUNCA scrolleen: toda la pantalla
+   de contenido va dentro de #appScroll (un div normal, no fixed), que es
+   el único que scrollea. Como nav/tabbar dejan de ser hermanos de un
+   elemento que se mueve, WebKit ya no tiene motivo para "temblarlos". */
+html,body{height:100%;overflow:hidden}
+body{height:100dvh}
+#appScroll{
+  display:none;height:100%;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
+  padding-top:var(--nav-h, calc(env(safe-area-inset-top,0px) + 68px));
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 76px);
+}
 
 /* NAV */
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;background:rgba(255,255,255,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid #e5e5ea;transition:transform .25s ease;transform:translateZ(0);-webkit-transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;}
@@ -291,11 +310,10 @@ body{min-height:100dvh;padding-top:var(--nav-h, calc(env(safe-area-inset-top,0px
 
 /* PIN */
 .pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:9vh 24px 0;text-align:center;width:100%;gap:0;overflow:hidden}
-/* BUG CORREGIDO: solo se anulaba el padding-top del body en modo PIN — el
-   padding-bottom (reservado para la barra de pestañas inferior, que en
-   esta pantalla no existe) seguía aplicado, así que el contenido
-   centrado quedaba desplazado hacia arriba en vez de centrado real. */
-body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidden}
+/* body ya no tiene padding propio (ver #appScroll más arriba) — esta
+   clase se deja como no-op por compatibilidad con el JS existente que
+   la añade/quita, pero ya no necesita anular nada. */
+body.pin-mode{overflow:hidden}
 .pin-logo{display:none}
 .pin-title{font-size:22px;font-weight:700;color:#000;margin-bottom:4px}
 .pin-sub{font-size:14px;color:#8e8e93;font-weight:400;margin-bottom:28px}
@@ -484,7 +502,7 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
    con la versión antigua (mostraba texto en todas, o ninguna). */
 .bottom-tabbar{
   position:fixed;left:0;right:0;
-  bottom:calc(env(safe-area-inset-bottom,0px) + 14px);
+  bottom:calc(env(safe-area-inset-bottom,0px) + 8px);
   z-index:200;
   display:flex;
   justify-content:center;
@@ -812,6 +830,11 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
   <div class="greet-name" id="greetName">—</div>
   <div class="greet-role" id="greetRole">—</div>
 </div>
+
+<!-- Único contenedor que scrollea de verdad (ver comentario en el CSS de
+     #appScroll) — envuelve las 3 pantallas de rol para que nav/tabbar,
+     fuera de aquí, nunca tiemblen. -->
+<div id="appScroll">
 
 <!-- ═══ PANTALLA: OPERARIO ═══ -->
 <div id="screenOperario" style="display:none">
@@ -1214,6 +1237,8 @@ body.pin-mode{padding-top:0 !important;padding-bottom:0 !important;overflow:hidd
   </div>
 
 </div>
+
+</div><!-- /#appScroll -->
 
 <!-- BOTTOM TAB BAR: OPERARIO -->
 <div class="bottom-tabbar" id="tabbarOperario" style="display:none">
@@ -1815,6 +1840,7 @@ function changeUser() {
   document.getElementById('tabbarOperario').style.display = 'none';
   document.getElementById('tabbarManager').style.display = 'none';
   document.getElementById('tabbarAdmin').style.display = 'none';
+  document.getElementById('appScroll').style.display = 'none';
 
   document.getElementById('navExit').style.visibility = 'hidden';
   document.getElementById('navTitle').textContent = 'AEDIS';
@@ -1904,6 +1930,7 @@ function routeToRoleScreen() {
   document.getElementById('tabbarOperario').style.display = 'none';
   document.getElementById('tabbarManager').style.display = 'none';
   document.getElementById('tabbarAdmin').style.display = 'none';
+  document.getElementById('appScroll').style.display = 'block';
   document.getElementById('navExit').style.visibility = 'visible';
 
   // BUG CORREGIDO: este título estaba escrito directamente en español,
@@ -5215,13 +5242,19 @@ document.addEventListener('visibilitychange', function() {
 });
 
 /* ════════ SCROLL LOCK — bloquea el scroll del fondo mientras hay un modal
-   abierto. Solo el contenido DENTRO del modal puede desplazarse. ════════ */
+   abierto. Solo el contenido DENTRO del modal puede desplazarse. ════════
+   Antes esto trababa document.body con el truco position:fixed+top
+   negativo+scrollTo() (necesario porque <body> era el elemento que
+   realmente scrolleaba). Ahora que <body> nunca scrollea y el único
+   contenedor con scroll real es #appScroll (ver su CSS), basta con
+   alternar overflow:hidden en #appScroll — un div normal preserva su
+   scrollTop automáticamente al restaurar overflow, sin el salto visual
+   que sí sufría <body> en iOS al combinar destrabado + scrollTo(). */
 (function() {
   var modalIds = [
     'reportDetailModal', 'mgDetailModal', 'editReportModal',
     'mgRejectModal', 'notifFullModal', 'photoGalleryModal'
   ];
-  var savedScrollY = 0;
   var isLocked = false;
 
   function isAnyModalOpen() {
@@ -5234,30 +5267,13 @@ document.addEventListener('visibilitychange', function() {
 
   function updateLock() {
     var shouldLock = isAnyModalOpen();
+    var scroller = document.getElementById('appScroll');
+    if (!scroller) return;
     if (shouldLock && !isLocked) {
-      savedScrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = '-' + savedScrollY + 'px';
-      document.body.style.left = '0';
-      document.body.style.right = '0';
+      scroller.style.overflow = 'hidden';
       isLocked = true;
     } else if (!shouldLock && isLocked) {
-      // BUG CORREGIDO ("el tabbar se desplaza al cerrar un modal"): quitar
-      // body.position:fixed y hacer scrollTo() en el MISMO frame deja a
-      // Safari/iOS un instante a mitad de la transición en el que los
-      // elementos position:fixed (tabbar, nav) pueden "arrastrarse"
-      // visualmente con el scroll restaurado — un bug conocido de iOS al
-      // combinar el destrabado de scroll con un scrollTo() inmediato.
-      // Separar el scrollTo() al siguiente frame (tras el repintado del
-      // destrabado) le da a WebKit un ciclo limpio para asentar los
-      // elementos fijos antes de mover el scroll de fondo.
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.left = '';
-      document.body.style.right = '';
-      requestAnimationFrame(function() {
-        window.scrollTo(0, savedScrollY);
-      });
+      scroller.style.overflow = '';
       isLocked = false;
     }
   }
@@ -5581,31 +5597,43 @@ if ('serviceWorker' in navigator) {
   // Al hacer scroll hacia abajo, la barra superior se oculta deslizándose
   // hacia arriba; al hacer scroll hacia arriba (o cerca del tope), reaparece.
   (function() {
+    // BUG CORREGIDO: escuchaba "scroll" en window/document — eso solo
+    // dispara si <body> scrollea. Ahora quien scrollea de verdad es
+    // #appScroll (ver su CSS), así que el listener va ahí y usa su
+    // propio scrollTop en vez de window.scrollY.
     var lastY = 0;
     var navEl = null;
+    var scrollerEl = null;
     var ticking = false;
     function getNav() {
       if (!navEl) navEl = document.querySelector('.nav');
       return navEl;
     }
-    window.addEventListener('scroll', function() {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(function() {
-        var nav = getNav();
-        ticking = false;
-        if (!nav) return;
-        var y = window.scrollY || document.documentElement.scrollTop || 0;
-        if (y <= 8) {
-          nav.classList.remove('nav-hidden'); // siempre visible cerca del tope
-        } else if (y > lastY + 4) {
-          nav.classList.add('nav-hidden'); // scroll hacia abajo → ocultar
-        } else if (y < lastY - 4) {
-          nav.classList.remove('nav-hidden'); // scroll hacia arriba → mostrar
-        }
-        lastY = y;
-      });
-    }, { passive: true });
+    function getScroller() {
+      if (!scrollerEl) scrollerEl = document.getElementById('appScroll');
+      return scrollerEl;
+    }
+    var scroller = getScroller();
+    if (scroller) {
+      scroller.addEventListener('scroll', function() {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(function() {
+          var nav = getNav();
+          ticking = false;
+          if (!nav) return;
+          var y = scroller.scrollTop || 0;
+          if (y <= 8) {
+            nav.classList.remove('nav-hidden'); // siempre visible cerca del tope
+          } else if (y > lastY + 4) {
+            nav.classList.add('nav-hidden'); // scroll hacia abajo → ocultar
+          } else if (y < lastY - 4) {
+            nav.classList.remove('nav-hidden'); // scroll hacia arriba → mostrar
+          }
+          lastY = y;
+        });
+      }, { passive: true });
+    }
   })();
 
   // ═══ FIX: evitar que los campos "salten" con el teclado de iOS ═══
