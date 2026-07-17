@@ -103,6 +103,13 @@ input,textarea,.rta,.mode-text-input,.mi-comment,
   -webkit-user-select:text;-moz-user-select:text;user-select:text;
 }
 html,body{background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+/* DIAGNÓSTICO TEMPORAL — quitar esta línea en cuanto tengamos la respuesta.
+   Sobrescribe el fondo de html/body a un color imposible de confundir con
+   blanco, para saber si la franja bajo el tabbar es el propio fondo de
+   html/body asomando (entonces se verá de este color) o algo fuera del
+   control de la página (WKWebView/UI del sistema — seguirá blanco/gris
+   pase lo que pase con el CSS). */
+html,body{background:#ff00aa !important}
 /* Ocultar la barra de scroll en TODA la app — el gesto táctil sigue
    funcionando igual, solo desaparece la línea visual del lateral derecho
    (en móvil suele ya estar oculta por defecto, pero en desktop/algunos
