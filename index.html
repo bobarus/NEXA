@@ -2,7 +2,22 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+<!-- 2026-07-17: interactive-widget cambiado de resizes-content a
+     overlays-content — con resizes-content, cada vez que aparecía el
+     teclado el visualViewport se encogía y TODO lo dimensionado con
+     100dvh/height:100% (el modal de editar informe incluido) se
+     achicaba visiblemente con él, sintiéndose como si "la pantalla se
+     partiera a la mitad" en vez de comportarse como una app nativa,
+     donde el teclado simplemente se superpone sin encoger el layout. Con
+     overlays-content, 100dvh/height:100% siempre reportan la altura
+     completa real, pase lo que pase con el teclado; el propio WebKit
+     sigue encargándose de desplazar el campo enfocado por encima del
+     teclado (comportamiento nativo del focus, no depende de esta
+     meta). El hack JS que ajustaba a mano el maxHeight del modal vía
+     visualViewport (ver más abajo, ya eliminado) existía específicamente
+     para paliar el encogimiento de resizes-content — con
+     overlays-content ya no hace falta. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AEDIS" id="appTitleMeta">
@@ -6454,31 +6469,17 @@ if ('serviceWorker' in navigator) {
     }
   })();
 
-  // ═══ FIX: evitar que los campos "salten" con el teclado de iOS ═══
-  // Cuando el teclado aparece, Safari reduce el visualViewport pero el
-  // layout viewport (y por tanto nuestros overlays position:fixed) no
-  // siempre se ajustan igual → los campos del modal parecen "moverse".
-  // Anclamos el modal abierto al alto real visible del visualViewport.
-  if (window.visualViewport) {
-    var vv = window.visualViewport;
-    var vvTicking = false;
-    function adjustOpenModalToViewport() {
-      var openModal = document.querySelector('.mg-modal-overlay.show, .mg-modal-overlay[style*="display: flex"]');
-      if (!openModal) return;
-      var inner = openModal.querySelector('.mg-modal');
-      if (!inner) return;
-      // Alto disponible real (descontando el teclado), con un pequeño margen.
-      var availH = Math.round(vv.height - 8);
-      inner.style.maxHeight = availH + 'px';
-    }
-    function onViewportChange() {
-      if (vvTicking) return;
-      vvTicking = true;
-      requestAnimationFrame(function() { vvTicking = false; adjustOpenModalToViewport(); });
-    }
-    vv.addEventListener('resize', onViewportChange);
-    vv.addEventListener('scroll', onViewportChange);
-  }
+  // ═══ ELIMINADO (2026-07-17): hack que encogía el modal abierto a mano
+  // vía visualViewport.height cada vez que aparecía el teclado — era
+  // precisamente la causa de "la pantalla se parte a la mitad al tocar
+  // un campo" (ver el comentario en el <meta viewport> del <head>).
+  // Existía para compensar el encogimiento de interactive-widget=
+  // resizes-content; con overlays-content ya no hay nada que compensar
+  // — el modal se queda siempre a pantalla completa y WebKit desplaza el
+  // campo enfocado por encima del teclado por su cuenta, como cualquier
+  // <input> normal dentro de un contenedor con overflow-y:auto. No
+  // reintroducir este ajuste manual de maxHeight sin volver a cambiar
+  // también el <meta viewport>.
 
   window.addEventListener('load', function() {
     setTimeout(function() {
