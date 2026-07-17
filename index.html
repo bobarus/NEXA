@@ -153,19 +153,19 @@ body{height:100dvh}
    mínimo estático seguro (altura típica de una sola línea + notch); JS
    solo puede AUMENTARLo si el nombre ocupa 2 líneas. */
 #appScroll{
-  display:none;height:100%;
+  display:none;
+  /* BUG CORREGIDO (2026-07-17): antes height:100% + padding-bottom fijo
+     (un número de px que debía coincidir a mano con la altura real del
+     tabbar, ver el comentario de #mainFlexWrap más arriba en el HTML).
+     Ahora #appScroll es un hijo flex de #mainFlexWrap junto al tabbar:
+     flex:1 le da automáticamente "todo el espacio que sobra" una vez
+     descontada la altura real del tabbar (flex-shrink:0), sin que nadie
+     tenga que calcular ni mantener sincronizado ningún número — si la
+     altura del tabbar cambia por lo que sea, #appScroll se ajusta solo,
+     en el mismo reflow, siempre exacto. */
+  flex:1;min-height:0;
   overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
   padding-top:max(var(--nav-h, 0px), calc(env(safe-area-inset-top,0px) + 68px));
-  /* BUG CORREGIDO ("la barra inferior no es estática, da un salto visible
-     al arrancar en iOS PWA, y a veces se ve una franja blanca debajo"):
-     esta cifra ANTES dependía de env(safe-area-inset-bottom), igual que
-     .bottom-tabbar (ver su comentario) — se ha fijado a una constante por
-     la misma razón: si el propio valor de la barra ya no puede cambiar
-     tras el primer pintado, este padding debe usar exactamente la misma
-     constante para seguir encajando con su altura real — medida con
-     getBoundingClientRect() en el navegador, no estimada: 91px (10px
-     padding-top + 47px de contenido + 34px de despeje). */
-  padding-bottom:91px;
 }
 
 /* NAV */
@@ -556,7 +556,15 @@ body.pin-mode{overflow:hidden}
 .mg-btn-reject:active{opacity:.88}
 
 /* MODALS */
-.mg-modal-overlay{display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.35);align-items:flex-end;justify-content:center}
+/* BUG CORREGIDO (2026-07-17, "la página de editar informe se puede
+   arrastrar/mover entera al tocar, como una web, en vez de quedarse fija
+   como el resto de la app"): a este overlay position:fixed le faltaba el
+   mismo aislamiento de capa GPU que .bottom-tabbar/.nav SÍ tienen (ver
+   sus comentarios) para el mismo tipo de bug de WebKit — un position:fixed
+   sin su propia capa de composición puede "arrastrarse" visualmente junto
+   con el scroll con inercia de un hijo con -webkit-overflow-scrolling:touch
+   (aquí, el contenido interno con scroll de cada modal). Se añade aquí. */
+.mg-modal-overlay{display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.35);align-items:flex-end;justify-content:center;transform:translateZ(0);-webkit-transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .mg-modal-overlay.show{display:flex}
 /* BUG CORREGIDO ("franja blanca debajo del footer del modal a pantalla
    completa, en el iPhone real"): mismo problema de fondo que ya se
@@ -576,7 +584,7 @@ body.pin-mode{overflow:hidden}
    transform nunca (siempre translateY(0)), así que solo mantenían viva
    una capa de composición de más en cada modal abierto sin ningún efecto
    visual, sin aportar nada al scroll. */
-.mg-modal{width:100%;max-width:480px;background:#fff;border-radius:24px 24px 0 0;padding:20px 18px calc(env(safe-area-inset-bottom,0px) + 20px);box-shadow:0 -4px 24px rgba(0,0,0,.12)}
+.mg-modal{width:100%;max-width:480px;background:#fff;border-radius:24px 24px 0 0;padding:20px 18px calc(env(safe-area-inset-bottom,0px) + 20px);box-shadow:0 -4px 24px rgba(0,0,0,.12);transform:translateZ(0);-webkit-transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .mg-modal-title{font-size:17px;font-weight:700;color:#1b1b1d;margin-bottom:3px}
 .mg-modal-sub{font-size:13px;color:#737687;margin-bottom:14px}
 .mg-modal-textarea{width:100%;min-height:80px;border-radius:18px;border:none;background:#f4f4f7;padding:14px 16px;font-size:14px;font-weight:500;font-family:inherit;color:#1b1b1d;resize:none;margin-bottom:8px;transition:box-shadow .15s;outline:none}
@@ -643,59 +651,43 @@ body.pin-mode{overflow:hidden}
    pestañas al cambiar — un único elemento .tab-indicator compartido,
    movido con transform, para que la animación sea un desplazamiento
    continuo y no un salto.
-   BUG CORREGIDO ("el tabbar queda muy alto, con hueco blanco debajo"):
-   la versión anterior era una cápsula flotante centrada, separada de
-   los bordes por un margen + env(safe-area-inset-bottom) + unos px —
-   cualquier fallo de medición de esos px dejaba un hueco visible.
-   Ahora el fondo oscuro de la barra llega SIEMPRE hasta bottom:0 exacto
-   (pegado de verdad al borde físico, sin cálculo que pueda fallar).
-   BUG CORREGIDO (definitivo — "la barra no es estática, da un salto
-   visible al arrancar en iOS PWA, y a veces se ve una franja blanca
-   debajo"): las dos versiones anteriores todavía usaban
-   env(safe-area-inset-bottom) dentro del padding-bottom. Aunque el
-   bottom:-60px de la barra en sí no dependía de env(), su ALTURA TOTAL sí
-   — y como bottom:-60px es un desplazamiento fijo desde el borde inferior,
-   cualquier cambio de altura (p. ej. si WebKit resuelve env() en 0 en el
-   primer frame y luego lo corrige a 34px, un bug ya documentado de WebKit
-   en PWAs standalone recién lanzadas) desplaza el borde SUPERIOR de la
-   barra — y con él, los iconos — ese mismo delta. Eso es exactamente el
-   "salto"/no-estático reportado. Solución: eliminar aquí toda dependencia
-   de env() y fijar el despeje inferior a una CONSTANTE (34px, el home
-   indicator de todos los iPhone actuales con Face ID/gesto) — así la
-   altura total de la barra es fija desde el primer frame, nunca puede
-   recalcularse, y por tanto nunca puede saltar. El margen de seguridad de
-   60px se mantiene como red adicional para el fondo (ver bottom:-60px),
-   totalmente independiente de esta constante. */
+   BUG CORREGIDO DE RAÍZ (2026-07-17 — historial completo en el HTML,
+   justo antes de #mainFlexWrap): tres intentos previos mantuvieron esta
+   barra como position:fixed;bottom:0/-60px, intentando que su fondo
+   siempre "sobresaliera" hasta el borde físico real pese a cualquier
+   desajuste entre el viewport que reporta CSS y el borde físico del
+   dispositivo. ninguno funcionó de verdad porque overflow:hidden en
+   <html> (necesario por otra razón, ver su comentario) recorta cualquier
+   position:fixed que sobresalga justo en el borde que CSS considera "fin
+   del viewport" — el colchón nunca llegaba a cubrir nada. Ahora esta
+   barra YA NO es position:fixed: es un hijo flex normal (flex-shrink:0)
+   de #mainFlexWrap, el ÚLTIMO antes del borde inferior de un contenedor
+   con height:100% exacto — su borde inferior coincide con el borde real
+   por definición de layout, no por ningún cálculo de env()/bottom que
+   pueda desincronizarse. El padding inferior ahora puede usar
+   env(safe-area-inset-bottom) con total tranquilidad: si ese valor
+   cambia tras el primer pintado, todo el flex-column simplemente
+   reajusta su reparto de espacio en el mismo reflow — no hay "salto" de
+   posición fixed que temer, es un reflow normal de página. */
 .bottom-tabbar{
-  position:fixed;left:0;right:0;
-  bottom:-60px;
-  z-index:200;
+  flex-shrink:0;
   display:flex;
   background:#1c1c1e;
   border-radius:24px 24px 0 0;
-  padding:10px 0 94px; /* 34px despeje constante (home indicator) + 60px de red de seguridad del fondo — ninguno de los dos depende de env() */
+  padding:10px 0 max(env(safe-area-inset-bottom,0px), 10px);
   /* Sombra en dos capas — un filo de contacto muy sutil + una difusa
      amplia — en vez de una sola sombra dura; es el patrón que usan los
      tab bars "flotantes" modernos (iOS 17+, Instagram, etc.) para que la
      barra se sienta posada sobre el contenido y no recortada encima. */
   box-shadow:0 -1px 0 rgba(0,0,0,.05), 0 -10px 32px -4px rgba(0,0,0,.20);
-  /* Fuerza una capa de composición GPU propia — evita el "salto"/jitter
-     que WebKit produce en elementos position:fixed durante el scroll con
-     inercia (rubber-band) en iOS Safari/PWA standalone. */
-  transform:translateZ(0);
-  -webkit-transform:translateZ(0);
-  backface-visibility:hidden;
-  -webkit-backface-visibility:hidden;
   /* BUG CORREGIDO ("la línea indicadora de la pestaña activa se sale de
      la barra"): .tab-indicator se posiciona con "width:50%" sobre este
-     contenedor (ver su regla más abajo) — en iOS Safari real, combinado
-     con que este contenedor es "display:flex" + capa GPU propia
-     (transform:translateZ(0)), WebKit puede tardar un frame en resolver
-     ese 50% contra el ancho correcto y pintarlo momentáneamente a todo
-     lo ancho, sobresaliendo incluso de las esquinas redondeadas. No es
-     reproducible en Chromium. overflow:hidden no arregla el cálculo en
-     sí, pero garantiza que la barrita NUNCA pueda pintarse fuera de los
-     límites (ni siquiera fuera de la esquina redondeada) de esta barra,
+     contenedor (ver su regla más abajo) — en iOS Safari real WebKit
+     puede tardar un frame en resolver ese 50% contra el ancho correcto y
+     pintarlo momentáneamente a todo lo ancho, sobresaliendo incluso de
+     las esquinas redondeadas. No es reproducible en Chromium.
+     overflow:hidden no arregla el cálculo en sí, pero garantiza que la
+     barrita NUNCA pueda pintarse fuera de los límites de esta barra,
      pase lo que pase con ese cálculo. */
   overflow:hidden;
 }
@@ -1058,6 +1050,30 @@ body.pin-mode{overflow:hidden}
   <div class="greet-name" id="greetName">—</div>
   <div class="greet-role" id="greetRole">—</div>
 </div>
+
+<!-- BUG CORREGIDO (2026-07-17, "franja blanca bajo el tabbar", tras
+     confirmar por prueba de color en el dispositivo real que era el
+     fondo de html/body asomando): el tabbar era position:fixed;bottom:0
+     con un "colchón" negativo para sobresalir del viewport a propósito —
+     pero overflow:hidden en <html> (necesario para que el documento no
+     se sienta "arrastrable" como una web, ver ese comentario) recorta
+     CUALQUIER position:fixed que sobresalga en el borde exacto que CSS
+     reporta como fin del viewport, así que el colchón nunca llegó a
+     cubrir nada realmente. En vez de seguir peleando con esa combinación
+     (ya se revirtió una vez por quitar overflow:hidden y romper el
+     "no-arrastrable"), se elimina aquí la dependencia de position:fixed
+     PARA EL TABBAR por completo: este wrapper es un flex-column con
+     height:100% (exactamente la altura de <body>, que es 100dvh), y
+     #appScroll + el tabbar activo son sus dos hijos flex — #appScroll
+     con flex:1 (ocupa todo el espacio restante) y el tabbar con
+     flex-shrink:0 (ocupa solo su altura de contenido, en flujo normal,
+     JAMÁS position:fixed). Al ser el ÚLTIMO hijo de un contenedor con la
+     altura EXACTA del viewport, el borde inferior del tabbar coincide
+     con el borde inferior real por definición de layout — no por un
+     cálculo de env()/bottom:0 que pueda desincronizarse. Elimina de raíz
+     TODA la clase de bug (env() tardío, recorte por overflow:hidden,
+     desajuste viewport-vs-borde-físico) en vez de seguir parcheándola. -->
+<div id="mainFlexWrap" style="display:flex;flex-direction:column;height:100%">
 
 <!-- Único contenedor que scrollea de verdad (ver comentario en el CSS de
      #appScroll) — envuelve las 3 pantallas de rol para que nav/tabbar,
@@ -1516,6 +1532,7 @@ body.pin-mode{overflow:hidden}
     <span>Análisis</span>
   </div>
 </div>
+</div><!-- /#mainFlexWrap -->
 
 <script>
 /* ════════ ESTADO GLOBAL ════════ */
