@@ -139,7 +139,12 @@ body{height:100dvh}
   display:none;height:100%;
   overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
   padding-top:max(var(--nav-h, 0px), calc(env(safe-area-inset-top,0px) + 68px));
-  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 66px);
+  /* Debe cubrir la altura REAL de la nueva barra de ancho completo
+     (10px padding-top + icono~22 + gap 4 + etiqueta~13 + 2px padding-bottom
+     ≈ 51px de contenido) más su propio padding inferior — que ya usa el
+     mismo max(env, 10px) que la barra, para no sumar env() dos veces con
+     fórmulas distintas y arriesgarse a un desajuste entre ambas. */
+  padding-bottom:calc(max(env(safe-area-inset-bottom,0px), 10px) + 61px);
 }
 
 /* NAV */
@@ -523,30 +528,31 @@ body.pin-mode{overflow:hidden}
 .pg-thumb.active{border-color:#fff;opacity:1}
 .pg-thumb img{width:100%;height:100%;object-fit:cover;-webkit-user-select:none;user-select:none;pointer-events:none}
 
-/* TABBAR — cápsula oscura flotante (referencia: dock tipo app de
-   finanzas), separada de los bordes de la pantalla, con la pestaña
-   activa como píldora ancha con icono+texto y las inactivas como
-   círculos solo-icono. Como en AEDIS siempre hay exactamente 2 pestañas
-   (1 activa ancha + 1 inactiva estrecha en todo momento), el ancho total
-   de la cápsula no cambia al alternar — evita el "salto" que sí ocurría
-   con la versión antigua (mostraba texto en todas, o ninguna). */
+/* TABBAR — rediseño "dock" oscuro de ancho completo (referencia
+   proporcionada): icono+etiqueta SIEMPRE visibles en ambas pestañas
+   (ya no solo en la activa), pestaña activa en azul con resplandor, y
+   una barrita indicadora que se DESLIZA (no aparece/desaparece) entre
+   pestañas al cambiar — un único elemento .tab-indicator compartido,
+   movido con transform, para que la animación sea un desplazamiento
+   continuo y no un salto.
+   BUG CORREGIDO ("el tabbar queda muy alto, con hueco blanco debajo"):
+   la versión anterior era una cápsula flotante centrada, separada de
+   los bordes por un margen + env(safe-area-inset-bottom) + unos px —
+   cualquier fallo de medición de esos px dejaba un hueco visible.
+   Ahora el fondo oscuro de la barra llega SIEMPRE hasta bottom:0 exacto
+   (pegado de verdad al borde físico, sin cálculo que pueda fallar); el
+   único uso de env(safe-area-inset-bottom) es como padding INTERNO para
+   que los botones no queden bajo el home indicator — si ese valor
+   fallara, en el peor caso los botones quedan un poco bajos, pero el
+   fondo de la barra jamás deja ver un hueco en blanco por debajo. */
 .bottom-tabbar{
-  position:fixed;left:0;right:0;
-  bottom:calc(env(safe-area-inset-bottom,0px) + 2px);
+  position:fixed;left:0;right:0;bottom:0;
   z-index:200;
   display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:6px;
-  width:fit-content;
-  margin:0 auto;
-  padding:6px;
   background:#1c1c1e;
-  border-radius:999px;
-  /* Pedido: sin sombra pronunciada — un borde muy sutil basta para
-     separarlo visualmente del contenido, como en apps modernas (Uber,
-     Airbnb) en vez del halo oscuro de antes. */
-  box-shadow:0 1px 3px rgba(0,0,0,.12);
+  border-radius:24px 24px 0 0;
+  padding:10px 0 max(env(safe-area-inset-bottom,0px), 10px);
+  box-shadow:0 -6px 24px rgba(0,0,0,.22);
   /* Fuerza una capa de composición GPU propia — evita el "salto"/jitter
      que WebKit produce en elementos position:fixed durante el scroll con
      inercia (rubber-band) en iOS Safari/PWA standalone. */
@@ -556,22 +562,35 @@ body.pin-mode{overflow:hidden}
   -webkit-backface-visibility:hidden;
 }
 .bottom-tabbar.tabbar-hidden{
-  transform:translateY(calc(100% + 24px)) translateZ(0);
+  transform:translateY(100%) translateZ(0);
   opacity:0;
   pointer-events:none;
 }
-.bottom-tab{
-  display:flex;flex-direction:row;align-items:center;justify-content:center;gap:0;
-  cursor:pointer;touch-action:manipulation;background:none;border:none;font-family:inherit;
-  width:46px;height:46px;padding:0;border-radius:999px;
-  transition:background .2s,width .2s,padding .2s;
+/* Barrita indicadora deslizante — un solo elemento, 50% del ancho (2
+   pestañas fijas en AEDIS), desplazado con transform en vez de
+   recalcular left/width, así la transición es una animación GPU fluida. */
+.tab-indicator{
+  position:absolute;top:0;left:0;width:50%;height:3px;
+  border-radius:0 0 4px 4px;
+  background:#0049c5;
+  box-shadow:0 0 8px rgba(0,73,197,.65);
+  transform:translateX(0%);
+  transition:transform .32s cubic-bezier(.4,0,.2,1);
+  pointer-events:none;
 }
-.bottom-tab .tab-icon{width:auto;height:auto;border-radius:0;display:flex;align-items:center;justify-content:center;transition:none;background:transparent !important}
-.bottom-tab i{font-size:21px;color:#8e8e93;line-height:1;display:block;font-style:normal;transition:color .15s}
-.bottom-tab span{display:none;font-size:13px;font-weight:600;color:#fff;white-space:nowrap;margin-left:7px}
-.bottom-tab.active{background:#007AFF;width:auto;padding:0 18px 0 14px}
-.bottom-tab.active i{color:#fff}
-.bottom-tab.active span{display:inline}
+.bottom-tabbar.tab-1-active .tab-indicator{transform:translateX(100%)}
+.bottom-tab{
+  flex:1;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  cursor:pointer;touch-action:manipulation;background:none;border:none;font-family:inherit;
+  padding:6px 4px 2px;
+  transition:opacity .15s;
+}
+.bottom-tab .tab-icon{width:auto;height:auto;border-radius:0;display:flex;align-items:center;justify-content:center;background:transparent !important}
+.bottom-tab i{font-size:22px;color:#8e8e93;line-height:1;display:block;font-style:normal;transition:color .25s ease}
+.bottom-tab span{display:block;font-size:11px;font-weight:600;color:#8e8e93;white-space:nowrap;transition:color .25s ease}
+.bottom-tab.active i,.bottom-tab.active span{color:#4d94ff}
+.bottom-tab.active i{filter:drop-shadow(0 0 6px rgba(77,148,255,.55))}
 .bottom-tab:active{opacity:.7}
 .tab-icon{position:relative}
 .tab-badge{
@@ -1272,6 +1291,7 @@ body.pin-mode{overflow:hidden}
 
 <!-- BOTTOM TAB BAR: OPERARIO -->
 <div class="bottom-tabbar" id="tabbarOperario" style="display:none">
+  <div class="tab-indicator"></div>
   <div class="bottom-tab active" id="tabOpNew" onclick="switchOpTab('new')">
     <div class="tab-icon"><i class="ti ti-file-plus"></i></div>
     <span>Nuevo</span>
@@ -1284,6 +1304,7 @@ body.pin-mode{overflow:hidden}
 
 <!-- BOTTOM TAB BAR: MANAGER -->
 <div class="bottom-tabbar" id="tabbarManager" style="display:none">
+  <div class="tab-indicator"></div>
   <div class="bottom-tab active" id="tabMgPending" onclick="switchMgTab('pending')">
     <div class="tab-icon"><i class="ti ti-clock"></i></div>
     <span>Pendientes</span>
@@ -1296,6 +1317,7 @@ body.pin-mode{overflow:hidden}
 
 <!-- BOTTOM TAB BAR: ADMIN -->
 <div class="bottom-tabbar" id="tabbarAdmin" style="display:none">
+  <div class="tab-indicator"></div>
   <div class="bottom-tab active" id="tabAdJournal" onclick="switchAdTab('journal')">
     <div class="tab-icon"><i class="ti ti-list"></i></div>
     <span>Diario</span>
@@ -2104,6 +2126,7 @@ var myReportsSyncing = false;
 function switchOpTab(tab) {
   document.getElementById('tabOpNew').classList.toggle('active', tab === 'new');
   document.getElementById('tabOpMine').classList.toggle('active', tab === 'mine');
+  document.getElementById('tabbarOperario').classList.toggle('tab-1-active', tab === 'mine');
   document.getElementById('opPanelNew').style.display = tab === 'new' ? 'block' : 'none';
   document.getElementById('opPanelMine').style.display = tab === 'mine' ? 'block' : 'none';
   // Кнопки фиксированные — показываем только на вкладке Nuevo
@@ -3579,6 +3602,7 @@ function switchMgTab(tab) {
   if (tab !== 'pending') markVisibleQueueAsSeen(); // salimos de la cola — lo visto, visto queda
   document.getElementById('tabMgPending').classList.toggle('active', tab === 'pending');
   document.getElementById('tabMgHistory').classList.toggle('active', tab === 'history');
+  document.getElementById('tabbarManager').classList.toggle('tab-1-active', tab === 'history');
   document.getElementById('mgPanelPending').style.display = tab === 'pending' ? 'block' : 'none';
   document.getElementById('mgPanelHistory').style.display = tab === 'history' ? 'block' : 'none';
   if (tab === 'pending') {
@@ -4004,6 +4028,7 @@ function switchAdTab(tab) {
   if (tab !== 'journal') markVisibleQueueAsSeen();
   document.getElementById('tabAdJournal').classList.toggle('active', tab === 'journal');
   document.getElementById('tabAdAnalisis').classList.toggle('active', tab === 'analisis');
+  document.getElementById('tabbarAdmin').classList.toggle('tab-1-active', tab === 'analisis');
   document.getElementById('adPanelJournal').style.display = tab === 'journal' ? 'block' : 'none';
   document.getElementById('adPanelAnalisis').style.display = tab === 'analisis' ? 'block' : 'none';
   if (tab === 'analisis') initAnalisis();
