@@ -139,12 +139,16 @@ body{height:100dvh}
   display:none;height:100%;
   overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
   padding-top:max(var(--nav-h, 0px), calc(env(safe-area-inset-top,0px) + 68px));
-  /* Debe cubrir la altura REAL de la nueva barra de ancho completo
-     (10px padding-top + icono~22 + gap 4 + etiqueta~13 + 2px padding-bottom
-     ≈ 51px de contenido) más su propio padding inferior — que ya usa el
-     mismo max(env, 10px) que la barra, para no sumar env() dos veces con
-     fórmulas distintas y arriesgarse a un desajuste entre ambas. */
-  padding-bottom:calc(max(env(safe-area-inset-bottom,0px), 10px) + 61px);
+  /* BUG CORREGIDO ("la barra inferior no es estática, da un salto visible
+     al arrancar en iOS PWA, y a veces se ve una franja blanca debajo"):
+     esta cifra ANTES dependía de env(safe-area-inset-bottom), igual que
+     .bottom-tabbar (ver su comentario) — se ha fijado a una constante por
+     la misma razón: si el propio valor de la barra ya no puede cambiar
+     tras el primer pintado, este padding debe usar exactamente la misma
+     constante para seguir encajando con su altura real — medida con
+     getBoundingClientRect() en el navegador, no estimada: 91px (10px
+     padding-top + 47px de contenido + 34px de despeje). */
+  padding-bottom:91px;
 }
 
 /* NAV */
@@ -255,16 +259,23 @@ body{height:100dvh}
 .req-dot{width:5px;height:5px;border-radius:50%;background:#ff3b30;display:inline-block;flex-shrink:0}
 .rinput{flex:1;text-align:right;font-size:14px;font-weight:500;color:#1b1b1d;border:none;outline:none;background:transparent;font-family:inherit;min-width:0;margin-left:auto}
 .rinput::placeholder{color:#a7a9b4}
-.sel-wrap{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0;max-width:70%;background:#f4f4f7;border-radius:999px;padding:8px 8px 8px 16px}
+.sel-wrap{position:relative;display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0;max-width:70%;background:#f4f4f7;border-radius:999px;padding:8px 8px 8px 16px}
 .rselect{font-size:14px;font-weight:500;color:#737687;border:none;outline:none;background:transparent;font-family:inherit;-webkit-appearance:none;appearance:none;cursor:pointer;text-align:right;text-align-last:right;min-width:60px;max-width:100%}
 .rselect.has-val{color:#1b1b1d}
 .rselect option{color:#1b1b1d;background:#fff}
 .rchev{margin-left:4px}.rchev svg{width:7px;height:12px;stroke:#9a9ca8;fill:none;stroke-width:2.5;stroke-linecap:round}
-/* Mismo círculo azul que .mode-list-row .rchev — pedido explícitamente
-   para "Sin ayudante" también. Aquí no hace falta position:absolute ni
-   compensar padding: .sel-wrap ya centra sus hijos con flexbox. */
-.sel-wrap .rchev{margin-left:0;width:24px;height:24px;border-radius:50%;background:#e6f0fe;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.sel-wrap .rchev svg{stroke:#0049c5}
+/* BUG CORREGIDO ("tocar el círculo con la flecha no abre la lista"): el
+   círculo era un <span> puramente decorativo, hermano del <select> real
+   pero fuera de su caja — un toque ahí nunca llegaba al <select>, solo
+   funcionaba tocando el propio texto. Ahora el <select> reserva ese
+   mismo espacio con su propio padding-right (sigue siendo el único hijo
+   en flujo normal, así que .sel-wrap se sigue autodimensionando igual
+   que antes) y el círculo pasa a ser un overlay absoluto con
+   pointer-events:none sobre ese hueco — cualquier toque dentro del
+   círculo cae directo sobre el <select> que hay debajo. */
+.sel-wrap .rselect{padding-right:32px}
+.sel-wrap .rchev{margin-left:0;width:24px;height:24px;border-radius:50%;background:#e6f0fe;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none}
+.sel-wrap .rchev svg{stroke:#0049c5;width:12px;height:7px}
 .tarow{flex-direction:column;align-items:flex-start;padding:12px 14px;min-height:auto}
 .tarow .sub-label{font-size:11px;font-weight:600;color:#737687;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
 /* Etiquetas de campo del modal "Editar informe" — antes sin definir: se
@@ -391,7 +402,11 @@ body{height:100dvh}
    para que el contenido nunca quede tapado detrás. */
 .ss-footer{position:fixed;left:0;right:0;bottom:0;width:100%;background:#fff;border-top:.5px solid #f0f0f0;padding:12px 20px calc(env(safe-area-inset-bottom,0px) + 20px);display:flex;flex-direction:column;gap:10px;z-index:10}
 .btn-share{width:100%;background:#f4f4f7;border:none;color:#1b1b1d;border-radius:999px;padding:14px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;touch-action:manipulation}
-.btn-new{width:100%;background:#34c759;color:#fff;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation}
+/* Misma familia de sombra que los demás botones primarios (.btn-save.ready,
+   .mg-btn-approve) para que ninguna acción principal del sistema se vea
+   plana frente a las demás. */
+.btn-new{width:100%;background:#34c759;color:#fff;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation;box-shadow:0 10px 20px -8px rgba(52,199,89,.5)}
+.btn-new:active{opacity:.88}
 
 /* PIN */
 .pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:9vh 24px 0;text-align:center;width:100%;gap:0;overflow:hidden}
@@ -511,12 +526,33 @@ body.pin-mode{overflow:hidden}
 .mg-btn-delete{width:100%;margin-top:8px;background:none;border:none;color:#ff3b30;font-size:14px;font-weight:600;font-family:inherit;padding:10px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;touch-action:manipulation}
 .mg-btn-delete:active{opacity:.6}
 .mg-btn-approve:active{opacity:.88}
-.mg-btn-reject{background:#fdece9;color:#e0433a;border:none}
-.mg-btn-reject:active{background:#fadcd7}
+/* BUG CORREGIDO ("Rechazar se ve apagado/secundario junto a Aprobar,
+   inconsistente en todo el sistema"): antes era un rosa pálido plano sin
+   sombra — mismo peso visual que un botón secundario, aunque semánti-
+   camente es una decisión tan primaria como Aprobar. Ahora comparte la
+   misma fórmula de sombra que .mg-btn-approve (mismo offset/blur/spread,
+   solo cambia el color a rojo) para que ambas opciones de la fila se
+   vean igual de "importantes" — ver también .mg-modal-confirm, que es
+   el mismo botón "Rechazar" en el modal de motivo y ahora usa la misma
+   fórmula. */
+.mg-btn-reject{background:#ff3b30;color:#fff;border:none;box-shadow:0 10px 20px -8px rgba(255,59,48,.5)}
+.mg-btn-reject:active{opacity:.88}
 
 /* MODALS */
 .mg-modal-overlay{display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.35);align-items:flex-end;justify-content:center}
 .mg-modal-overlay.show{display:flex}
+/* BUG CORREGIDO ("franja blanca debajo del footer del modal a pantalla
+   completa, en el iPhone real"): mismo problema de fondo que ya se
+   resolvió para .bottom-tabbar (ver su comentario) — position:fixed con
+   inset:0 no siempre llega de verdad hasta el borde físico inferior en
+   una PWA standalone de iOS. Aplicado aquí a los modales a pantalla
+   completa (detalle de informe, editor): se extiende el overlay 60px por
+   debajo del borde real, y el modal interior (height:100% del overlay,
+   ver estilo inline "mg-modal-full") se compensa con 60px extra de
+   padding-bottom propio — con box-sizing:border-box esos 60px se anulan
+   entre sí para el contenido visible (nada se desplaza), y solo queda el
+   fondo blanco del modal cubriendo ese margen de más. */
+.mg-modal-overlay.fullbleed{bottom:-60px}
 /* transform/transition/will-change/touch-action:pan-y ELIMINADOS: eran
    resto del antiguo gesto de arrastre para cerrar el modal (ver el
    comentario en el bloque "MODALES" del JS) — el modal ya no cambia su
@@ -534,8 +570,11 @@ body.pin-mode{overflow:hidden}
 .mg-modal-textarea.shake{animation:shakeField .4s}
 .mg-modal-actions{display:flex;gap:8px}
 .mg-modal-cancel{flex:1;background:#f4f4f7;color:#1b1b1d;border:none;border-radius:999px;padding:14px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation}
-.mg-modal-confirm{flex:1;background:#ff3b30;color:#fff;border:none;border-radius:999px;padding:14px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;touch-action:manipulation}
-.mg-modal-confirm:disabled{opacity:.35;cursor:not-allowed}
+/* Mismo rojo + misma fórmula de sombra que .mg-btn-reject (ver su
+   comentario) — es el mismo botón "Rechazar", solo que aquí confirma el
+   motivo en vez de aparecer junto a Aprobar; deben verse idénticos. */
+.mg-modal-confirm{flex:1;background:#ff3b30;color:#fff;border:none;border-radius:999px;padding:14px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;touch-action:manipulation;box-shadow:0 10px 20px -8px rgba(255,59,48,.5)}
+.mg-modal-confirm:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
 
 /* ADMIN CARDS */
 .ad-card{position:relative;background:#fff;border:.5px solid #e5e5ea;border-radius:12px;margin:0 16px 8px;padding:14px 14px;cursor:pointer;touch-action:manipulation;box-shadow:0 2px 10px rgba(0,0,0,.07)}
@@ -592,34 +631,32 @@ body.pin-mode{overflow:hidden}
    los bordes por un margen + env(safe-area-inset-bottom) + unos px —
    cualquier fallo de medición de esos px dejaba un hueco visible.
    Ahora el fondo oscuro de la barra llega SIEMPRE hasta bottom:0 exacto
-   (pegado de verdad al borde físico, sin cálculo que pueda fallar); el
-   único uso de env(safe-area-inset-bottom) es como padding INTERNO para
-   que los botones no queden bajo el home indicator — si ese valor
-   fallara, en el peor caso los botones quedan un poco bajos, pero el
-   fondo de la barra jamás deja ver un hueco en blanco por debajo. */
+   (pegado de verdad al borde físico, sin cálculo que pueda fallar).
+   BUG CORREGIDO (definitivo — "la barra no es estática, da un salto
+   visible al arrancar en iOS PWA, y a veces se ve una franja blanca
+   debajo"): las dos versiones anteriores todavía usaban
+   env(safe-area-inset-bottom) dentro del padding-bottom. Aunque el
+   bottom:-60px de la barra en sí no dependía de env(), su ALTURA TOTAL sí
+   — y como bottom:-60px es un desplazamiento fijo desde el borde inferior,
+   cualquier cambio de altura (p. ej. si WebKit resuelve env() en 0 en el
+   primer frame y luego lo corrige a 34px, un bug ya documentado de WebKit
+   en PWAs standalone recién lanzadas) desplaza el borde SUPERIOR de la
+   barra — y con él, los iconos — ese mismo delta. Eso es exactamente el
+   "salto"/no-estático reportado. Solución: eliminar aquí toda dependencia
+   de env() y fijar el despeje inferior a una CONSTANTE (34px, el home
+   indicator de todos los iPhone actuales con Face ID/gesto) — así la
+   altura total de la barra es fija desde el primer frame, nunca puede
+   recalcularse, y por tanto nunca puede saltar. El margen de seguridad de
+   60px se mantiene como red adicional para el fondo (ver bottom:-60px),
+   totalmente independiente de esta constante. */
 .bottom-tabbar{
   position:fixed;left:0;right:0;
-  /* BUG CORREGIDO, intento 2 ("sigue habiendo una franja blanca visible
-     debajo de la barra, y no es un simple hilo de 1px"): el bleed de 2px
-     de la versión anterior asumía un desajuste de SUBPÍXEL de composición
-     — pero en el dispositivo real la franja tiene la altura del propio
-     home indicator, lo que apunta a que env(safe-area-inset-bottom) no se
-     está resolviendo como se esperaba en el momento en que WebKit coloca
-     esta capa (hay reportes del propio WebKit de esto en el primer pintado
-     de una PWA standalone recién lanzada). No podemos depurar esto en
-     hardware real desde aquí, así que en vez de perseguir la causa exacta,
-     se sobredimensiona el margen de seguridad: la barra se extiende 60px
-     más allá del borde físico — muy por encima de los ~34px del home
-     indicator más alto que existe hoy — y el padding-bottom absorbe esos
-     mismos 60px de más, así que la posición VISUAL de los botones no
-     cambia ni un píxel respecto a antes; solo el fondo oscuro por detrás
-     gana ese margen extra, que siempre queda fuera del viewport visible. */
   bottom:-60px;
   z-index:200;
   display:flex;
   background:#1c1c1e;
   border-radius:24px 24px 0 0;
-  padding:10px 0 calc(max(env(safe-area-inset-bottom,0px), 10px) + 60px);
+  padding:10px 0 94px; /* 34px despeje constante (home indicator) + 60px de red de seguridad del fondo — ninguno de los dos depende de env() */
   /* Sombra en dos capas — un filo de contacto muy sutil + una difusa
      amplia — en vez de una sola sombra dura; es el patrón que usan los
      tab bars "flotantes" modernos (iOS 17+, Instagram, etc.) para que la
@@ -816,14 +853,14 @@ body.pin-mode{overflow:hidden}
      limitado a 88vh dentro de un body con scroll bloqueado (SCROLL LOCK)
      daba lugar a comportamientos de scroll poco fiables. Ahora es un
      diálogo a pantalla completa (100dvh) con cierre explícito por botón. -->
-<div id="editReportModal" class="mg-modal-overlay" onclick="if(event.target===this)closeEditReportModal()">
-  <div class="mg-modal mg-modal-full" style="height:100%;max-height:100%;border-radius:0;overflow:hidden;display:flex;flex-direction:column;padding:0">
+<div id="editReportModal" class="mg-modal-overlay fullbleed" onclick="if(event.target===this)erRequestClose()">
+  <div class="mg-modal mg-modal-full" style="height:100%;max-height:100%;border-radius:0;overflow:hidden;display:flex;flex-direction:column;padding:0 0 60px">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 14px) 18px 12px;border-bottom:.5px solid #f0f0f0;flex-shrink:0">
       <div>
         <div class="mg-modal-title" id="erTitle" style="margin-bottom:0">Editar informe</div>
         <div class="mg-modal-sub" id="erSub" style="margin-bottom:0">—</div>
       </div>
-      <button type="button" onclick="closeEditReportModal()" aria-label="Cerrar" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#f2f2f7;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation">
+      <button type="button" onclick="erRequestClose()" aria-label="Cerrar" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#f2f2f7;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation">
         <i class="ti ti-x" style="font-size:17px;color:#000"></i>
       </button>
     </div>
@@ -932,7 +969,7 @@ body.pin-mode{overflow:hidden}
     </div>
     <div style="padding:10px 18px calc(env(safe-area-inset-bottom,0px) + 14px);border-top:.5px solid #e5e5ea;background:#fff;flex-shrink:0">
       <div class="mg-actions">
-        <button class="mg-modal-cancel" style="flex:1" onclick="closeEditReportModal()">Cancelar</button>
+        <button class="mg-modal-cancel" style="flex:1" onclick="erRequestClose()">Cancelar</button>
         <button class="mg-btn mg-btn-approve" style="flex:1" id="erSaveBtn" onclick="submitEditReport()">Reenviar</button>
       </div>
     </div>
@@ -1070,7 +1107,7 @@ body.pin-mode{overflow:hidden}
         <span class="rlabel" id="lbl-ayudante">Ayudante</span>
         <div class="sel-wrap">
           <select class="rselect" id="ayudante" onchange="this.classList.toggle('has-val',!!this.value)"></select>
-          <span class="rchev"><svg viewBox="0 0 8 14"><polyline points="1,1 7,7 1,13"/></svg></span>
+          <span class="rchev"><svg viewBox="0 0 14 8"><polyline points="1,1 7,7 13,1"/></svg></span>
         </div>
       </div>
       <div class="row">
@@ -1238,8 +1275,8 @@ body.pin-mode{overflow:hidden}
 </div>
 
 <!-- MODAL: DETALLE DE INFORME (Mis informes) -->
-<div class="mg-modal-overlay" id="reportDetailModal" onclick="if(event.target===this)closeReportDetail()">
-  <div class="mg-modal" style="height:100%;max-height:100%;border-radius:0;overflow:hidden;display:flex;flex-direction:column;padding:0">
+<div class="mg-modal-overlay fullbleed" id="reportDetailModal" onclick="if(event.target===this)closeReportDetail()">
+  <div class="mg-modal" style="height:100%;max-height:100%;border-radius:0;overflow:hidden;display:flex;flex-direction:column;padding:0 0 60px">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 20px) 18px 12px;border-bottom:.5px solid #f0f0f0;flex-shrink:0">
       <div style="min-width:0">
         <div class="mg-modal-title" id="rdTitle">—</div>
@@ -1272,8 +1309,8 @@ body.pin-mode{overflow:hidden}
 </div>
 
 <!-- MODAL: DETALLE Y DECISIÓN (Manager) -->
-<div class="mg-modal-overlay" id="mgDetailModal" onclick="if(event.target===this)closeManagerDetail()">
-  <div class="mg-modal" style="height:100%;max-height:100%;border-radius:0;overflow:hidden;display:flex;flex-direction:column;padding:0">
+<div class="mg-modal-overlay fullbleed" id="mgDetailModal" onclick="if(event.target===this)closeManagerDetail()">
+  <div class="mg-modal" style="height:100%;max-height:100%;border-radius:0;overflow:hidden;display:flex;flex-direction:column;padding:0 0 60px">
     <!-- Скроллируемый контент -->
     <div style="overflow-y:auto;flex:1;padding:calc(env(safe-area-inset-top,0px) + 20px) 18px 8px;-webkit-overflow-scrolling:touch">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
@@ -1548,6 +1585,7 @@ var LANGS = {
     install_step_and1:'Toca el menú ⋮ del navegador', install_step_and2:'Selecciona "Instalar app" o "Añadir a pantalla de inicio"',
     lw_continue:'Continuar',
     btn_eliminar_informe:'Eliminar informe', confirm_eliminar:'¿Eliminar este informe? Esta acción no se puede deshacer.',
+    confirm_cerrar_sin_guardar:'¿Deseas cerrar sin guardar los cambios?',
     toast_eliminado:'Informe eliminado', toast_eliminar_error:'No se pudo eliminar el informe',
   },
   ru: {
@@ -1599,6 +1637,7 @@ var LANGS = {
     install_step_and1:'Откройте меню ⋮ браузера', install_step_and2:'Выберите «Установить приложение» или «Добавить на главный экран»',
     lw_continue:'Продолжить',
     btn_eliminar_informe:'Удалить отчёт', confirm_eliminar:'Удалить этот отчёт? Действие необратимо.',
+    confirm_cerrar_sin_guardar:'Закрыть без сохранения изменений?',
     toast_eliminado:'Отчёт удалён', toast_eliminar_error:'Не удалось удалить отчёт',
   },
   en: {
@@ -1650,6 +1689,7 @@ var LANGS = {
     install_step_and1:'Open the browser’s ⋮ menu', install_step_and2:'Select "Install app" or "Add to Home Screen"',
     lw_continue:'Continue',
     btn_eliminar_informe:'Delete report', confirm_eliminar:'Delete this report? This action cannot be undone.',
+    confirm_cerrar_sin_guardar:'Close without saving your changes?',
     toast_eliminado:'Report deleted', toast_eliminar_error:'Could not delete the report',
   }
 };
@@ -2998,11 +3038,19 @@ function closeReportDetail() {
   rdCurrentId = null;
 }
 
+// Pedido: al cancelar la edición (o guardar con éxito) hay que VOLVER a la
+// ficha del informe, no cerrarlo todo hasta la lista — guardamos aquí qué
+// informe reabrir. Solo se rellena cuando se entra a editar DESDE la
+// ficha de detalle; si se entra desde el botón "Editar y reenviar" de la
+// lista (informe rechazado), queda en null y erCloseAndReturn() simplemente
+// cierra sin intentar reabrir nada — mismo comportamiento que antes ahí.
+var erReturnToReportId = null;
+
 function editReportFromDetail() {
   if (!rdCurrentId) return;
-  var id = rdCurrentId;
+  erReturnToReportId = rdCurrentId;
   closeReportDetail();
-  openEditReport(id);
+  openEditReport(erReturnToReportId);
 }
 
 var erCurrentReport = null;
@@ -3196,6 +3244,27 @@ function closeEditReportModal() {
   erOriginalSnapshot = null;
 }
 
+// Cierra el editor y, si se había entrado desde la ficha de un informe
+// (ver erReturnToReportId), la vuelve a abrir — así "cancelar" o "guardar"
+// llevan de vuelta a la información del informe, no hasta la lista.
+function erCloseAndReturn() {
+  var returnId = erReturnToReportId;
+  closeEditReportModal();
+  if (returnId) {
+    erReturnToReportId = null;
+    openReportDetail(returnId);
+  }
+}
+
+// Pedido: si hay cambios sin guardar, cerrar (con la "x" o "Cancelar")
+// debe preguntar antes — nada de perder lo escrito por un toque sin querer.
+function erRequestClose() {
+  var saveBtn = document.getElementById('erSaveBtn');
+  var isDirty = saveBtn && !saveBtn.disabled;
+  if (isDirty && !confirm(t('confirm_cerrar_sin_guardar'))) return;
+  erCloseAndReturn();
+}
+
 function erChangeHoras(delta) {
   var el = document.getElementById('erHorasVal');
   var v = Math.max(0, (parseInt(el.textContent) || 0) + delta);
@@ -3278,8 +3347,6 @@ function submitEditReport() {
         uploadPhotosWithRetry(idForPhotos, fechaForPhotos, operarioForPhotos, erPhotosObraSelected, erPhotosMatSelected, 2);
       }
 
-      closeEditReportModal();
-
       // Actualización optimista INMEDIATA: parcheamos localmente el
       // informe en caché con el nuevo estado (pending, sin comentario,
       // timestamp fresco) y repintamos ya — así la tarjeta nunca se queda
@@ -3311,6 +3378,11 @@ function submitEditReport() {
 
       myReportsLoaded = false; // igualmente forzamos una recarga fresca en segundo plano
       loadMyReports();
+
+      // Se cierra DESPUÉS de parchear la caché — así, si veníamos de la
+      // ficha de detalle, erCloseAndReturn() la reabre ya con los datos
+      // frescos, no con los que había antes de guardar.
+      erCloseAndReturn();
     } else {
       showToast(result && result.message ? result.message : 'Error al reenviar', true);
     }
@@ -3356,7 +3428,14 @@ function submitEditReport() {
         });
         if (landed) {
           showToast(wasRejected ? t('toast_informe_reenviado') : t('toast_cambios_guardados'));
-          closeEditReportModal();
+          // res.data ya es la lectura fresca que acabamos de usar para
+          // comprobar "landed" — la usamos para refrescar la caché ANTES
+          // de reabrir la ficha (si venimos de ahí), para no reabrirla
+          // con los datos viejos de antes de guardar.
+          myReportsCache = res.data;
+          renderMyReports(myReportsCache);
+          dataCacheSet('myReports', myReportsCache);
+          erCloseAndReturn();
           myReportsLoaded = false;
           loadMyReports();
         } else {
