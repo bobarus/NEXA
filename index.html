@@ -599,27 +599,32 @@ body.pin-mode{overflow:hidden}
    fondo de la barra jamás deja ver un hueco en blanco por debajo. */
 .bottom-tabbar{
   position:fixed;left:0;right:0;
-  /* BUG CORREGIDO ("hay una línea blanca en el borde inferior en todo
-     el iPhone real"): "bottom:0" pone el borde inferior de la barra
-     EXACTAMENTE en el límite del viewport visual. Al promocionar este
-     elemento a su propia capa de composición GPU (transform:translateZ(0),
-     ver más abajo) para evitar el jitter del position:fixed, iOS Safari en
-     modo standalone a veces redondea la posición de esa capa a un
-     subpíxel de más — un artefacto de composición muy documentado en
-     WebKit — dejando ver una línea capilar del fondo blanco de <body>
-     justo por debajo del negro de la barra. No es reproducible en Chromium
-     (el motor de esta vista previa), solo en WebKit/iOS real. Extendemos
-     la barra 2px más allá del borde físico: esos 2px quedan siempre fuera
-     del viewport visible (no se ven, no roban espacio a los botones), pero
-     garantizan que el fondo oscuro cubra ese posible desajuste de subpíxel
-     en vez de dejar ver el blanco de detrás. */
-  bottom:-2px;
+  /* BUG CORREGIDO, intento 2 ("sigue habiendo una franja blanca visible
+     debajo de la barra, y no es un simple hilo de 1px"): el bleed de 2px
+     de la versión anterior asumía un desajuste de SUBPÍXEL de composición
+     — pero en el dispositivo real la franja tiene la altura del propio
+     home indicator, lo que apunta a que env(safe-area-inset-bottom) no se
+     está resolviendo como se esperaba en el momento en que WebKit coloca
+     esta capa (hay reportes del propio WebKit de esto en el primer pintado
+     de una PWA standalone recién lanzada). No podemos depurar esto en
+     hardware real desde aquí, así que en vez de perseguir la causa exacta,
+     se sobredimensiona el margen de seguridad: la barra se extiende 60px
+     más allá del borde físico — muy por encima de los ~34px del home
+     indicator más alto que existe hoy — y el padding-bottom absorbe esos
+     mismos 60px de más, así que la posición VISUAL de los botones no
+     cambia ni un píxel respecto a antes; solo el fondo oscuro por detrás
+     gana ese margen extra, que siempre queda fuera del viewport visible. */
+  bottom:-60px;
   z-index:200;
   display:flex;
   background:#1c1c1e;
   border-radius:24px 24px 0 0;
-  padding:10px 0 calc(max(env(safe-area-inset-bottom,0px), 10px) + 2px);
-  box-shadow:0 -6px 24px rgba(0,0,0,.22);
+  padding:10px 0 calc(max(env(safe-area-inset-bottom,0px), 10px) + 60px);
+  /* Sombra en dos capas — un filo de contacto muy sutil + una difusa
+     amplia — en vez de una sola sombra dura; es el patrón que usan los
+     tab bars "flotantes" modernos (iOS 17+, Instagram, etc.) para que la
+     barra se sienta posada sobre el contenido y no recortada encima. */
+  box-shadow:0 -1px 0 rgba(0,0,0,.05), 0 -10px 32px -4px rgba(0,0,0,.20);
   /* Fuerza una capa de composición GPU propia — evita el "salto"/jitter
      que WebKit produce en elementos position:fixed durante el scroll con
      inercia (rubber-band) en iOS Safari/PWA standalone. */
@@ -666,11 +671,18 @@ body.pin-mode{overflow:hidden}
   transition:opacity .15s;
 }
 .bottom-tab .tab-icon{width:auto;height:auto;border-radius:0;display:flex;align-items:center;justify-content:center;background:transparent !important}
-.bottom-tab i{font-size:22px;color:#8e8e93;line-height:1;display:block;font-style:normal;transition:color .25s ease}
-.bottom-tab span{display:block;font-size:11px;font-weight:600;color:#8e8e93;white-space:nowrap;transition:color .25s ease}
+/* Tipografía: peso más marcado + leve tracking en la etiqueta activa, y un
+   micro-rebote de escala en icono/etiqueta al activarse — el mismo tipo de
+   detalle "vivo" que tienen los tab bars nativos modernos, con una curva
+   con ligero overshoot (cubic-bezier con el 4º valor >1) en vez de un
+   linear/ease plano. */
+.bottom-tab i{font-size:22px;color:#8e8e93;line-height:1;display:block;font-style:normal;transition:color .25s ease,transform .3s cubic-bezier(.34,1.56,.64,1)}
+.bottom-tab span{display:block;font-size:11px;font-weight:600;letter-spacing:.1px;color:#8e8e93;white-space:nowrap;transition:color .25s ease,font-weight .15s ease}
 .bottom-tab.active i,.bottom-tab.active span{color:#4d94ff}
-.bottom-tab.active i{filter:drop-shadow(0 0 6px rgba(77,148,255,.55))}
+.bottom-tab.active i{filter:drop-shadow(0 0 6px rgba(77,148,255,.55));transform:scale(1.08)}
+.bottom-tab.active span{font-weight:700}
 .bottom-tab:active{opacity:.7}
+.bottom-tab:active i{transform:scale(.9)}
 .tab-icon{position:relative}
 .tab-badge{
   position:absolute;top:-3px;right:-6px;
