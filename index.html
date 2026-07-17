@@ -167,8 +167,22 @@ body{height:100dvh}
 .globe-btn.pressed{background:#e8f0fe}
 .globe-btn.pressed svg,.globe-btn.pressed i{stroke:#0049c5;color:#0049c5}
 .globe-btn svg,.globe-btn i{color:#8e8e93;font-size:22px;stroke:#8e8e93;width:22px;height:22px;fill:none;stroke-width:1.8;stroke-linecap:round;transition:color .15s,stroke .15s}
-.lang-dropdown{display:none;position:absolute;top:42px;right:0;background:#fff;border-radius:14px;overflow:hidden;min-width:160px;border:.5px solid #d1d1d6;z-index:300;box-shadow:0 4px 20px rgba(0,0,0,.12)}
-.lang-dropdown.open{display:block}
+/* Menú de idioma: en vez de display:none/block (que no permite animar),
+   se anima con opacity+transform, igual que .bottom-tabbar.tabbar-hidden
+   o .nav.nav-hidden en esta misma hoja de estilos — mismo lenguaje visual
+   que el resto de la app. transform-origin en la esquina donde está el
+   botón del globo para que la animación "crezca" desde ahí, como un menú
+   nativo de iOS. */
+.lang-dropdown{
+  position:absolute;top:42px;right:0;background:#fff;border-radius:16px;
+  overflow:hidden;min-width:180px;border:.5px solid #e5e5ea;z-index:300;
+  box-shadow:0 10px 30px rgba(0,0,0,.16);
+  transform-origin:top right;
+  opacity:0;transform:scale(.85) translateY(-6px);
+  pointer-events:none;
+  transition:opacity .18s cubic-bezier(.4,0,.2,1),transform .22s cubic-bezier(.34,1.4,.4,1);
+}
+.lang-dropdown.open{opacity:1;transform:scale(1) translateY(0);pointer-events:auto}
 
 /* NOTIFICATION BELL */
 .notif-bell{position:relative}
@@ -198,9 +212,13 @@ body{height:100dvh}
 .notif-card.notif-unread{background:rgba(255,59,48,.04);border-color:rgba(255,59,48,.15)}
 .notif-card.notif-unread .ni-title::before{content:'';width:7px;height:7px;border-radius:50%;background:#ff3b30;flex-shrink:0}
 .notif-empty{padding:60px 24px;text-align:center;font-size:15px;color:#8e8e93}
-.lang-opt{display:flex;align-items:center;gap:10px;padding:12px 16px;font-size:15px;color:#000;cursor:pointer;font-weight:400;width:100%;text-align:left;background:none;border:none;border-bottom:.5px solid #f2f2f7;font-family:inherit;touch-action:manipulation}
-.lang-opt:last-child{border-bottom:none}
-.lang-opt.active{font-weight:600;color:#0049c5}
+.lang-opt{display:flex;align-items:center;gap:10px;padding:13px 14px;margin:4px;width:calc(100% - 8px);border-radius:11px;font-size:15px;color:#1b1b1d;cursor:pointer;font-weight:500;text-align:left;background:none;border:none;font-family:inherit;touch-action:manipulation;transition:background .15s}
+.lang-opt:active{background:#f4f4f7}
+.lang-opt .lang-flag{font-size:18px;line-height:1}
+.lang-opt .lang-name{flex:1}
+.lang-opt .lang-check{font-size:16px;color:#0049c5;opacity:0;transform:scale(.5);transition:opacity .15s,transform .15s}
+.lang-opt.active{background:#eaf2ff;color:#0049c5;font-weight:600}
+.lang-opt.active .lang-check{opacity:1;transform:scale(1)}
 .nav-side svg{stroke:#636366;width:18px;height:18px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;cursor:pointer}
 .nav-side i{font-size:18px;color:#636366;cursor:pointer}
 
@@ -213,6 +231,14 @@ body{height:100dvh}
    de línea dura + sombra corta. */
 .card{background:#fff;border:none;border-radius:20px;margin:0 16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.06)}
 .row{display:flex;align-items:center;padding:6px 14px;min-height:64px;border-bottom:.5px solid #eef0f4}
+/* Pedido: quitar las líneas divisorias finas entre filas SOLO en
+   Identificación/Trabajo/Materiales — Personal las conserva, no se pidió
+   cambiarla. */
+.card-no-divider .row,.card-no-divider .mode-header{border-bottom:none}
+/* Pedido: quitar el icono de calendario nativo del campo Fecha — que se
+   vea solo la fecha en cifras. El campo se sigue pudiendo tocar entero
+   para abrir el selector nativo, esto solo oculta el glifo. */
+#fecha::-webkit-calendar-picker-indicator{display:none;-webkit-appearance:none}
 .row:last-child{border-bottom:none}
 .row:active{background:#f9f9fb}
 
@@ -229,11 +255,16 @@ body{height:100dvh}
 .req-dot{width:5px;height:5px;border-radius:50%;background:#ff3b30;display:inline-block;flex-shrink:0}
 .rinput{flex:1;text-align:right;font-size:14px;font-weight:500;color:#1b1b1d;border:none;outline:none;background:transparent;font-family:inherit;min-width:0;margin-left:auto}
 .rinput::placeholder{color:#a7a9b4}
-.sel-wrap{display:flex;align-items:center;gap:2px;margin-left:auto;flex-shrink:0;max-width:70%;background:#f4f4f7;border-radius:999px;padding:9px 14px 9px 16px}
+.sel-wrap{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0;max-width:70%;background:#f4f4f7;border-radius:999px;padding:8px 8px 8px 16px}
 .rselect{font-size:14px;font-weight:500;color:#737687;border:none;outline:none;background:transparent;font-family:inherit;-webkit-appearance:none;appearance:none;cursor:pointer;text-align:right;text-align-last:right;min-width:60px;max-width:100%}
 .rselect.has-val{color:#1b1b1d}
 .rselect option{color:#1b1b1d;background:#fff}
 .rchev{margin-left:4px}.rchev svg{width:7px;height:12px;stroke:#9a9ca8;fill:none;stroke-width:2.5;stroke-linecap:round}
+/* Mismo círculo azul que .mode-list-row .rchev — pedido explícitamente
+   para "Sin ayudante" también. Aquí no hace falta position:absolute ni
+   compensar padding: .sel-wrap ya centra sus hijos con flexbox. */
+.sel-wrap .rchev{margin-left:0;width:24px;height:24px;border-radius:50%;background:#e6f0fe;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sel-wrap .rchev svg{stroke:#0049c5}
 .tarow{flex-direction:column;align-items:flex-start;padding:12px 14px;min-height:auto}
 .tarow .sub-label{font-size:11px;font-weight:600;color:#737687;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
 /* Etiquetas de campo del modal "Editar informe" — antes sin definir: se
@@ -241,6 +272,13 @@ body{height:100dvh}
    rompiendo el estilo uniforme de etiqueta compacta usado en el resto de
    la app (mismo patrón que .tarow .sub-label). */
 .s-label{font-size:11px;font-weight:600;color:#737687;text-transform:uppercase;letter-spacing:.5px}
+/* Select de "modo edición" (Cliente/Obra/Tipo/Compañía) — misma caja
+   blanca con borde que el resto de campos de este formulario, con una
+   flecha propia porque -webkit-appearance:none quita la nativa. */
+.er-select{width:100%;padding:10px 34px 10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;-webkit-appearance:none;appearance:none;color:#1b1b1d;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239a9ca8' stroke-width='2.5' stroke-linecap='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat:no-repeat;background-position:right 10px center;background-size:16px}
+.er-select:invalid{color:#8e8e93}
 .rta{width:100%;border:none;outline:none;background:#f4f4f7;border-radius:18px;padding:14px 16px;margin-top:2px;font-size:14px;font-weight:500;color:#1b1b1d;font-family:inherit;resize:none;min-height:70px;line-height:1.6;transition:background .15s}
 .rta:focus{background:#eaeefc}
 .rta::placeholder{color:#a7a9b4}
@@ -259,8 +297,18 @@ body{height:100dvh}
    sin tocar el HTML. */
 .mode-list-row{display:flex;align-items:center;position:relative;padding:0 14px 12px;min-height:0;border-bottom:none}
 .mode-list-row > span:first-child{display:none}
-.mode-list-row .rselect{width:100%;background:#f4f4f7;border-radius:999px;padding:13px 40px 13px 18px;font-size:14px;font-weight:500;text-align:left;text-align-last:left}
-.mode-list-row .rchev{position:absolute;right:30px;top:50%;transform:translateY(-50%) rotate(90deg);margin-left:0;pointer-events:none}
+.mode-list-row .rselect{width:100%;background:#f4f4f7;border-radius:999px;padding:13px 46px 13px 18px;font-size:14px;font-weight:500;text-align:left;text-align-last:left}
+/* Elegido (variante 3 de las propuestas): misma píldora gris de siempre,
+   pero la flecha ahora vive dentro de un círculo azul — dice con más
+   claridad que todo el campo es tocable. */
+/* top:calc(50% - 6px), no 50% simple: .mode-list-row tiene padding
+   asimétrico (0 arriba, 12px abajo — ver su regla), así que su centro
+   geométrico cae 6px MÁS ABAJO que el centro real de la píldora .rselect
+   (que sí ocupa toda la caja de contenido). Sin este ajuste el círculo
+   quedaba centrado respecto a la fila entera, no respecto a la píldora
+   visible, y se veía "caído". */
+.mode-list-row .rchev{position:absolute;right:21px;top:calc(50% - 6px);transform:translateY(-50%) rotate(90deg);margin-left:0;pointer-events:none;width:26px;height:26px;border-radius:50%;background:#e6f0fe;display:flex;align-items:center;justify-content:center}
+.mode-list-row .rchev svg{stroke:#0049c5;width:8px;height:14px}
 .mode-text-row{padding:0 14px 12px;border-bottom:none;display:none}
 .mode-text-input{width:100%;border:none;outline:none;background:#f4f4f7;border-radius:999px;padding:13px 18px;font-size:14px;font-weight:500;color:#1b1b1d;font-family:inherit;transition:background .15s}
 .mode-text-input:focus{background:#eaeefc}
@@ -343,7 +391,6 @@ body{height:100dvh}
    para que el contenido nunca quede tapado detrás. */
 .ss-footer{position:fixed;left:0;right:0;bottom:0;width:100%;background:#fff;border-top:.5px solid #f0f0f0;padding:12px 20px calc(env(safe-area-inset-bottom,0px) + 20px);display:flex;flex-direction:column;gap:10px;z-index:10}
 .btn-share{width:100%;background:#f4f4f7;border:none;color:#1b1b1d;border-radius:999px;padding:14px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;touch-action:manipulation}
-.btn-share svg{width:17px;height:17px;stroke:#000;fill:none;stroke-width:2;stroke-linecap:round}
 .btn-new{width:100%;background:#34c759;color:#fff;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation}
 
 /* PIN */
@@ -423,6 +470,11 @@ body.pin-mode{overflow:hidden}
 .mi-badge{font-size:9px;font-weight:700;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px}
 .mi-badge.st-pending{background:#e5f0ff;color:#0049c5}
 .mi-badge.st-rejected{background:#fff0f0;color:#ff3b30}
+/* BUG CORREGIDO: faltaba esta regla — el badge "Aprobado" en Mis informes
+   se quedaba sin color (fondo/texto por defecto) porque solo existían
+   st-pending y st-rejected. Mismo verde que .ad-status-badge.st-approved
+   (Admin/Manager), para que el mismo estado se vea igual en toda la app. */
+.mi-badge.st-approved{background:#e5f9ec;color:#34c759}
 .mi-obra{font-size:18px;font-weight:700;color:#000;margin-bottom:2px;letter-spacing:-.2px}
 .mi-sub{font-size:11px;color:#8e8e93;margin-bottom:8px}
 .mi-comment{background:#fff0f0;border-radius:8px;padding:9px 12px;font-size:12px;color:#ff3b30;margin-bottom:10px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -546,12 +598,27 @@ body.pin-mode{overflow:hidden}
    fallara, en el peor caso los botones quedan un poco bajos, pero el
    fondo de la barra jamás deja ver un hueco en blanco por debajo. */
 .bottom-tabbar{
-  position:fixed;left:0;right:0;bottom:0;
+  position:fixed;left:0;right:0;
+  /* BUG CORREGIDO ("hay una línea blanca en el borde inferior en todo
+     el iPhone real"): "bottom:0" pone el borde inferior de la barra
+     EXACTAMENTE en el límite del viewport visual. Al promocionar este
+     elemento a su propia capa de composición GPU (transform:translateZ(0),
+     ver más abajo) para evitar el jitter del position:fixed, iOS Safari en
+     modo standalone a veces redondea la posición de esa capa a un
+     subpíxel de más — un artefacto de composición muy documentado en
+     WebKit — dejando ver una línea capilar del fondo blanco de <body>
+     justo por debajo del negro de la barra. No es reproducible en Chromium
+     (el motor de esta vista previa), solo en WebKit/iOS real. Extendemos
+     la barra 2px más allá del borde físico: esos 2px quedan siempre fuera
+     del viewport visible (no se ven, no roban espacio a los botones), pero
+     garantizan que el fondo oscuro cubra ese posible desajuste de subpíxel
+     en vez de dejar ver el blanco de detrás. */
+  bottom:-2px;
   z-index:200;
   display:flex;
   background:#1c1c1e;
   border-radius:24px 24px 0 0;
-  padding:10px 0 max(env(safe-area-inset-bottom,0px), 10px);
+  padding:10px 0 calc(max(env(safe-area-inset-bottom,0px), 10px) + 2px);
   box-shadow:0 -6px 24px rgba(0,0,0,.22);
   /* Fuerza una capa de composición GPU propia — evita el "salto"/jitter
      que WebKit produce en elementos position:fixed durante el scroll con
@@ -560,6 +627,18 @@ body.pin-mode{overflow:hidden}
   -webkit-transform:translateZ(0);
   backface-visibility:hidden;
   -webkit-backface-visibility:hidden;
+  /* BUG CORREGIDO ("la línea indicadora de la pestaña activa se sale de
+     la barra"): .tab-indicator se posiciona con "width:50%" sobre este
+     contenedor (ver su regla más abajo) — en iOS Safari real, combinado
+     con que este contenedor es "display:flex" + capa GPU propia
+     (transform:translateZ(0)), WebKit puede tardar un frame en resolver
+     ese 50% contra el ancho correcto y pintarlo momentáneamente a todo
+     lo ancho, sobresaliendo incluso de las esquinas redondeadas. No es
+     reproducible en Chromium. overflow:hidden no arregla el cálculo en
+     sí, pero garantiza que la barrita NUNCA pueda pintarse fuera de los
+     límites (ni siquiera fuera de la esquina redondeada) de esta barra,
+     pase lo que pase con ese cálculo. */
+  overflow:hidden;
 }
 .bottom-tabbar.tabbar-hidden{
   transform:translateY(100%) translateZ(0);
@@ -662,10 +741,10 @@ body.pin-mode{overflow:hidden}
     </div>
     <div class="globe-btn" id="globeWrap" onclick="toggleLangDrop()">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-      <div class="lang-dropdown" id="langDrop">
-        <button class="lang-opt active" onclick="setLang('es')">🇪🇸 Español</button>
-        <button class="lang-opt" onclick="setLang('ru')">🇷🇺 Русский</button>
-        <button class="lang-opt" onclick="setLang('en')">🇬🇧 English</button>
+      <div class="lang-dropdown" id="langDrop" onclick="event.stopPropagation()">
+        <button class="lang-opt active" onclick="setLang('es')"><span class="lang-flag">🇪🇸</span><span class="lang-name">Español</span><i class="ti ti-check lang-check"></i></button>
+        <button class="lang-opt" onclick="setLang('ru')"><span class="lang-flag">🇷🇺</span><span class="lang-name">Русский</span><i class="ti ti-check lang-check"></i></button>
+        <button class="lang-opt" onclick="setLang('en')"><span class="lang-flag">🇬🇧</span><span class="lang-name">English</span><i class="ti ti-check lang-check"></i></button>
       </div>
     </div>
   </div>
@@ -712,7 +791,7 @@ body.pin-mode{overflow:hidden}
          vistazo cuántas fotos hay y cuál está activa; tocar una salta a ella. -->
     <div id="pgThumbStrip" style="display:flex;gap:6px;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch"></div>
     <button type="button" onclick="sharePhotoGalleryCurrent()" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);border:none;border-radius:20px;padding:10px 20px;color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation">
-      <i class="ti ti-send" style="font-size:16px"></i> Compartir
+      <i class="ti ti-upload" style="font-size:16px"></i> <span id="pgShareBtnLbl">Compartir</span>
     </button>
   </div>
 </div>
@@ -740,23 +819,52 @@ body.pin-mode{overflow:hidden}
 
       <div class="mi-comment full" style="margin:12px 0" id="erCommentBlock"><b id="erCommentLabel">Comentario del manager</b><span id="erComment"></span></div>
 
-      <div class="s-label" style="padding:8px 0 6px" id="erLblCliente">Cliente</div>
-      <input type="text" id="erCliente" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
+      <!-- Pedido: en modo edición los campos con lista (Cliente/Obra/Tipo/
+           Compañía) deben comportarse EXACTAMENTE como en la pantalla
+           "Nuevo informe" — desplegable con opciones + alternativa "Nuevo"
+           para escribir un valor libre — y no una simple caja de texto
+           como eran antes. Mismo patrón (mode-toggle + select + input),
+           con IDs propios "er*" (no pueden repetir los del formulario
+           "Nuevo" — dos elementos no pueden compartir id en el DOM) y su
+           propio juego de funciones erSet*Mode()/getEr*() más abajo. -->
+      <div class="s-label" style="padding:8px 0 6px;display:flex;align-items:center;justify-content:space-between">
+        <span id="erLblCliente">Cliente</span>
+        <div class="mode-toggle">
+          <button class="ct on" id="erCtClL" onclick="erSetClienteMode('list')"><span id="er-ctcll-lbl">Lista</span></button>
+          <button class="ct" id="erCtClN" onclick="erSetClienteMode('new')"><span id="er-ctcln-lbl">Nuevo</span></button>
+        </div>
+      </div>
+      <select id="erClienteSel" class="er-select" onchange="checkErDirty()"></select>
+      <input type="text" id="erClienteNew" style="display:none;width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit" oninput="checkErDirty()">
 
-      <div class="s-label" style="padding:14px 0 6px" id="erLblObra">Obra</div>
-      <input type="text" id="erObra" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
+      <div class="s-label" style="padding:14px 0 6px;display:flex;align-items:center;justify-content:space-between">
+        <span id="erLblObra">Obra</span>
+        <div class="mode-toggle">
+          <button class="ct on" id="erCtObL" onclick="erSetObraMode('list')"><span id="er-ctobl-lbl">Lista</span></button>
+          <button class="ct" id="erCtObN" onclick="erSetObraMode('new')"><span id="er-ctobn-lbl">Nueva</span></button>
+        </div>
+      </div>
+      <select id="erObraSel" class="er-select" onchange="checkErDirty()"></select>
+      <input type="text" id="erObraNew" style="display:none;width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit" oninput="checkErDirty()">
 
       <div class="s-label" style="padding:14px 0 6px" id="erLblFecha">Fecha</div>
       <input type="date" id="erFecha" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
 
       <div class="s-label" style="padding:14px 0 6px" id="erLblAyudante">Ayudante</div>
-      <input type="text" id="erAyudante" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
+      <select id="erAyudante" class="er-select" onchange="checkErDirty()"></select>
 
       <div class="s-label" style="padding:14px 0 6px" id="erLblVehiculo">Vehículo</div>
       <input type="text" id="erVehiculo" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
 
-      <div class="s-label" style="padding:14px 0 6px" id="erLblTipo">Tipo de trabajo</div>
-      <input type="text" id="erTipo" class="mode-text-input" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
+      <div class="s-label" style="padding:14px 0 6px;display:flex;align-items:center;justify-content:space-between">
+        <span id="erLblTipo">Tipo de trabajo</span>
+        <div class="mode-toggle">
+          <button class="ct on" id="erCtTL" onclick="erSetTipoMode('list')"><span id="er-cttl-lbl">Lista</span></button>
+          <button class="ct" id="erCtTN" onclick="erSetTipoMode('new')"><span id="er-cttn-lbl">Otro</span></button>
+        </div>
+      </div>
+      <select id="erTipoSel" class="er-select" onchange="checkErDirty()"></select>
+      <input type="text" id="erTipoNew" style="display:none;width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit" oninput="checkErDirty()">
 
       <div class="s-label" style="padding:14px 0 6px" id="erLblHoras">Horas trabajadas</div>
       <div style="display:flex;align-items:center;gap:14px;background:#fff;border:.5px solid #d1d1d6;border-radius:10px;padding:8px 14px">
@@ -777,12 +885,18 @@ body.pin-mode{overflow:hidden}
             <input type="file" accept="image/*" multiple style="display:none" id="erInputPhotosObra" onchange="erHandlePhotoSelect(this,'obra')">
           </label>
         </div>
-        <div class="photo-thumbs" id="erExistingThumbsObra"></div>
         <div class="photo-thumbs" id="erThumbsObra"></div>
       </div>
 
-      <div class="s-label" style="padding:14px 0 6px" id="erLblCompania">Compañía (materiales)</div>
-      <input type="text" id="erCompania" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit">
+      <div class="s-label" style="padding:14px 0 6px;display:flex;align-items:center;justify-content:space-between">
+        <span id="erLblCompania">Compañía (materiales)</span>
+        <div class="mode-toggle">
+          <button class="ct on" id="erCtCL" onclick="erSetCompMode('list')"><span id="er-ctcl-lbl">Lista</span></button>
+          <button class="ct" id="erCtCN" onclick="erSetCompMode('new')"><span id="er-ctcn-lbl">Nueva</span></button>
+        </div>
+      </div>
+      <select id="erCompaniaSel" class="er-select" onchange="checkErDirty()"></select>
+      <input type="text" id="erCompaniaNew" style="display:none;width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit" oninput="checkErDirty()">
 
       <div class="s-label" style="padding:14px 0 6px" id="erLblMateriales">Materiales utilizados</div>
       <textarea id="erMateriales" rows="2" style="width:100%;padding:10px 12px;border:.5px solid #d1d1d6;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;resize:none"></textarea>
@@ -799,7 +913,6 @@ body.pin-mode{overflow:hidden}
             <input type="file" accept="image/*" multiple style="display:none" id="erInputPhotosMat" onchange="erHandlePhotoSelect(this,'materiales')">
           </label>
         </div>
-        <div class="photo-thumbs" id="erExistingThumbsMat"></div>
         <div class="photo-thumbs" id="erThumbsMat"></div>
       </div>
 
@@ -892,7 +1005,7 @@ body.pin-mode{overflow:hidden}
   <div id="opPanelNew">
 
     <div class="slabel"><span id="sl-ident">Identificación</span><span class="req-badge" id="req-badge-obligatorio">• obligatorio</span></div>
-    <div class="card">
+    <div class="card card-no-divider">
       <div class="mode-header" id="rCliente">
         <div class="rbadge b-blue"><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></div>
         <span class="rlabel"><span id="lbl-cliente">Cliente</span> <span class="req-dot"></span></span>
@@ -928,7 +1041,7 @@ body.pin-mode{overflow:hidden}
       <div class="row" id="rFecha">
         <div class="rbadge b-blue"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
         <span class="rlabel"><span id="lbl-fecha">Fecha</span> <span class="req-dot"></span></span>
-        <input type="date" id="fecha" onchange="clearErr('rFecha');updateBtn()" style="margin-left:auto;border:none;outline:none;background:#f4f4f7;font-family:inherit;font-size:14px;font-weight:700;color:#0049c5;-webkit-appearance:none;cursor:pointer;border-radius:999px;padding:9px 16px">
+        <input type="date" id="fecha" onchange="clearErr('rFecha');updateBtn()" style="margin-left:auto;border:none;outline:none;background:#f4f4f7;font-family:inherit;font-size:14px;font-weight:700;color:#0049c5;-webkit-appearance:none;cursor:pointer;border-radius:999px;padding:9px 16px;text-align:center;text-align-last:center">
       </div>
     </div>
 
@@ -956,7 +1069,7 @@ body.pin-mode{overflow:hidden}
     </div>
 
     <div class="slabel"><span id="sl-trabajo">Trabajo</span></div>
-    <div class="card">
+    <div class="card card-no-divider">
       <div class="mode-header" id="rTipo">
         <div class="rbadge b-orange"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
         <span class="rlabel"><span id="lbl-tipo">Tipo</span> <span class="req-dot"></span></span>
@@ -1007,7 +1120,7 @@ body.pin-mode{overflow:hidden}
     </div>
 
     <div class="slabel"><span id="sl-materiales">Materiales</span></div>
-    <div class="card">
+    <div class="card card-no-divider">
       <div class="mode-header">
         <div class="rbadge b-teal"><svg viewBox="0 0 24 24"><path d="M3 8h18l-1.4 11.2a2 2 0 0 1-2 1.8H6.4a2 2 0 0 1-2-1.8L3 8z"/><path d="M8 8V6.5a4 4 0 0 1 8 0V8"/><path d="M9 12v5M12 12v5M15 12v5"/></svg></div>
         <span class="rlabel" id="lbl-compania">Compañía</span>
@@ -1028,7 +1141,7 @@ body.pin-mode{overflow:hidden}
         <span class="sub-label" id="sub-materiales">Materiales utilizados</span>
         <textarea class="rta" id="materiales" placeholder="Listar materiales..."></textarea>
       </div>
-      <div class="row" style="min-height:60px">
+      <div class="row" id="rPrecio" style="min-height:60px">
         <span class="rlabel" id="lbl-precio" style="font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#737687">Precio</span>
         <div style="display:flex;align-items:baseline;gap:4px;margin-left:auto">
           <input type="number" id="precio" min="0" step="0.01" inputmode="decimal" placeholder="0.00"
@@ -1079,8 +1192,8 @@ body.pin-mode{overflow:hidden}
   </div>
   <div class="ss-footer">
     <button class="btn-share" onclick="shareRecord()">
-      <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-      Compartir
+      <i class="ti ti-upload" style="font-size:17px"></i>
+      <span id="ssShareBtnLbl">Compartir</span>
     </button>
     <button class="btn-new" onclick="startNew()">+ Nuevo informe</button>
   </div>
@@ -1120,14 +1233,24 @@ body.pin-mode{overflow:hidden}
         <div class="mg-modal-title" id="rdTitle">—</div>
         <div class="mg-modal-sub" id="rdSub">—</div>
       </div>
-      <button type="button" onclick="closeReportDetail()" aria-label="Cerrar" style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:#f2f2f7;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation">
-        <i class="ti ti-x" style="font-size:16px;color:#000"></i>
-      </button>
+      <div style="flex-shrink:0;display:flex;align-items:center;gap:8px">
+        <!-- Pedido: mientras el informe está "pending" (esperando revisión),
+             el operario puede corregirlo sin tener que esperar un rechazo.
+             Mismo formulario y misma acción de guardado que ya existía para
+             reenviar un informe rechazado (ver openEditReport/fillEditReportModal/
+             submitEditReport) — aquí solo se añade la entrada visual. -->
+        <button type="button" id="rdEditBtn" onclick="editReportFromDetail()" aria-label="Editar" style="display:none;flex-shrink:0;width:30px;height:30px;border-radius:50%;background:#e6f0fe;border:none;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation">
+          <i class="ti ti-pencil" style="font-size:15px;color:#0049c5"></i>
+        </button>
+        <button type="button" onclick="closeReportDetail()" aria-label="Cerrar" style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:#f2f2f7;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation">
+          <i class="ti ti-x" style="font-size:16px;color:#000"></i>
+        </button>
+      </div>
     </div>
     <div id="rdBody" style="overflow-y:auto;flex:1;padding:14px 18px;-webkit-overflow-scrolling:touch"></div>
     <div style="padding:10px 18px calc(env(safe-area-inset-bottom,0px) + 14px);border-top:.5px solid #e5e5ea;background:#fff;flex-shrink:0">
       <button class="mg-modal-cancel" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px" onclick="shareReportDetailFromModal()">
-        <i class="ti ti-send" style="font-size:16px"></i> Compartir
+        <i class="ti ti-upload" style="font-size:16px"></i> <span id="rdShareBtnLbl">Compartir</span>
       </button>
       <button class="mg-btn-delete" id="rdDeleteBtn" style="display:none" onclick="deleteReportFromOperario()">
         <i class="ti ti-trash" style="font-size:15px"></i> <span id="rdDeleteBtnLbl">Eliminar informe</span>
@@ -1155,7 +1278,7 @@ body.pin-mode{overflow:hidden}
     <!-- Фиксированный footer — TODOS los botones de acción, incluido Compartir -->
     <div style="padding:10px 18px calc(env(safe-area-inset-bottom,0px) + 14px);border-top:.5px solid #e5e5ea;background:#fff;flex-shrink:0">
       <button class="mg-modal-cancel" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px" onclick="shareManagerDetail()">
-        <i class="ti ti-send" style="font-size:16px"></i> Compartir
+        <i class="ti ti-upload" style="font-size:16px"></i> <span id="mgdShareBtnLbl">Compartir</span>
       </button>
       <div class="mg-actions">
         <button class="mg-btn mg-btn-reject" onclick="rejectFromDetail()">Rechazar</button>
@@ -1345,6 +1468,20 @@ function fmtDate(val) {
   return dd+'.'+mm+'.'+yyyy;
 }
 
+// Pedido: mostrar junto a la fecha la hora en que se FORMÓ el informe
+// (TIMESTAMP — se actualiza tanto al crearlo como al editarlo/reenviarlo,
+// ver saveReport/resubmitRecord en Code_v5.gs), no la fecha de obra (FECHA,
+// que el operario elige libremente y puede no ser "hoy"). Devuelve '' si
+// no hay timestamp, para no mostrar una hora inventada.
+function fmtTime(val) {
+  if (!val) return '';
+  var d = new Date(val);
+  if (isNaN(d.getTime())) return '';
+  var hh = String(d.getHours()).padStart(2,'0');
+  var mi = String(d.getMinutes()).padStart(2,'0');
+  return hh+':'+mi+t('unit_hora_corta');
+}
+
 /* ════════ LANG SWITCHER (UI ya listo, traducciones se conectarán al final) ════════ */
 function toggleLangDrop() {
   document.getElementById('langDrop').classList.toggle('open');
@@ -1372,6 +1509,8 @@ var LANGS = {
     hint_obra:'Añade fotos del estado de la obra', hint_mat:'Añade fotos del recibo o albarán de materiales',
     btn_anadir:'Añadir', btn_guardar:'Guardar registro', btn_clear:'Borrar todo', btn_enviando:'Enviando…',
     btn_reenviar:'Reenviar', btn_guardar_cambios:'Guardar cambios',
+    toast_informe_reenviado:'Informe reenviado para aprobación', toast_cambios_guardados:'Cambios guardados',
+    unit_hora_corta:'h', toast_error_borrar_foto:'No se pudo borrar la foto',
     btn_aprobar:'Aprobar', btn_rechazar:'Rechazar', btn_compartir:'Compartir', btn_cancelar:'Cancelar',
     lbl_obligatorio:'• obligatorio', reject_title:'Rechazar informe', reject_sub:'Explica al operario qué hay que corregir',
     reject_ph:'Ej: Falta indicar el número de horas extra...', reject_hint:'El comentario es obligatorio',
@@ -1421,6 +1560,8 @@ var LANGS = {
     hint_obra:'Добавьте фото хода работ', hint_mat:'Добавьте фото чека или накладной',
     btn_anadir:'Добавить', btn_guardar:'Сохранить запись', btn_clear:'Очистить всё', btn_enviando:'Отправка…',
     btn_reenviar:'Отправить снова', btn_guardar_cambios:'Сохранить изменения',
+    toast_informe_reenviado:'Отчёт отправлен повторно на согласование', toast_cambios_guardados:'Изменения сохранены',
+    unit_hora_corta:'ч', toast_error_borrar_foto:'Не удалось удалить фото',
     btn_aprobar:'Одобрить', btn_rechazar:'Отклонить', btn_compartir:'Поделиться', btn_cancelar:'Отмена',
     lbl_obligatorio:'• обязательно', reject_title:'Отклонить отчёт', reject_sub:'Объясните рабочему что нужно исправить',
     reject_ph:'Например: не указаны сверхурочные часы...', reject_hint:'Комментарий обязателен',
@@ -1470,6 +1611,8 @@ var LANGS = {
     hint_obra:'Add photos of the work progress', hint_mat:'Add photos of the receipt or delivery note',
     btn_anadir:'Add', btn_guardar:'Save record', btn_clear:'Clear all', btn_enviando:'Sending…',
     btn_reenviar:'Resend', btn_guardar_cambios:'Save changes',
+    toast_informe_reenviado:'Report resent for approval', toast_cambios_guardados:'Changes saved',
+    unit_hora_corta:'h', toast_error_borrar_foto:'Could not delete the photo',
     btn_aprobar:'Approve', btn_rechazar:'Reject', btn_compartir:'Share', btn_cancelar:'Cancel',
     lbl_obligatorio:'• required', reject_title:'Reject report', reject_sub:'Explain to the worker what needs to be corrected',
     reject_ph:'E.g.: Missing overtime hours...', reject_hint:'Comment is required',
@@ -1610,18 +1753,20 @@ function applyLang() {
   document.querySelectorAll('.mg-btn-approve').forEach(function(b){ b.textContent = t('btn_aprobar'); });
   document.querySelectorAll('.mg-btn-reject').forEach(function(b){ b.textContent = t('btn_rechazar'); });
 
-  // Compartir buttons (все)
-  document.querySelectorAll('[onclick*="share"], [onclick*="Share"], [onclick*="Compartir"]').forEach(function(b){
-    if (b.textContent.trim().toLowerCase().includes('compartir') || b.textContent.trim().toLowerCase().includes('share') || b.textContent.trim().toLowerCase().includes('поделиться')) {
-      b.innerHTML = b.innerHTML.replace(/>Compartir|>Share|>Поделиться/g, '>' + t('btn_compartir'));
-    }
-  });
-  // Compartir явно по тексту
-  document.querySelectorAll('button, a').forEach(function(b){
-    if (b.textContent.trim() === 'Compartir' || b.textContent.trim() === 'Share' || b.textContent.trim() === 'Поделиться') {
-      b.textContent = t('btn_compartir');
-    }
-  });
+  // Botones "Compartir" (todos)
+  // BUG CORREGIDO ("el icono del botón Compartir desaparece"): esto antes
+  // recorría CUALQUIER button/a cuyo textContent fuera exactamente
+  // "Compartir"/"Share"/"Поделиться" y hacía "b.textContent = ...", lo cual
+  // borra TODOS los hijos del botón — incluido el <i> del icono, que no
+  // aporta nada a textContent pero sí es un hijo real en el DOM. Como esto
+  // se ejecuta en cada carga y en cada cambio de idioma, el icono
+  // desaparecía prácticamente siempre. Cada botón "Compartir" tiene ahora
+  // un <span id="..."> propio solo para el texto — setEl() actualiza ESE
+  // span, dejando el <i> del icono intacto.
+  setEl('pgShareBtnLbl',  t('btn_compartir'));
+  setEl('ssShareBtnLbl',  t('btn_compartir'));
+  setEl('rdShareBtnLbl',  t('btn_compartir'));
+  setEl('mgdShareBtnLbl', t('btn_compartir'));
 
   // Admin search & filters
   setPh('adSearch',       t('search_ph'));
@@ -1742,8 +1887,20 @@ function saveUserToDevice(codigo) {
 function getSavedPin() {
   try { return localStorage.getItem('parte_user_pin'); } catch(e) { return null; }
 }
-function saveUserCache(data) {
-  try { localStorage.setItem('parte_user_cache', JSON.stringify({ts: Date.now(), data: data})); } catch(e) {}
+function saveUserCache(data, pin) {
+  // BUG CORREGIDO ("la app pide el PIN cada vez que se cierra y reabre"):
+  // checkUser() en Code_v5.gs NUNCA devuelve el campo "codigo" en su
+  // respuesta — solo rol/nombre/obras/lang. getUserCache() de abajo compara
+  // "c.data.codigo === pin" para validar el caché, así que esa comparación
+  // era SIEMPRE false (undefined === pin) y el "login instantáneo desde
+  // caché" de startAppAfterGates() nunca llegaba a activarse: cada apertura
+  // dependía de que el fetch de red respondiera a tiempo. En iOS, justo al
+  // reabrir la app tras cerrarla del todo, la conexión tarda un instante en
+  // reengancharse — ese fetch fallaba o iba lento con frecuencia, y el
+  // usuario terminaba viendo la pantalla de PIN aunque su sesión seguía
+  // siendo válida. Guardamos aquí el PIN usado en la petición para que el
+  // caché sea utilizable de verdad.
+  try { data.codigo = pin; localStorage.setItem('parte_user_cache', JSON.stringify({ts: Date.now(), data: data})); } catch(e) {}
 }
 function getUserCache(pin) {
   try {
@@ -1931,7 +2088,7 @@ function submitPin() {
       if (result && result.status === 'ok' && result.valid) {
         currentUser = result;
         saveUserToDevice(pinToCheck);
-        saveUserCache(result);
+        saveUserCache(result, pinToCheck);
         // El idioma guardado para este PIN en el backend manda al iniciar
         // sesión — así el idioma "sigue" al usuario aunque cambie de
         // dispositivo o reinstale la app.
@@ -2320,6 +2477,15 @@ function removePhoto(group, idx) {
    también al reenviar un informe rechazado, no solo al crearlo) ════════ */
 var erPhotosObraSelected = [];
 var erPhotosMatSelected = [];
+// Pedido: unificar el campo de fotos — antes había DOS controles visibles
+// a la vez cuando ya había fotos subidas (el botón "Añadir" de siempre y,
+// aparte, un enlace de solo lectura "Fotos de obra" para verlas). Ahora
+// las fotos YA subidas se listan aquí (URLs individuales, obtenidas de la
+// carpeta de Drive vía getFolderPhotos) y se pintan como miniaturas reales
+// en el mismo sitio que las nuevas, con su propia "x" para borrarlas —
+// un solo control de fotos, en el mismo estilo que ya usa el resto de la app.
+var erExistingPhotosObra = [];
+var erExistingPhotosMat = [];
 
 function erHandlePhotoSelect(input, group) {
   var files = Array.from(input.files || []);
@@ -2339,10 +2505,17 @@ function erHandlePhotoSelect(input, group) {
 
 function erRenderThumbs(group) {
   var arr = group === 'obra' ? erPhotosObraSelected : erPhotosMatSelected;
+  var existingArr = group === 'obra' ? erExistingPhotosObra : erExistingPhotosMat;
   var wrap = document.getElementById(group === 'obra' ? 'erThumbsObra' : 'erThumbsMat');
   var bigBtn = document.getElementById(group === 'obra' ? 'erAddBtnObra' : 'erAddBtnMat');
 
   wrap.innerHTML = '';
+  existingArr.forEach(function(url, idx) {
+    var div = document.createElement('div');
+    div.className = 'photo-thumb';
+    div.innerHTML = '<img src="'+pgThumbUrl(url)+'"><div class="rm" onclick="erRemoveExistingPhoto(\''+group+'\','+idx+')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>';
+    wrap.appendChild(div);
+  });
   arr.forEach(function(photo, idx) {
     var div = document.createElement('div');
     div.className = 'photo-thumb';
@@ -2350,7 +2523,7 @@ function erRenderThumbs(group) {
     wrap.appendChild(div);
   });
 
-  if (arr.length > 0) {
+  if (existingArr.length + arr.length > 0) {
     bigBtn.classList.add('hidden');
     var addMini = document.createElement('label');
     addMini.className = 'photo-add-mini';
@@ -2368,20 +2541,70 @@ function erRemovePhoto(group, idx) {
   checkErDirty();
 }
 
-// Fotos YA subidas (de antes de rechazar) — solo lectura, un enlace que
-// abre la galería, igual que en el detalle de solo lectura del informe.
-function erRenderExistingPhotos(report) {
-  var svgCam = '<i class="ti ti-camera" style="font-size:15px;color:#0049c5;margin-right:5px"></i>';
-  var obraEl = document.getElementById('erExistingThumbsObra');
-  var matEl = document.getElementById('erExistingThumbsMat');
+// Borra una foto YA subida — a diferencia de erRemovePhoto (que solo quita
+// del array local algo que aún no se había guardado), esto llama al
+// servidor para borrarla de verdad de Drive. Optimista: desaparece de la
+// vista al instante, y si el borrado real falla se vuelve a mostrar (no
+// fingimos un éxito que no ocurrió).
+function erRemoveExistingPhoto(group, idx) {
+  var arr = group === 'obra' ? erExistingPhotosObra : erExistingPhotosMat;
+  var url = arr[idx];
+  if (!url || !erCurrentReport) return;
+  arr.splice(idx, 1);
+  erRenderThumbs(group);
+  fetch(WEBAPP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action:'deletePhoto', codigo: currentPin, id: erCurrentReport.ID, fileUrl: url })
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (!res || res.status !== 'ok') {
+        arr.splice(idx, 0, url);
+        erRenderThumbs(group);
+        showToast(t('toast_error_borrar_foto'), true);
+      }
+    })
+    .catch(function(){
+      arr.splice(idx, 0, url);
+      erRenderThumbs(group);
+      showToast(t('toast_error_borrar_foto'), true);
+    });
+}
+
+// Trae las fotos YA subidas del informe (listando la carpeta de Drive de
+// cada grupo) para pintarlas como miniaturas reales — antes solo se
+// mostraba un enlace "ver galería" de solo lectura.
+function erFetchExistingPhotos(report) {
+  erExistingPhotosObra = [];
+  erExistingPhotosMat = [];
+  erRenderThumbs('obra');
+  erRenderThumbs('materiales');
+
   var fotosObra = report['FOTOS DE OBRA'] || '';
   var fotosMat = report['FOTO MATERIALES / RECIBO'] || '';
-  obraEl.innerHTML = fotosObra
-    ? '<button type="button" class="rd-photo-link" onclick="openPhotoGallery(this)" data-photos=\''+encodeURIComponent(fotosObra)+'\'>'+svgCam+t('lbl_foto_obra')+'</button>'
-    : '';
-  matEl.innerHTML = fotosMat
-    ? '<button type="button" class="rd-photo-link" onclick="openPhotoGallery(this)" data-photos=\''+encodeURIComponent(fotosMat)+'\'>'+svgCam+t('lbl_fotos_materiales')+'</button>'
-    : '';
+  var reportId = report.ID;
+
+  if (fotosObra) {
+    fetch(WEBAPP_URL + '?action=getFolderPhotos&codigo=' + encodeURIComponent(currentPin) + '&url=' + encodeURIComponent(fotosObra))
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if (erCurrentReport && erCurrentReport.ID === reportId && res && res.status === 'ok' && res.photos) {
+          erExistingPhotosObra = res.photos;
+          erRenderThumbs('obra');
+        }
+      }).catch(function(){});
+  }
+  if (fotosMat) {
+    fetch(WEBAPP_URL + '?action=getFolderPhotos&codigo=' + encodeURIComponent(currentPin) + '&url=' + encodeURIComponent(fotosMat))
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if (erCurrentReport && erCurrentReport.ID === reportId && res && res.status === 'ok' && res.photos) {
+          erExistingPhotosMat = res.photos;
+          erRenderThumbs('materiales');
+        }
+      }).catch(function(){});
+  }
 }
 
 /* ════════ OPERARIO: SAVE RECORD (отчёт + фото единым действием) ════════ */
@@ -2735,7 +2958,7 @@ function openReportDetail(id) {
   // STATUS crudo del backend ("approved") en vez de traducirlo, mientras
   // pending/rejected sí pasaban por t(). Se completan los 3 estados.
   var statusLabel = r.STATUS === 'pending' ? t('status_pending') : (r.STATUS === 'rejected' ? t('status_rejected') : (r.STATUS === 'approved' ? t('status_approved') : r.STATUS));
-  var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
+  var fecha = (r.FECHA ? fmtDate(r.FECHA) : '') + (r.TIMESTAMP ? ' ' + fmtTime(r.TIMESTAMP) : '');
 
   document.getElementById('rdTitle').textContent = (r.OBRA || r.ID);
   document.getElementById('rdSub').textContent = (r.ID ? r.ID + ' · ' : '') + (r.CLIENTE ? r.CLIENTE + ' · ' : '') + statusLabel + ' · ' + fecha;
@@ -2750,12 +2973,24 @@ function openReportDetail(id) {
   // revisión" (pending) — ni aprobado ni ya rechazado (ver deleteRecord
   // en Code_v5.gs, que valida esto también del lado del servidor).
   document.getElementById('rdDeleteBtn').style.display = (r.STATUS === 'pending') ? 'flex' : 'none';
+  // Pedido: poder corregir un informe MIENTRAS sigue pendiente de revisión
+  // (antes solo se podía editar tras un rechazo). Mismo criterio de
+  // permiso que resubmitRecord() en Code_v5.gs, que ahora también acepta
+  // 'pending' además de 'rejected' — ver ese archivo.
+  document.getElementById('rdEditBtn').style.display = (r.STATUS === 'pending') ? 'flex' : 'none';
   document.getElementById('reportDetailModal').classList.add('show');
 }
 
 function closeReportDetail() {
   document.getElementById('reportDetailModal').classList.remove('show');
   rdCurrentId = null;
+}
+
+function editReportFromDetail() {
+  if (!rdCurrentId) return;
+  var id = rdCurrentId;
+  closeReportDetail();
+  openEditReport(id);
 }
 
 var erCurrentReport = null;
@@ -2783,17 +3018,84 @@ function openEditReport(id) {
 // formulario en cada cambio y activa/desactiva el botón de guardar.
 var erOriginalSnapshot = null;
 
+// Pedido: Cliente/Obra/Tipo/Compañía en modo edición funcionan igual que
+// en "Nuevo informe" — desplegable de la lista conocida, o "Nuevo/Otro"
+// para un valor libre. Mismo patrón que setClienteMode/getCliente etc.
+// (ver más arriba), pero con su propio estado — son selects e inputs
+// DISTINTOS (ids "er*"), no pueden compartir estado con el formulario
+// "Nuevo" que puede estar abierto en la otra pestaña al mismo tiempo.
+var erClienteMode = 'list', erObraMode = 'list', erTipoMode = 'list', erCompMode = 'list';
+
+function erSetClienteMode(m) {
+  erClienteMode = m;
+  document.getElementById('erCtClL').classList.toggle('on', m==='list');
+  document.getElementById('erCtClN').classList.toggle('on', m!=='list');
+  document.getElementById('erClienteSel').style.display = m==='list' ? 'block' : 'none';
+  document.getElementById('erClienteNew').style.display = m==='new' ? 'block' : 'none';
+  if (m==='list') document.getElementById('erClienteNew').value='';
+  else document.getElementById('erClienteSel').selectedIndex = 0;
+  checkErDirty();
+}
+function erSetObraMode(m) {
+  erObraMode = m;
+  document.getElementById('erCtObL').classList.toggle('on', m==='list');
+  document.getElementById('erCtObN').classList.toggle('on', m!=='list');
+  document.getElementById('erObraSel').style.display = m==='list' ? 'block' : 'none';
+  document.getElementById('erObraNew').style.display = m==='new' ? 'block' : 'none';
+  if (m==='list') document.getElementById('erObraNew').value='';
+  else document.getElementById('erObraSel').selectedIndex = 0;
+  checkErDirty();
+}
+function erSetTipoMode(m) {
+  erTipoMode = m;
+  document.getElementById('erCtTL').classList.toggle('on', m==='list');
+  document.getElementById('erCtTN').classList.toggle('on', m!=='list');
+  document.getElementById('erTipoSel').style.display = m==='list' ? 'block' : 'none';
+  document.getElementById('erTipoNew').style.display = m==='new' ? 'block' : 'none';
+  if (m==='list') document.getElementById('erTipoNew').value='';
+  else document.getElementById('erTipoSel').selectedIndex = 0;
+  checkErDirty();
+}
+function erSetCompMode(m) {
+  erCompMode = m;
+  document.getElementById('erCtCL').classList.toggle('on', m==='list');
+  document.getElementById('erCtCN').classList.toggle('on', m!=='list');
+  document.getElementById('erCompaniaSel').style.display = m==='list' ? 'block' : 'none';
+  document.getElementById('erCompaniaNew').style.display = m==='new' ? 'block' : 'none';
+  if (m==='list') document.getElementById('erCompaniaNew').value='';
+  else document.getElementById('erCompaniaSel').selectedIndex = 0;
+  checkErDirty();
+}
+function getErCliente()  { return erClienteMode==='list' ? document.getElementById('erClienteSel').value : document.getElementById('erClienteNew').value.trim(); }
+function getErObra()     { return erObraMode==='list'    ? document.getElementById('erObraSel').value    : document.getElementById('erObraNew').value.trim(); }
+function getErTipo()     { return erTipoMode==='list'    ? document.getElementById('erTipoSel').value    : document.getElementById('erTipoNew').value.trim(); }
+function getErCompania() { return erCompMode==='list'    ? document.getElementById('erCompaniaSel').value : document.getElementById('erCompaniaNew').value.trim(); }
+
+// Pone el campo en modo "Lista" con ese valor seleccionado si existe entre
+// las opciones conocidas; si no, en modo "Nuevo/Otro" con el valor tal
+// cual — así un valor que ya no está en la lista (o nunca lo estuvo) no
+// se pierde ni se sustituye por otra cosa al abrir el editor.
+function erFillListField(listArr, selId, newId, setModeFn, value) {
+  if (value && listArr && listArr.indexOf(value) !== -1) {
+    setModeFn('list');
+    document.getElementById(selId).value = value;
+  } else {
+    setModeFn('new');
+    document.getElementById(newId).value = value || '';
+  }
+}
+
 function getErFormValues() {
   return {
-    cliente: document.getElementById('erCliente').value,
-    obra: document.getElementById('erObra').value,
+    cliente: getErCliente(),
+    obra: getErObra(),
     fecha: document.getElementById('erFecha').value,
     ayudante: document.getElementById('erAyudante').value,
     vehiculo: document.getElementById('erVehiculo').value,
-    tipo: document.getElementById('erTipo').value,
+    tipo: getErTipo(),
     horas: document.getElementById('erHorasVal').textContent,
     trabajos: document.getElementById('erTrabajos').value,
-    compania: document.getElementById('erCompania').value,
+    compania: getErCompania(),
     materiales: document.getElementById('erMateriales').value,
     precio: document.getElementById('erPrecio').value,
     fotosObra: erPhotosObraSelected.length,
@@ -2834,23 +3136,32 @@ function fillEditReportModal(report) {
     commentBlock.style.display = 'none';
   }
 
-  document.getElementById('erCliente').value = report.CLIENTE || '';
-  document.getElementById('erObra').value = report.OBRA || '';
-  document.getElementById('erFecha').value = report.FECHA ? report.FECHA.split('T')[0] : '';
+  // Pedido: mismas listas que "Nuevo informe" (Cliente/Obra/Tipo/Compañía/
+  // Ayudante) — se reconstruyen aquí porque LISTS puede haberse refrescado
+  // desde que se abrió la pantalla, y para excluir al propio operario de
+  // la lista de ayudantes igual que hace buildAllSelects().
+  buildSelect('erClienteSel', LISTS.clientes, t('ph_select'));
+  buildSelect('erObraSel', LISTS.obras, t('ph_select'));
+  buildSelect('erTipoSel', LISTS.tipos, t('ph_select'));
+  buildSelect('erCompaniaSel', LISTS.companias, t('ph_select'));
+  buildSelect('erAyudante', LISTS.operarios.filter(function(n){ return n !== (currentUser && currentUser.nombre); }), t('ph_no_assistant'));
+
+  erFillListField(LISTS.clientes, 'erClienteSel', 'erClienteNew', erSetClienteMode, report.CLIENTE || '');
+  erFillListField(LISTS.obras, 'erObraSel', 'erObraNew', erSetObraMode, report.OBRA || '');
+  erFillListField(LISTS.tipos, 'erTipoSel', 'erTipoNew', erSetTipoMode, report['TIPO DE TRABAJO'] || '');
+  erFillListField(LISTS.companias, 'erCompaniaSel', 'erCompaniaNew', erSetCompMode, report['COMPAÑÍA'] || '');
   document.getElementById('erAyudante').value = report.AYUDANTE || '';
+
+  document.getElementById('erFecha').value = report.FECHA ? report.FECHA.split('T')[0] : '';
   document.getElementById('erVehiculo').value = report['VEHÍCULO'] || '';
-  document.getElementById('erTipo').value = report['TIPO DE TRABAJO'] || '';
   document.getElementById('erHorasVal').textContent = report.HORAS || 0;
   document.getElementById('erTrabajos').value = report['TRABAJOS REALIZADAS'] || report['TRABAJOS REALIZADOS'] || '';
-  document.getElementById('erCompania').value = report['COMPAÑÍA'] || '';
   document.getElementById('erMateriales').value = report['MATERIALES UTILIZADOS'] || '';
   document.getElementById('erPrecio').value = report['PRECIO (EUR)'] || '';
 
   erPhotosObraSelected = [];
   erPhotosMatSelected = [];
-  erRenderThumbs('obra');
-  erRenderThumbs('materiales');
-  erRenderExistingPhotos(report);
+  erFetchExistingPhotos(report);
 
   var saveBtn = document.getElementById('erSaveBtn');
   saveBtn.textContent = isRejected ? t('btn_reenviar') : t('btn_guardar_cambios');
@@ -2868,6 +3179,8 @@ function closeEditReportModal() {
   erCurrentReport = null;
   erPhotosObraSelected = [];
   erPhotosMatSelected = [];
+  erExistingPhotosObra = [];
+  erExistingPhotosMat = [];
   erOriginalSnapshot = null;
 }
 
@@ -2882,6 +3195,13 @@ function submitEditReport() {
   if (!erCurrentReport) return;
   var btn = document.getElementById('erSaveBtn');
   if (btn.disabled) return; // defensa extra: nada cambió, no hay nada que reenviar
+  // Se captura ANTES de enviar — erCurrentReport no cambia durante la
+  // edición, así que este flag distingue "reenvío de un rechazado" (vuelve
+  // a pending para que lo revisen) de "corrección de uno que YA estaba
+  // pending" (sigue pending, no se "reenvía" nada) solo para el texto del
+  // toast — el resto del flujo (backend, caché local) es idéntico en
+  // ambos casos.
+  var wasRejected = erCurrentReport.STATUS === 'rejected';
   var originalText = btn.textContent;
   btn.textContent = t('btn_enviando');
   btn.disabled = true;
@@ -2894,14 +3214,14 @@ function submitEditReport() {
       codigo: currentPin,
       id: erCurrentReport.ID,
       fecha: document.getElementById('erFecha').value,
-      cliente: document.getElementById('erCliente').value,
-      obra: document.getElementById('erObra').value,
+      cliente: getErCliente(),
+      obra: getErObra(),
       ayudante: document.getElementById('erAyudante').value,
       vehiculo: document.getElementById('erVehiculo').value,
       trabajos: document.getElementById('erTrabajos').value,
-      tipo: document.getElementById('erTipo').value,
+      tipo: getErTipo(),
       horas: horas,
-      compania: document.getElementById('erCompania').value,
+      compania: getErCompania(),
       materiales: document.getElementById('erMateriales').value,
       precio: precio
   };
@@ -2933,7 +3253,7 @@ function submitEditReport() {
     btn.disabled = false;
     btn.textContent = originalText;
     if (result && result.status === 'ok') {
-      showToast('Informe reenviado para aprobación');
+      showToast(wasRejected ? t('toast_informe_reenviado') : t('toast_cambios_guardados'));
 
       // Si el operario adjuntó fotos nuevas al corregir el informe, se
       // suben AHORA (con el mismo ID) — uploadReportPhotos() reutiliza la
@@ -2956,15 +3276,15 @@ function submitEditReport() {
       var patched = {
         ID: erCurrentReport.ID, STATUS: 'pending',
         FECHA: document.getElementById('erFecha').value,
-        CLIENTE: document.getElementById('erCliente').value,
-        OBRA: document.getElementById('erObra').value,
+        CLIENTE: getErCliente(),
+        OBRA: getErObra(),
         OPERARIO: erCurrentReport.OPERARIO,
         AYUDANTE: document.getElementById('erAyudante').value,
         'VEHÍCULO': document.getElementById('erVehiculo').value,
         'TRABAJOS REALIZADOS': document.getElementById('erTrabajos').value,
-        'TIPO DE TRABAJO': document.getElementById('erTipo').value,
+        'TIPO DE TRABAJO': getErTipo(),
         HORAS: horas,
-        COMPAÑÍA: document.getElementById('erCompania').value,
+        COMPAÑÍA: getErCompania(),
         'MATERIALES UTILIZADOS': document.getElementById('erMateriales').value,
         'PRECIO (EUR)': precio,
         'FOTOS DE OBRA': erCurrentReport['FOTOS DE OBRA'],
@@ -2993,15 +3313,37 @@ function submitEditReport() {
     // el fetch por fallido aunque la escritura en la hoja SÍ haya
     // terminado bien del otro lado. Antes de mostrar el error,
     // comprobamos con una lectura si el informe realmente llegó a
-    // guardarse (pasó a "pending") — si es así, lo tratamos como éxito.
+    // guardarse.
+    // BUG CORREGIDO (encontrado al probar la edición de informes YA
+    // pending, no solo los rechazados): el criterio de "¿llegó?" era solo
+    // "STATUS === 'pending'". Eso funcionaba para un reenvío desde
+    // rechazado (rejected → pending es una señal real de que algo pasó),
+    // pero para un informe que YA estaba pending antes de editarlo, ese
+    // mismo STATUS es verdadero SIEMPRE, haya o no haya llegado el guardado
+    // — el toast decía "guardado" y se cerraba el modal aunque el POST
+    // hubiera sido rechazado de verdad por el servidor. Ahora se compara
+    // el informe recién leído contra los valores que se acaban de enviar
+    // (payload) — solo se da por bueno si los datos coinciden de verdad.
     fetch(WEBAPP_URL + '?action=getMyReports&codigo=' + encodeURIComponent(currentPin) + '&operario=' + encodeURIComponent(currentUser.nombre) + '&t=' + Date.now())
       .then(function(r){ return r.json(); })
       .then(function(res){
         var landed = res && res.status === 'ok' && res.data && res.data.some(function(r){
-          return r.ID === erCurrentReport.ID && r.STATUS === 'pending';
+          if (r.ID !== erCurrentReport.ID || r.STATUS !== 'pending') return false;
+          var fecha = r.FECHA ? String(r.FECHA).split('T')[0] : '';
+          return fecha === payload.fecha
+            && String(r.CLIENTE||'') === String(payload.cliente||'')
+            && String(r.OBRA||'') === String(payload.obra||'')
+            && String(r.AYUDANTE||'') === String(payload.ayudante||'')
+            && String(r['VEHÍCULO']||'') === String(payload.vehiculo||'')
+            && String(r['TRABAJOS REALIZADOS']||'') === String(payload.trabajos||'')
+            && String(r['TIPO DE TRABAJO']||'') === String(payload.tipo||'')
+            && String(r.HORAS||0) === String(payload.horas||0)
+            && String(r['COMPAÑÍA']||'') === String(payload.compania||'')
+            && String(r['MATERIALES UTILIZADOS']||'') === String(payload.materiales||'')
+            && String(r['PRECIO (EUR)']||0) === String(payload.precio||0);
         });
         if (landed) {
-          showToast('Informe reenviado para aprobación');
+          showToast(wasRejected ? t('toast_informe_reenviado') : t('toast_cambios_guardados'));
           closeEditReportModal();
           myReportsLoaded = false;
           loadMyReports();
@@ -3292,7 +3634,7 @@ function openManagerDetail(id) {
     if (label) label.remove();
   }
 
-  var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
+  var fecha = (r.FECHA ? fmtDate(r.FECHA) : '') + (r.TIMESTAMP ? ' ' + fmtTime(r.TIMESTAMP) : '');
   document.getElementById('mgdTitle').textContent = r.OBRA || '—';
   document.getElementById('mgdSub').textContent = (r.CLIENTE||'') + ' · ' + r.ID + ' · ' + fecha;
   document.getElementById('mgdBody').innerHTML = buildDetailHtml(r, true);
@@ -3580,7 +3922,7 @@ function openHistorialDetail(id) {
   var r = mgHistorialCache.find(function(x){ return x.ID === id; });
   if (!r) return;
   mgDetailId = id;
-  var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
+  var fecha = (r.FECHA ? fmtDate(r.FECHA) : '') + (r.TIMESTAMP ? ' ' + fmtTime(r.TIMESTAMP) : '');
   var isApproved = r.STATUS === 'approved';
   document.getElementById('mgdTitle').textContent = r.OBRA || '—';
   document.getElementById('mgdSub').textContent = (r.CLIENTE||'') + ' · ' + r.ID + ' · ' + fecha;
@@ -3974,7 +4316,7 @@ function openAdminDetail(id) {
       newLabel.textContent = statusLabels[st];
     }
   }
-  var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
+  var fecha = (r.FECHA ? fmtDate(r.FECHA) : '') + (r.TIMESTAMP ? ' ' + fmtTime(r.TIMESTAMP) : '');
   var st = r.STATUS || 'pending';
   var statusLabels = { pending:t('status_pending'), approved:t('status_approved'), rejected:t('status_rejected') };
   document.getElementById('mgdTitle').textContent = r.OBRA || '—';
@@ -4006,7 +4348,7 @@ function openAdminInformeDetail(id) {
   if (!r) { r = adAllRecords.find(function(x){ return x.ID === id; }); }
   if (!r) return;
   adDetailCurrentId = id;
-  var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
+  var fecha = (r.FECHA ? fmtDate(r.FECHA) : '') + (r.TIMESTAMP ? ' ' + fmtTime(r.TIMESTAMP) : '');
   document.getElementById('mgdTitle').textContent = r.OBRA || '—';
   document.getElementById('mgdSub').textContent = (r.CLIENTE||'') + ' · ' + (r.ID||'') + ' · ' + fecha;
   var html = buildDetailHtml(r, true);
@@ -4950,7 +5292,16 @@ function renderPhotoGallery(photos) {
     // estar las demás fuera del área visible del scroll horizontal, el
     // navegador las difiere hasta que el swipe las acerca a la pantalla.
     return '<div class="pg-slide" data-idx="'+i+'" style="flex:0 0 100%;scroll-snap-align:center;display:flex;align-items:center;justify-content:center;height:100%;position:relative">' +
-      '<div class="pg-slide-spinner splash-ring" style="border-color:rgba(255,255,255,.2);border-top-color:#fff;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"></div>' +
+      // BUG CORREGIDO ("el círculo de carga se va deslizando"): centrar con
+      // "transform:translate(-50%,-50%)" en un elemento cuya animación
+      // (.splash-ring → @keyframes splashSpin) SOLO define "transform:
+      // rotate(...)" hace que el navegador interpole entre ambos transforms
+      // como matrices — el componente de traslación se va "comiendo" hacia
+      // (0,0) en cada vuelta de la animación, así que el aro se ve desplazarse
+      // fuera del centro y saltar de vuelta al empezar el siguiente ciclo.
+      // Centrando con margin (valor fijo, ajeno a "transform") el spinner
+      // queda fijo en el centro sin interferir con la animación de giro.
+      '<div class="pg-slide-spinner splash-ring" style="border-color:rgba(255,255,255,.2);border-top-color:#fff;position:absolute;top:50%;left:50%;margin:-26px 0 0 -26px"></div>' +
       '<img src="'+url+'" loading="'+(i===0?'eager':'lazy')+'" onload="this.previousElementSibling.style.display=\'none\'" style="max-width:100%;max-height:100%;object-fit:contain;-webkit-user-select:none;user-select:none;pointer-events:none" draggable="false">' +
     '</div>';
   }).join('');
@@ -5035,6 +5386,7 @@ function closePhotoGallery() {
   document.documentElement.style.background = '';
   document.body.style.background = '';
   var track = document.getElementById('pgTrack');
+  track.style.overflowX = '';
   track.innerHTML = '';
 }
 
@@ -5100,6 +5452,18 @@ function bindPgGestures() {
         tapCandidate = false;
         if (Math.abs(dy) > Math.abs(dx) * 1.3) {
           isVerticalDrag = true;
+          // BUG CORREGIDO ("al arrastrar para cerrar la foto glitchea"):
+          // el transform de arrastre se aplica a #photoGalleryModal, que es
+          // ANCESTRO de #pgTrack — y #pgTrack sigue siendo un contenedor con
+          // scroll táctil nativo activo (-webkit-overflow-scrolling:touch).
+          // Aplicar CSS transform a un ancestro de un elemento con scroll
+          // táctil "en vivo" es la misma combinación que ya causaba
+          // problemas en Safari/iOS cuando el transform iba directo sobre
+          // el propio scroller (ver comentario más arriba) — solo que un
+          // nivel más arriba. Congelamos el scroll de #pgTrack mientras
+          // dura el arrastre vertical para que no haya un scroller activo
+          // por debajo del elemento transformado, y lo restauramos al soltar.
+          track.style.overflowX = 'hidden';
         } else {
           isHorizontalScroll = true;
         }
@@ -5118,6 +5482,7 @@ function bindPgGestures() {
 
   track.addEventListener('touchend', function(e) {
     modal.style.transition = 'transform .25s ease, opacity .25s ease';
+    track.style.overflowX = '';
 
     if (isVerticalDrag) {
       var dy = e.changedTouches[0].clientY - startY;
@@ -5142,6 +5507,27 @@ function bindPgGestures() {
     isVerticalDrag = false;
     isHorizontalScroll = false;
     gestureDecided = false;
+  }, { passive: true });
+
+  // Si el sistema interrumpe el gesto a medias (notificación, gesto de
+  // salir de la app, llamada entrante...) "touchend" nunca llega — sin este
+  // manejador el modal se quedaba a medio arrastrar (transform/opacity
+  // aplicados) y #pgTrack seguía con el scroll congelado (overflowX:hidden
+  // puesto arriba), dejando el swipe entre fotos roto hasta la próxima
+  // apertura de la galería.
+  track.addEventListener('touchcancel', function() {
+    modal.style.transition = 'transform .25s ease, opacity .25s ease';
+    modal.style.transform = 'translateY(0)';
+    modal.style.opacity = '1';
+    track.style.overflowX = '';
+    var top = document.getElementById('pgTopBar');
+    var bottom = document.getElementById('pgBottomBar');
+    top.style.opacity = pgChromeVisible ? '1' : '0';
+    bottom.style.opacity = pgChromeVisible ? '1' : '0';
+    isVerticalDrag = false;
+    isHorizontalScroll = false;
+    gestureDecided = false;
+    tapCandidate = false;
   }, { passive: true });
 
   // BUG CORREGIDO ("el resalte de la miniatura va muy atrasado al
@@ -5477,7 +5863,7 @@ function startAppAfterGates(){
       .then(function(result){
         if (result && result.status === 'ok' && result.valid) {
           currentUser = result;
-          saveUserCache(result);
+          saveUserCache(result, saved);
           if (result.lang && result.lang !== currentLang) { currentLang = result.lang; saveLangToDevice(result.lang); applyLang(); }
         } else if (result && result.status === 'ok' && result.valid === false) {
           try { localStorage.removeItem('parte_user_pin'); } catch(e) {}
@@ -5498,7 +5884,7 @@ function startAppAfterGates(){
     .then(function(result){
       if (result && result.status === 'ok' && result.valid) {
         currentUser = result;
-        saveUserCache(result);
+        saveUserCache(result, saved);
         currentPin = saved;
         if (result.lang) { currentLang = result.lang; saveLangToDevice(result.lang); applyLang(); }
         var readyPromise2 = routeToRoleScreen();
@@ -5521,7 +5907,7 @@ function startAppAfterGates(){
             .then(function(retryResult){
               if (retryResult && retryResult.status === 'ok' && retryResult.valid) {
                 currentUser = retryResult;
-                saveUserCache(retryResult);
+                saveUserCache(retryResult, saved);
                 currentPin = saved;
                 if (retryResult.lang) { currentLang = retryResult.lang; saveLangToDevice(retryResult.lang); applyLang(); }
                 var readyPromise3 = routeToRoleScreen();
