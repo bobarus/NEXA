@@ -1132,8 +1132,19 @@ body.pin-mode{overflow:hidden}
      se verá justo detrás, del mismo color — así que cualquier fallo de
      pintado se vuelve indistinguible del fondo correcto, sea cual sea su
      causa real. Visibilidad controlada por JS junto a donde se
-     muestra/oculta cada tabbar (buscar "tabbarSafetyBg" en el JS). -->
-<div id="tabbarSafetyBg" style="display:none;position:fixed;left:0;right:0;bottom:0;height:40px;background:#1c1c1e;z-index:1;pointer-events:none"></div>
+     muestra/oculta cada tabbar (buscar "tabbarSafetyBg" en el JS).
+     BUG CORREGIDO (2026-07-17): la altura era un 40px fijo, pensado para
+     el despeje de safe-area de un iPhone con Face ID (34px) — pero en un
+     navegador normal (sin safe-area-inset-bottom, o con la barra de
+     Safari ocupando ese espacio en vez del sistema) el tabbar en sí es
+     más bajo, y esos 40px fijos sobresalían por encima de su propio
+     límite, tapando la mitad de los iconos con una franja negra. Ahora
+     usa max(env(safe-area-inset-bottom,0px), 10px) — EXACTAMENTE la
+     misma fórmula que .bottom-tabbar usa para su propio padding-bottom
+     (ver su CSS) — así esta capa siempre coincide con la zona de
+     despeje real (pura zona de fondo, sin iconos), sea cual sea el
+     contexto, y nunca puede invadir el contenido visible. -->
+<div id="tabbarSafetyBg" style="display:none;position:fixed;left:0;right:0;bottom:0;height:max(env(safe-area-inset-bottom,0px), 10px);background:#1c1c1e;z-index:1;pointer-events:none"></div>
 
 <div id="mainFlexWrap" style="display:flex;flex-direction:column;height:100%">
 
