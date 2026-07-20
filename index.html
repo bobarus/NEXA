@@ -180,7 +180,25 @@ html,body{background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,"SF Pr
    overflow:hidden en <html> — buscar otra vía (p.ej. no depender de
    sobresalir del viewport en absoluto). */
 html,body{height:100%;overflow:hidden}
-body{height:100svh}
+/* BUG RAÍZ ENCONTRADO Y CORREGIDO (2026-07-17, tras 12 intentos fallidos
+   con otras teorías): esta regla decía "100svh", no "100dvh" — un error
+   real en el código, no una teoría. svh ("small viewport height") es,
+   por especificación CSS, la interpretación MÁS PEQUEÑA posible del
+   viewport, distinta de dvh ("dynamic", se ajusta al estado real) — en
+   esta PWA standalone con viewport-fit=cover, WebKit está tratando la
+   extensión de safe-area como "el caso más grande" y excluyéndola del
+   cálculo de svh, dejando <body> sistemáticamente más corto que la
+   pantalla física real. Esto explica TODO lo observado: por qué el hueco
+   era idéntico en todas las pantallas (una sola línea gobierna la altura
+   de <body>, de la que dependen #mainFlexWrap/#appScroll/.bottom-tabbar
+   en cascada), y por qué ningún fix anterior — env(), interactive-widget,
+   theme-color/manifest, GPU layers, tamaños de tabbar — pudo moverlo ni
+   un píxel: todos operaban DENTRO de la altura ya recortada de <body>,
+   nunca sobre la causa (esta unidad). El resto del archivo (comentarios,
+   .pin-screen, modales) usa "dvh" consistentemente — esta era la única
+   línea con "svh", casi con certeza un error de tipeo o un
+   copiar/pegar histórico de una sesión anterior a esta. */
+body{height:100dvh}
 /* BUG CORREGIDO ("las secciones quedan tapadas bajo la cabecera"): antes
    el padding-top dependía SOLO de --nav-h (fijada por JS vía
    ResizeObserver). Si esa primera medición ocurre con el nav aún
