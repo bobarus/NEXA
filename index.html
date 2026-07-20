@@ -690,6 +690,30 @@ body.pin-mode{overflow:hidden}
   background:#1c1c1e;
   border-radius:24px 24px 0 0;
   padding:10px 0 max(env(safe-area-inset-bottom,0px), 10px);
+  /* BUG CORREGIDO (2026-07-17, confirmado con datos reales del
+     dispositivo — no una teoría): document.elementFromPoint() en varios
+     puntos del área inferior (2 a 90px del borde, todo el ancho) devolvía
+     SIEMPRE .bottom-tabbar con background rgb(28,28,30) — es decir, el
+     DOM/CSSOM están perfectamente correctos, el layout ya no es la causa
+     (ver el bloque de comentario de arriba). El usuario seguía viendo una
+     franja blanca ancha de todos modos: getComputedStyle() devuelve lo
+     que la hoja de estilos DICE que debería pintarse, no lo que la GPU
+     realmente rasterizó en pantalla — así que esto solo puede ser un
+     fallo de RASTERIZACIÓN/COMPOSICIÓN de WebKit en la región extendida
+     de safe-area de una PWA standalone con viewport-fit=cover, no un
+     bug de posicionamiento. Se fuerza aquí una capa de composición GPU
+     propia para este elemento — un patrón conocido para forzar a WebKit
+     a re-rasterizar un elemento como superficie independiente en vez de
+     depender de un tile compartido de la página que puede quedar mal
+     pintado en esa región. (Esta misma propiedad existía antes con
+     position:fixed por una razón distinta — jitter — y se quitó al
+     eliminar position:fixed por considerarse ya innecesaria; resulta que
+     sigue haciendo falta, por este motivo nuevo y no relacionado.) */
+  transform:translateZ(0);
+  -webkit-transform:translateZ(0);
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  will-change:transform;
   /* Sombra en dos capas — un filo de contacto muy sutil + una difusa
      amplia — en vez de una sola sombra dura; es el patrón que usan los
      tab bars "flotantes" modernos (iOS 17+, Instagram, etc.) para que la
