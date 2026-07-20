@@ -2,40 +2,52 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<!-- 2026-07-17: interactive-widget cambiado de resizes-content a
-     overlays-content — con resizes-content, cada vez que aparecía el
-     teclado el visualViewport se encogía y TODO lo dimensionado con
-     100dvh/height:100% (el modal de editar informe incluido) se
-     achicaba visiblemente con él. El hack JS que ajustaba a mano el
-     maxHeight del modal vía visualViewport (ver más abajo, ya eliminado)
-     existía específicamente para paliar ese encogimiento.
-     REVERTIDO EN LA MISMA SESIÓN a "resizes-visual" (2026-07-17,
-     más tarde): tras cambiar a overlays-content, el usuario reportó que
-     la franja blanca bajo el tabbar dejó de ser un detalle localizado —
-     pasó a notarse en TODA la app, con el espacio útil reducido en todas
-     las pantallas y los elementos anclados al fondo (footers de modales
-     incluidos) sistemáticamente "levantados" por encima del borde físico
-     real. Ese patrón (generalizado, no localizado en un elemento) encaja
-     con que 100dvh/window.innerHeight estuvieran reportando una altura
-     MENOR que la pantalla física real — algo que ningún diagnóstico
-     anterior habría detectado, porque todos comparaban un elemento
-     CONTRA innerHeight (relativo), nunca innerHeight contra la altura
-     física real del dispositivo (absoluto). overlays-content es la
-     variante más nueva y menos probada de las tres del spec
-     interactive-widget — "resizes-visual" es el comportamiento por
-     defecto/histórico (el que ya usaban los navegadores antes de que
-     existiera esta meta): el visualViewport SÍ se encoge con el teclado
-     (así que WebKit sigue desplazando el campo enfocado por encima de
-     él, comportamiento nativo, sin cambios) pero el LAYOUT viewport
-     (100dvh/height:100%) NUNCA se encoge — ni con el teclado ni, con
-     suerte, con ningún otro efecto colateral de overlays-content. Debería
-     seguir evitando el "modal se encoge a la mitad" sin el efecto
-     secundario sistémico. Sin confirmar en dispositivo real todavía. -->
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual">
+<!-- 2026-07-17: historial de "interactive-widget" — probado
+     resizes-content → overlays-content → resizes-visual, en esa orden,
+     todos en esta misma sesión, ninguno resolvió la franja blanca
+     sistemática bajo el contenido. CONFIRMADO CON DATOS REALES (no
+     teoría) que el problema es más profundo: un script de diagnóstico en
+     el dispositivo real mostró window.innerHeight=894 pero
+     window.screen.height=956 — una diferencia real de 62px entre lo que
+     la página cree que mide el viewport y el tamaño físico real de la
+     pantalla, con env(safe-area-inset-bottom) reportando correctamente
+     34px (no es un problema de ESE cálculo). O sea: viewport-fit=cover
+     no estaba logrando que el viewport cubriera de verdad toda la
+     pantalla física, y la propiedad interactive-widget (en cualquiera de
+     sus 3 valores) es la sospechosa más probable, por ser la más nueva y
+     menos probada de las meta viewport aquí en juego, y por coincidir en
+     el tiempo con cuándo el usuario empezó a notar el problema como
+     "sistémico" en vez de aislado en el tabbar. Eliminada por completo
+     — ni resizes-content, ni resizes-visual, ni overlays-content: sin
+     nada, el navegador usa su comportamiento más antiguo y probado. Si
+     esto arregla el hueco de 62px pero reintroduce "el teclado encoge el
+     modal a la mitad", ese problema se debe resolver por otra vía (JS
+     scroll-into-view manual, sin tocar esta meta global) antes que volver
+     a añadir aquí interactive-widget. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AEDIS" id="appTitleMeta">
-<meta name="theme-color" content="#ffffff">
+<!-- BUG CORREGIDO (2026-07-17, intento en una capa distinta — ni CSS ni
+     meta viewport): tras confirmar con datos reales que window.innerHeight
+     (894) no coincide con window.screen.height (956) — una diferencia real
+     de 62px — y que quitar interactive-widget del <meta viewport> NO
+     cambió esa diferencia ni un píxel, la causa no está en absoluto en
+     esta página web ni en su CSS: está en un nivel más bajo, el propio
+     WKWebView/shell nativo de la PWA instalada. theme-color aquí y
+     background_color/theme_color en manifest.json eran #ffffff — ese
+     blanco es exactamente el color que usa iOS como fondo NATIVO de la
+     app (splash screen y, se sospecha, cualquier margen que el propio
+     WebView reserve fuera del área que la página renderiza) — ningún
+     cambio de CSS puede tocar esa capa, por eso ninguno de los intentos
+     anteriores (tabbar, safety-net, GPU layer, meta viewport) pudo
+     arreglarlo nunca. Cambiado a #1c1c1e (el mismo oscuro del tabbar).
+     Contrapartida asumida a propósito: los 2-3 segundos de pantalla PIN/
+     splash (que sí son blancas) podrían mostrar un destello oscuro en el
+     margen en vez de blanco — se acepta ese riesgo menor porque las
+     pantallas de rol (con tabbar oscuro) son las que se usan la enorme
+     mayoría del tiempo real de uso. Sin confirmar en dispositivo real. -->
+<meta name="theme-color" content="#1c1c1e">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png" id="appleTouchIconLink">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
