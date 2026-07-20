@@ -748,11 +748,13 @@ body.pin-mode{overflow:hidden}
   backface-visibility:hidden;
   -webkit-backface-visibility:hidden;
   will-change:transform;
-  /* Sombra en dos capas — un filo de contacto muy sutil + una difusa
-     amplia — en vez de una sola sombra dura; es el patrón que usan los
-     tab bars "flotantes" modernos (iOS 17+, Instagram, etc.) para que la
-     barra se sienta posada sobre el contenido y no recortada encima. */
-  box-shadow:0 -1px 0 rgba(0,0,0,.05), 0 -10px 32px -4px rgba(0,0,0,.20);
+  /* 2026-07-17: sombra reforzada a petición explícita ("como en apps
+     modernas") — filo de contacto + halo difuso más grande y profundo,
+     el mismo lenguaje de "tarjeta flotante" que usan las apps de
+     referencia (Instagram, Airbnb, apps iOS 17+): más blur y más
+     desplazamiento que antes para que la barra se sienta claramente
+     "levantada" sobre el contenido, no pegada a él. */
+  box-shadow:0 -1px 0 rgba(0,0,0,.06), 0 -18px 44px -10px rgba(0,0,0,.32);
   /* BUG CORREGIDO ("la línea indicadora de la pestaña activa se sale de
      la barra"): .tab-indicator se posiciona con "width:50%" sobre este
      contenedor (ver su regla más abajo) — en iOS Safari real WebKit
@@ -782,11 +784,19 @@ body.pin-mode{overflow:hidden}
   pointer-events:none;
 }
 .bottom-tabbar.tab-1-active .tab-indicator{transform:translateX(100%)}
+/* 2026-07-17: tamaño de toque revisado a petición explícita ("iconos de
+   un tamaño que sean clicables y encajen visualmente") — .bottom-tab ya
+   era el área de toque completa (flex:1, todo el ancho de su mitad de la
+   barra), pero con padding:6px 4px 2px su alto real rondaba ~48px, justo
+   en el límite del mínimo recomendado de 44pt (Apple HIG) / 48dp
+   (Material) para objetivos táctiles — ahora 10px/6px de padding para
+   más aire, sumado al icono más grande de abajo, da un alto de toque
+   claramente por encima de ese mínimo. */
 .bottom-tab{
   flex:1;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
   cursor:pointer;touch-action:manipulation;background:none;border:none;font-family:inherit;
-  padding:6px 4px 2px;
+  padding:10px 4px 6px;
   transition:opacity .15s;
 }
 .bottom-tab .tab-icon{width:auto;height:auto;border-radius:0;display:flex;align-items:center;justify-content:center;background:transparent !important}
@@ -794,11 +804,17 @@ body.pin-mode{overflow:hidden}
    micro-rebote de escala en icono/etiqueta al activarse — el mismo tipo de
    detalle "vivo" que tienen los tab bars nativos modernos, con una curva
    con ligero overshoot (cubic-bezier con el 4º valor >1) en vez de un
-   linear/ease plano. */
-.bottom-tab i{font-size:22px;color:#8e8e93;line-height:1;display:block;font-style:normal;transition:color .25s ease,transform .3s cubic-bezier(.34,1.56,.64,1)}
-.bottom-tab span{display:block;font-size:11px;font-weight:600;letter-spacing:.1px;color:#8e8e93;white-space:nowrap;transition:color .25s ease,font-weight .15s ease}
+   linear/ease plano.
+   2026-07-17: icono 22px→26px y etiqueta 11px→12px (subida proporcional)
+   — a ese tamaño el icono tiene presencia visual propia en vez de verse
+   perdido junto al resto de la interfaz (cards con iconos de 20-22px,
+   pero esta es la navegación PRINCIPAL, debería notarse más que el resto,
+   no menos), acercándose a los ~24-28pt que usan los tab bars nativos de
+   iOS/Android de referencia. */
+.bottom-tab i{font-size:26px;color:#8e8e93;line-height:1;display:block;font-style:normal;transition:color .25s ease,transform .3s cubic-bezier(.34,1.56,.64,1)}
+.bottom-tab span{display:block;font-size:12px;font-weight:600;letter-spacing:.1px;color:#8e8e93;white-space:nowrap;transition:color .25s ease,font-weight .15s ease}
 .bottom-tab.active i,.bottom-tab.active span{color:#4d94ff}
-.bottom-tab.active i{filter:drop-shadow(0 0 6px rgba(77,148,255,.55));transform:scale(1.08)}
+.bottom-tab.active i{filter:drop-shadow(0 0 7px rgba(77,148,255,.55));transform:scale(1.08)}
 .bottom-tab.active span{font-weight:700}
 .bottom-tab:active{opacity:.7}
 .bottom-tab:active i{transform:scale(.9)}
