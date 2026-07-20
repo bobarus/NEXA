@@ -723,7 +723,11 @@ body.pin-mode{overflow:hidden}
      del documento, no una capa aparte) llegue de sobra a la zona donde
      se veía blanco, en vez de depender de que los últimos píxeles de un
      cálculo ajustado se rastericen bien. */
-  padding:10px 0 max(env(safe-area-inset-bottom,0px), 50px);
+    padding:10px 0 calc(env(safe-area-inset-bottom));
+;
+    ;
+;
+;
   /* BUG CORREGIDO (2026-07-17, confirmado con datos reales del
      dispositivo — no una teoría): document.elementFromPoint() en varios
      puntos del área inferior (2 a 90px del borde, todo el ancho) devolvía
