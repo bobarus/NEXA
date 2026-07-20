@@ -1112,6 +1112,29 @@ body.pin-mode{overflow:hidden}
      cálculo de env()/bottom:0 que pueda desincronizarse. Elimina de raíz
      TODA la clase de bug (env() tardío, recorte por overflow:hidden,
      desajuste viewport-vs-borde-físico) en vez de seguir parcheándola. -->
+<!-- BUG CORREGIDO (2026-07-17, "sigue habiendo una franja blanca ancha
+     bajo el tabbar" — confirmado con datos reales del dispositivo que ya
+     NO es un bug de layout: document.elementFromPoint() en toda la zona
+     inferior devolvía siempre .bottom-tabbar con su color correcto, o
+     sea que el DOM/CSSOM están perfectos pero la GPU no está pintando
+     esos píxeles — un bug de rasterización/composición de WebKit en la
+     zona de safe-area extendida de una PWA standalone, no algo que se
+     pueda arreglar ajustando posiciones. En vez de seguir persiguiendo
+     la causa exacta del fallo de pintado (ya van dos intentos: primero
+     eliminar position:fixed del todo, luego forzar una capa GPU propia
+     en .bottom-tabbar — ninguno bastó), se añade esta capa de "red de
+     seguridad": un div aparte, position:fixed;bottom:0, del mismo color
+     oscuro, SIEMPRE presente detrás de todo (z-index bajo) mientras haya
+     una pantalla de rol activa — si el tabbar de verdad pinta bien todos
+     sus píxeles, esta capa quedará completamente tapada y será invisible;
+     si hay cualquier píxel que el tabbar no consiga rasterizar, por el
+     motivo que sea, esta capa (con su PROPIA rasterización independiente)
+     se verá justo detrás, del mismo color — así que cualquier fallo de
+     pintado se vuelve indistinguible del fondo correcto, sea cual sea su
+     causa real. Visibilidad controlada por JS junto a donde se
+     muestra/oculta cada tabbar (buscar "tabbarSafetyBg" en el JS). -->
+<div id="tabbarSafetyBg" style="display:none;position:fixed;left:0;right:0;bottom:0;height:40px;background:#1c1c1e;z-index:1;pointer-events:none"></div>
+
 <div id="mainFlexWrap" style="display:flex;flex-direction:column;height:100%">
 
 <!-- Único contenedor que scrollea de verdad (ver comentario en el CSS de
@@ -2184,6 +2207,7 @@ function changeUser() {
   document.getElementById('tabbarOperario').style.display = 'none';
   document.getElementById('tabbarManager').style.display = 'none';
   document.getElementById('tabbarAdmin').style.display = 'none';
+  document.getElementById('tabbarSafetyBg').style.display = 'none';
   document.getElementById('appScroll').style.display = 'none';
 
   document.getElementById('navExit').style.visibility = 'hidden';
@@ -2293,6 +2317,7 @@ function routeToRoleScreen() {
   document.getElementById('tabbarOperario').style.display = 'none';
   document.getElementById('tabbarManager').style.display = 'none';
   document.getElementById('tabbarAdmin').style.display = 'none';
+  document.getElementById('tabbarSafetyBg').style.display = 'none';
   document.getElementById('appScroll').style.display = 'block';
   document.getElementById('navExit').style.visibility = 'visible';
 
@@ -2313,14 +2338,17 @@ function routeToRoleScreen() {
   if (currentUser.rol === 'operario') {
     document.getElementById('screenOperario').style.display = 'block';
     document.getElementById('tabbarOperario').style.display = 'flex';
+    document.getElementById('tabbarSafetyBg').style.display = 'block';
     initPromise = initOperarioScreen();
   } else if (currentUser.rol === 'manager') {
     document.getElementById('screenManager').style.display = 'block';
     document.getElementById('tabbarManager').style.display = 'flex';
+    document.getElementById('tabbarSafetyBg').style.display = 'block';
     initPromise = initManagerScreen();
   } else if (currentUser.rol === 'admin') {
     document.getElementById('screenAdmin').style.display = 'block';
     document.getElementById('tabbarAdmin').style.display = 'flex';
+    document.getElementById('tabbarSafetyBg').style.display = 'block';
     initPromise = initAdminScreen();
   }
   startNotifyPoll();
