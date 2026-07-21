@@ -668,6 +668,24 @@ body.pin-mode{overflow:hidden}
    (aquí, el contenido interno con scroll de cada modal). Se añade aquí. */
 .mg-modal-overlay{display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.35);align-items:flex-end;justify-content:center;transform:translateZ(0);-webkit-transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .mg-modal-overlay.show{display:flex}
+/* 2026-07-21, intento experimental — SIN CONFIRMAR EN DISPOSITIVO REAL:
+   "la pantalla se puede mover con el dedo en cualquier dirección, por
+   toda la pantalla de edición" persistía pese a la capa de composición
+   GPU (transform:translateZ(0) de arriba), que ya se había documentado
+   como insuficiente por sí sola para este MISMO tipo de bug en
+   .bottom-tabbar (ver su historial — solo se resolvió del todo
+   eliminando position:fixed, no añadiendo más aislamiento de capas). Es
+   un bug conocido de WebKit: un position:fixed puede "arrastrarse"
+   visualmente durante el scroll con inercia de un descendiente con
+   -webkit-overflow-scrolling:touch, y ningún hint de compositing lo
+   arregla siempre. html/body en esta app nunca hacen scroll de verdad
+   (overflow:hidden, ver su CSS) — así que position:absolute se comporta
+   visualmente IDÉNTICO a position:fixed aquí (no hay scroll del que
+   diferenciarse) pero no está sujeto a ese bug concreto de WebKit, que es
+   específico de position:fixed. Solo se aplica a los modales a pantalla
+   completa (fullbleed) — los más señalados — no a los diálogos pequeños
+   tipo hoja inferior, que no se han reportado con este problema. */
+.mg-modal-overlay.fullbleed{position:absolute}
 /* 2026-07-21: el parche de "-60px de overshoot + 60px de padding que se
    cancelan" que vivía aquí (para el mismo problema de fondo que
    .bottom-tabbar tuvo — position:fixed;inset:0 sin llegar de verdad al
@@ -771,6 +789,8 @@ body.pin-mode{overflow:hidden}
 .mi-seg-btn.active{background:#0049c5;color:#fff;box-shadow:0 2px 6px rgba(0,73,197,.35)}
 #adFilterToggle.has-filters{background:#e5f0ff;border-color:#0049c5}
 #adFilterToggle.has-filters i,#adFilterToggle.has-filters svg{color:#0049c5;stroke:#0049c5}
+#mgFilterToggle.has-filters{background:#e5f0ff;border-color:#0049c5}
+#mgFilterToggle.has-filters svg{stroke:#0049c5}
 
 /* DETAIL MODAL CONTENT — estilo "Soft Elevated" (referencias aprobadas) */
 .det-group{background:#fff;border-radius:20px;border:none;margin-bottom:12px;overflow:hidden;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,.06)}
@@ -1581,6 +1601,72 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
 
 <!-- ═══ PANTALLA: MANAGER ═══ -->
 <div id="screenManager" style="display:none">
+  <!-- ── ПОИСК + ФИЛЬТРЫ (mismo lenguaje visual que el de admin —
+       ver #adFilterPanel/applyAdminFilters — reutilizado aquí un nivel
+       arriba de las dos pestañas Pendientes/Historial, para que un mismo
+       buscador/filtro cubra ambas sin duplicar la barra dos veces) ── -->
+  <div style="padding:10px 14px 6px">
+    <div style="display:flex;gap:8px;align-items:center">
+      <div style="flex:1;position:relative">
+        <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:#8e8e93;fill:none;stroke-width:2;stroke-linecap:round;pointer-events:none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="mgSearch" placeholder="Buscar..." oninput="applyMgFilters()"
+          style="width:100%;padding:9px 12px 9px 33px;border-radius:12px;border:none;background:#f2f2f7;font-family:inherit;font-size:14px;color:#000;outline:none">
+      </div>
+      <button onclick="toggleMgFilters()" id="mgFilterToggle"
+        style="width:40px;height:40px;border-radius:12px;border:none;background:#f2f2f7;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;touch-action:manipulation">
+        <svg style="width:18px;height:18px;stroke:#0049c5;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- Sin filtro de estado a propósito: Pendientes/Historial ya SON el
+         filtro de estado (pending vs aprobado/rechazado), duplicarlo aquí
+         dentro sería confuso — el resto de campos sí es común a ambas
+         pestañas. -->
+    <div id="mgFilterPanel" style="display:none;margin-top:10px;background:#fff;border-radius:14px;border:.5px solid #e5e5ea;box-shadow:0 2px 10px rgba(0,0,0,.07);padding:12px">
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:5px"><span id="mg-flt-lbl-cliente">Cliente</span></div>
+        <input type="text" id="mgFCliente" list="mgFClienteList" placeholder="Todos los clientes" oninput="applyMgFilters()"
+          style="width:100%;padding:8px 10px;border-radius:10px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;color:#000;outline:none">
+        <datalist id="mgFClienteList"></datalist>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:5px"><span id="mg-flt-lbl-obra">Obra</span></div>
+        <input type="text" id="mgFObra" list="mgFObraList" placeholder="Todas las obras" oninput="applyMgFilters()"
+          style="width:100%;padding:8px 10px;border-radius:10px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;color:#000;outline:none">
+        <datalist id="mgFObraList"></datalist>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:5px"><span id="mg-flt-lbl-operario">Operario</span></div>
+        <input type="text" id="mgFOperario" list="mgFOperarioList" placeholder="Todos los operarios" oninput="applyMgFilters()"
+          style="width:100%;padding:8px 10px;border-radius:10px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;color:#000;outline:none">
+        <datalist id="mgFOperarioList"></datalist>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:5px"><span id="mg-flt-lbl-tipo">Tipo de trabajo</span></div>
+        <input type="text" id="mgFTipo" list="mgFTipoList" placeholder="Todos los tipos" oninput="applyMgFilters()"
+          style="width:100%;padding:8px 10px;border-radius:10px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;color:#000;outline:none">
+        <datalist id="mgFTipoList"></datalist>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:5px"><span id="mg-flt-lbl-compania">Compañía</span></div>
+        <input type="text" id="mgFCompania" list="mgFCompaniaList" placeholder="Todas las compañías" oninput="applyMgFilters()"
+          style="width:100%;padding:8px 10px;border-radius:10px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;color:#000;outline:none">
+        <datalist id="mgFCompaniaList"></datalist>
+      </div>
+      <div style="margin-bottom:4px">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:5px"><span id="mg-flt-lbl-periodo">Período</span></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="date" id="mgFDateFrom" oninput="applyMgFilters()"
+            style="flex:1;padding:8px 10px;border-radius:10px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;color:#000;outline:none">
+          <span style="font-size:12px;color:#8e8e93;flex-shrink:0">—</span>
+          <input type="date" id="mgFDateTo" oninput="applyMgFilters()"
+            style="flex:1;padding:8px 10px;border-radius:10px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;color:#000;outline:none">
+        </div>
+      </div>
+      <button onclick="resetMgFilters()" id="mgFltReset" style="width:100%;margin-top:10px;padding:9px;border-radius:10px;border:none;background:rgba(255,59,48,.1);color:#ff3b30;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation">Resetear filtros</button>
+    </div>
+  </div>
+
   <div id="mgPanelPending"><div id="mgList"></div></div>
   <div id="mgPanelHistory" style="display:none">
     <div id="mgHistorialList"></div>
@@ -1926,7 +2012,7 @@ var LANGS = {
     search_ph:'Buscar...',
     flt_clientes:'Todos los clientes', flt_obras:'Todas las obras', flt_operarios:'Todos los operarios',
     flt_tipos:'Todos los tipos', flt_companias:'Todas las compañías',
-    flt_label_estado:'Estado', flt_todos:'Todos', flt_resetear:'Resetear filtros',
+    flt_label_estado:'Estado', flt_todos:'Todos', flt_resetear:'Resetear filtros', flt_sin_resultados:'Sin resultados para estos filtros',
     no_pending:'No hay informes pendientes', no_mine:'No tienes informes pendientes', loading:'Cargando...',
     status_pending:'Pendiente', status_approved:'Aprobado', status_rejected:'Rechazado',
     greet_worker:'Operario', greet_manager:'Manager', greet_admin:'Administrador',
@@ -1978,7 +2064,7 @@ var LANGS = {
     search_ph:'Поиск...',
     flt_clientes:'Все клиенты', flt_obras:'Все объекты', flt_operarios:'Все рабочие',
     flt_tipos:'Все типы', flt_companias:'Все компании',
-    flt_label_estado:'Статус', flt_todos:'Все', flt_resetear:'Сбросить фильтры',
+    flt_label_estado:'Статус', flt_todos:'Все', flt_resetear:'Сбросить фильтры', flt_sin_resultados:'Ничего не найдено по этим фильтрам',
     no_pending:'Нет ожидающих отчётов', no_mine:'У вас нет ожидающих отчётов', loading:'Загрузка...',
     status_pending:'Ожидает', status_approved:'Одобрено', status_rejected:'Отклонено',
     greet_worker:'Рабочий', greet_manager:'Менеджер', greet_admin:'Администратор',
@@ -2030,7 +2116,7 @@ var LANGS = {
     search_ph:'Search...',
     flt_clientes:'All clients', flt_obras:'All sites', flt_operarios:'All workers',
     flt_tipos:'All types', flt_companias:'All companies',
-    flt_label_estado:'Status', flt_todos:'All', flt_resetear:'Reset filters',
+    flt_label_estado:'Status', flt_todos:'All', flt_resetear:'Reset filters', flt_sin_resultados:'No results for these filters',
     no_pending:'No pending reports', no_mine:'You have no pending reports', loading:'Loading...',
     status_pending:'Pending', status_approved:'Approved', status_rejected:'Rejected',
     greet_worker:'Worker', greet_manager:'Manager', greet_admin:'Administrator',
@@ -2198,6 +2284,21 @@ function applyLang() {
   // Filter reset button
   var resetBtn = document.querySelector('[onclick="resetAdminFilters()"]');
   if (resetBtn) resetBtn.textContent = t('flt_resetear');
+
+  // Manager search & filters (mismo patrón que admin)
+  setPh('mgSearch',      t('search_ph'));
+  setPh('mgFCliente',    t('flt_clientes'));
+  setPh('mgFObra',       t('flt_obras'));
+  setPh('mgFOperario',   t('flt_operarios'));
+  setPh('mgFTipo',       t('flt_tipos'));
+  setPh('mgFCompania',   t('flt_companias'));
+  setEl('mg-flt-lbl-cliente',  t('lbl_cliente'));
+  setEl('mg-flt-lbl-obra',     t('lbl_obra'));
+  setEl('mg-flt-lbl-operario', t('lbl_operario'));
+  setEl('mg-flt-lbl-tipo',     t('lbl_tipo'));
+  setEl('mg-flt-lbl-compania', t('lbl_compania'));
+  setEl('mg-flt-lbl-periodo',  t('lbl_periodo'));
+  setEl('mgFltReset', t('flt_resetear'));
 
   // Filter status pills
   var pills = document.querySelectorAll('.ad-flt-btn[data-val=""]');
@@ -4057,37 +4158,55 @@ function refreshPendingBackground() {
     .catch(function(){ mgPendingSyncing = false; });
 }
 
+// Pedido: buscador + filtros para manager, igual que ya tenía admin — esto
+// separa "procesar lo que llega del servidor" (esta función: actualiza
+// mgReportsCache, sincroniza la campana SIEMPRE sobre el total sin
+// filtrar) de "pintar la lista" (renderMgPendingList más abajo, que sí
+// recibe el subconjunto ya filtrado). Antes ambas cosas vivían juntas en
+// una sola función, que no se podía reutilizar para repintar solo un
+// filtro sin también reprocesar/recachear los datos del servidor.
 function renderManagerQueue(reports) {
   // Ver el comentario equivalente en renderMyReports().
   lastMgQueueSig = reportsSignature(reports);
   mgReportsCache = capReports(reports);
-  reports = mgReportsCache;
-  var listEl = document.getElementById('mgList');
-  if (!reports.length) {
-    listEl.innerHTML = '<div class="mi-empty">No hay informes pendientes de aprobación</div>';
-    return;
-  }
-
-  var seen = getSeenIds();
 
   // Sincroniza el centro de notificaciones (campana): todo informe que
   // aparece como "NUEVO" en la lista debe existir también como entrada
   // en la campana. Versión por lotes — una sola operación de I/O en vez
   // de una por cada informe no visto (evita jank en el render/scroll).
+  // SIEMPRE sobre mgReportsCache completo, nunca sobre lo filtrado — un
+  // informe nuevo no debe dejar de avisar solo porque no coincide con la
+  // búsqueda/filtro que haya puesto el manager en ese momento.
+  var seen = getSeenIds();
   var pendingBellItems = [];
-  reports.forEach(function(r) {
+  mgReportsCache.forEach(function(r) {
     if (seen.indexOf(seenKey(r)) === -1) {
       pendingBellItems.push({ id: r.ID + '_new_mg', title: 'Nuevo informe', body: r.ID + ' · ' + r.OPERARIO });
     }
   });
   addNotificationsBatch(pendingBellItems);
 
+  buildMgDatalistOptions();
+  applyMgFilters();
+}
+
+function renderMgPendingList(reports) {
+  var listEl = document.getElementById('mgList');
+  if (!reports.length) {
+    listEl.innerHTML = '<div class="mi-empty">' + (hasActiveMgFilters() ? t('flt_sin_resultados') : 'No hay informes pendientes de aprobación') + '</div>';
+    return;
+  }
+
+  var seen = getSeenIds();
+
   // Lo más reciente arriba, según la última acción real (TIMESTAMP: se
   // actualiza tanto al crear como al reenviar tras un rechazo) — NO según
   // FECHA (que es la fecha del trabajo realizado, un campo editable por
   // el trabajador y no relacionado con cuándo se subió/reenvió). Misma
   // lógica que admin, para que el orden sea consistente en toda la app.
-  reports.sort(function(a, b) {
+  // Se ordena aquí (una copia, .slice()) y no mgReportsCache directamente,
+  // para no alterar el orden de la caché maestra que usan otras funciones.
+  reports = reports.slice().sort(function(a, b) {
     return new Date(b.TIMESTAMP||0) - new Date(a.TIMESTAMP||0);
   });
 
@@ -4621,35 +4740,203 @@ function refreshHistorialBackground() {
     .catch(function(){ mgHistorialSyncing = false; });
 }
 
+// Ver el comentario de renderManagerQueue — mismo reparto de
+// responsabilidades: esta función solo actualiza el datalist de
+// autocompletado y delega en applyMgFilters(), que es quien realmente
+// decide qué pintar (renderMgHistorialGrouped más abajo).
 function renderHistorial(reports) {
+  buildMgDatalistOptions();
+  applyMgFilters();
+}
+
+// Pedido: los informes ya procesados (aprobados/rechazados) del manager
+// se agrupan por mes, igual que ya hacen buildMiGroupedHtml (operario) y
+// renderAdminJournal (admin) — reutiliza las mismas clases CSS
+// .ad-month-header/.ad-month-body (pensadas para ser genéricas, ver su
+// comentario en el CSS) con ids/localStorage propios (mgm_/parte_mg_
+// collapsed) para no chocar con las otras dos pantallas.
+// BUG CORREGIDO: antes esta lista no se ordenaba en absoluto (quedaba en
+// el orden que devolviera el backend) — ahora, igual que
+// buildMiGroupedHtml, se ordena defensivamente aquí mismo por TIMESTAMP
+// descendente (más reciente arriba), tanto los grupos de mes como las
+// tarjetas dentro de cada grupo.
+function renderMgHistorialGrouped(reports) {
   var listEl = document.getElementById('mgHistorialList');
   if (!reports.length) {
-    listEl.innerHTML = '<div class="mi-empty">No hay informes procesados aún</div>';
+    listEl.innerHTML = '<div class="mi-empty">' + (hasActiveMgFilters() ? t('flt_sin_resultados') : 'No hay informes procesados aún') + '</div>';
     return;
   }
-  // BUG CORREGIDO: esta tarjeta tenía DOS problemas de consistencia:
-  // 1) usaba un borde de color a la izquierda para señalar el estado,
-  //    contradiciendo la norma ya documentada más arriba en el CSS de que
-  //    el estado se señaliza solo con badge/sombra, nunca con bordes de
-  //    color — ninguna otra tarjeta de la app hacía esto.
-  //    Ahora reutiliza el mismo badge .ad-status-badge que ya usa Admin,
-  //    en vez de glifos ✓/✗ sueltos sin traducir.
-  // 2) .mg-obra (pensada para el NÚMERO grande) llevaba el nombre de la
-  //    obra, y .mg-id (pensada para texto pequeño) llevaba el ID — al
-  //    revés que en la cola de Pendientes del propio Manager, donde
-  //    .mg-obra sí es el ID grande. Dos pestañas del mismo rol
-  //    mostrando la misma información con jerarquía visual invertida.
-  //    Ahora sigue exactamente la misma estructura que renderManagerQueue.
+
+  var now = new Date();
+  var curYear = now.getFullYear(), curMonth = now.getMonth();
+
+  var groups = {}, groupOrder = [];
+  reports.forEach(function(r) {
+    var d = r.FECHA ? new Date(r.FECHA) : new Date(r.TIMESTAMP||0);
+    var key = d.getFullYear() + '-' + String(d.getMonth()).padStart(2,'0');
+    var label = MONTH_NAMES[d.getMonth()] + ' ' + d.getFullYear();
+    if (!groups[key]) { groups[key] = { label: label, records: [], year: d.getFullYear(), month: d.getMonth() }; groupOrder.push(key); }
+    groups[key].records.push(r);
+  });
+  groupOrder.sort(function(a, b){ return a < b ? 1 : -1; });
+  groupOrder.forEach(function(key){ groups[key].records.sort(function(a,b){ return new Date(b.TIMESTAMP||0) - new Date(a.TIMESTAMP||0); }); });
+
+  var collapsedKey = 'parte_mg_collapsed_' + currentPin;
+  var collapsed = {};
+  try { collapsed = JSON.parse(localStorage.getItem(collapsedKey) || '{}'); } catch(e) {}
+
   var statusLabelsHist = { approved: t('status_approved'), rejected: t('status_rejected') };
-  listEl.innerHTML = reports.map(function(r){
-    var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
-    return '<div class="mg-card" data-hid="'+r.ID+'" onclick="openHistorialDetail(\''+r.ID+'\')">'
-      + '<div class="mg-head"><span class="mg-id">'+fecha+'</span><span class="ad-status-badge st-'+r.STATUS+'" style="margin-bottom:0">'+statusLabelsHist[r.STATUS]+'</span></div>'
-      + '<div class="mg-operario">'+r.OPERARIO+'</div>'
-      + '<div class="mg-obra">'+r.ID+'</div>'
-      + '<div class="mg-cliente">'+r.CLIENTE+' · '+r.OBRA+'</div>'
-      + '</div>';
-  }).join('');
+  var html = '';
+  groupOrder.forEach(function(key) {
+    var g = groups[key];
+    var isCurMonth = (g.year === curYear && g.month === curMonth);
+    var isCollapsed = collapsed[key] !== undefined ? collapsed[key] : !isCurMonth;
+
+    html += '<div class="ad-month-header" onclick="toggleMgMonth(\''+key+'\')" data-key="'+key+'">';
+    html += '<div style="display:flex;align-items:center;gap:8px">';
+    html += '<svg style="width:14px;height:14px;stroke:#8e8e93;fill:none;stroke-width:2.5;stroke-linecap:round;transition:transform .2s;transform:rotate('+(isCollapsed?'-90deg':'0deg')+')" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>';
+    html += '<span style="font-size:13px;font-weight:700;color:#000">'+g.label+'</span>';
+    html += '<span style="font-size:11px;color:#8e8e93">'+g.records.length+'</span>';
+    html += '</div></div>';
+
+    html += '<div class="ad-month-body" id="mgm_'+key+'" style="display:'+(isCollapsed?'none':'block')+'">';
+    // BUG CORREGIDO: esta tarjeta tenía DOS problemas de consistencia:
+    // 1) usaba un borde de color a la izquierda para señalar el estado,
+    //    contradiciendo la norma ya documentada más arriba en el CSS de que
+    //    el estado se señaliza solo con badge/sombra, nunca con bordes de
+    //    color — ninguna otra tarjeta de la app hacía esto.
+    //    Ahora reutiliza el mismo badge .ad-status-badge que ya usa Admin,
+    //    en vez de glifos ✓/✗ sueltos sin traducir.
+    // 2) .mg-obra (pensada para el NÚMERO grande) llevaba el nombre de la
+    //    obra, y .mg-id (pensada para texto pequeño) llevaba el ID — al
+    //    revés que en la cola de Pendientes del propio Manager, donde
+    //    .mg-obra sí es el ID grande. Dos pestañas del mismo rol
+    //    mostrando la misma información con jerarquía visual invertida.
+    //    Ahora sigue exactamente la misma estructura que renderManagerQueue.
+    g.records.forEach(function(r){
+      var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
+      html += '<div class="mg-card" data-hid="'+r.ID+'" onclick="openHistorialDetail(\''+r.ID+'\')">'
+        + '<div class="mg-head"><span class="mg-id">'+fecha+'</span><span class="ad-status-badge st-'+r.STATUS+'" style="margin-bottom:0">'+statusLabelsHist[r.STATUS]+'</span></div>'
+        + '<div class="mg-operario">'+r.OPERARIO+'</div>'
+        + '<div class="mg-obra">'+r.ID+'</div>'
+        + '<div class="mg-cliente">'+r.CLIENTE+' · '+r.OBRA+'</div>'
+        + '</div>';
+    });
+    html += '</div>';
+  });
+
+  listEl.innerHTML = html;
+}
+
+function toggleMgMonth(key) {
+  var body = document.getElementById('mgm_' + key);
+  var header = document.querySelector('#mgHistorialList .ad-month-header[data-key="'+key+'"]');
+  var arrow = header ? header.querySelector('svg') : null;
+  var isNowCollapsed = body && body.style.display === 'none';
+  if (body) body.style.display = isNowCollapsed ? 'block' : 'none';
+  if (arrow) arrow.style.transform = isNowCollapsed ? 'rotate(0deg)' : 'rotate(-90deg)';
+  var collapsedKey = 'parte_mg_collapsed_' + currentPin;
+  var collapsed = {};
+  try { collapsed = JSON.parse(localStorage.getItem(collapsedKey) || '{}'); } catch(e) {}
+  collapsed[key] = !isNowCollapsed;
+  try { localStorage.setItem(collapsedKey, JSON.stringify(collapsed)); } catch(e) {}
+}
+
+/* ════════ MANAGER: BUSCADOR + FILTROS (mismo patrón que admin) ════════ */
+var mgFilteredReportsCache = [];
+var mgFilteredHistorialCache = [];
+var mgFilterPanelOpen = false;
+
+function buildMgDatalistOptions() {
+  var maps = {
+    mgFClienteList:  function(r){ return r.CLIENTE; },
+    mgFObraList:     function(r){ return r.OBRA; },
+    mgFOperarioList: function(r){ return r.OPERARIO; },
+    mgFTipoList:     function(r){ return r['TIPO DE TRABAJO']; },
+    mgFCompaniaList: function(r){ return r['COMPAÑÍA']; }
+  };
+  var source = mgReportsCache.concat(mgHistorialCache);
+  Object.keys(maps).forEach(function(dlId){
+    var dl = document.getElementById(dlId);
+    if (!dl) return;
+    var vals = [];
+    source.forEach(function(r){
+      var v = maps[dlId](r);
+      if (v && vals.indexOf(v) === -1) vals.push(v);
+    });
+    vals.sort();
+    dl.innerHTML = vals.map(function(v){ return '<option value="'+v+'">'; }).join('');
+  });
+}
+
+function toggleMgFilters() {
+  mgFilterPanelOpen = !mgFilterPanelOpen;
+  document.getElementById('mgFilterPanel').style.display = mgFilterPanelOpen ? 'block' : 'none';
+  document.getElementById('mgFilterToggle').classList.toggle('has-filters', mgFilterPanelOpen || hasActiveMgFilters());
+}
+
+function hasActiveMgFilters() {
+  return !!(
+    document.getElementById('mgSearch').value ||
+    document.getElementById('mgFCliente').value ||
+    document.getElementById('mgFObra').value ||
+    document.getElementById('mgFOperario').value ||
+    document.getElementById('mgFTipo').value ||
+    document.getElementById('mgFCompania').value ||
+    document.getElementById('mgFDateFrom').value ||
+    document.getElementById('mgFDateTo').value
+  );
+}
+
+function resetMgFilters() {
+  document.getElementById('mgSearch').value = '';
+  document.getElementById('mgFCliente').value = '';
+  document.getElementById('mgFObra').value = '';
+  document.getElementById('mgFOperario').value = '';
+  document.getElementById('mgFTipo').value = '';
+  document.getElementById('mgFCompania').value = '';
+  document.getElementById('mgFDateFrom').value = '';
+  document.getElementById('mgFDateTo').value = '';
+  document.getElementById('mgFilterToggle').classList.remove('has-filters');
+  applyMgFilters();
+}
+
+function applyMgFilters() {
+  var q         = (document.getElementById('mgSearch').value || '').trim().toLowerCase();
+  var fCliente  = (document.getElementById('mgFCliente').value || '').trim().toLowerCase();
+  var fObra     = (document.getElementById('mgFObra').value || '').trim().toLowerCase();
+  var fOperario = (document.getElementById('mgFOperario').value || '').trim().toLowerCase();
+  var fTipo     = (document.getElementById('mgFTipo').value || '').trim().toLowerCase();
+  var fCompania = (document.getElementById('mgFCompania').value || '').trim().toLowerCase();
+  var fFrom     = document.getElementById('mgFDateFrom').value;
+  var fTo       = document.getElementById('mgFDateTo').value;
+
+  function matches(r) {
+    if (fCliente && !(r.CLIENTE||'').toLowerCase().includes(fCliente)) return false;
+    if (fObra && !(r.OBRA||'').toLowerCase().includes(fObra)) return false;
+    if (fOperario && !(r.OPERARIO||'').toLowerCase().includes(fOperario)) return false;
+    if (fTipo && !((r['TIPO DE TRABAJO'])||'').toLowerCase().includes(fTipo)) return false;
+    if (fCompania && !((r['COMPAÑÍA'])||'').toLowerCase().includes(fCompania)) return false;
+    if (fFrom && r.FECHA && new Date(r.FECHA) < new Date(fFrom)) return false;
+    if (fTo && r.FECHA && new Date(r.FECHA) > new Date(fTo + 'T23:59:59')) return false;
+    if (q) {
+      var haystack = [
+        r.ID, r.CLIENTE, r.OBRA, r.OPERARIO, r.AYUDANTE,
+        r['TIPO DE TRABAJO'], r['TRABAJOS REALIZADOS'],
+        r['MATERIALES UTILIZADOS'], r['COMPAÑÍA']
+      ].join(' ').toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  }
+
+  mgFilteredReportsCache = mgReportsCache.filter(matches);
+  mgFilteredHistorialCache = mgHistorialCache.filter(matches);
+
+  document.getElementById('mgFilterToggle').classList.toggle('has-filters', hasActiveMgFilters());
+
+  renderMgPendingList(mgFilteredReportsCache);
+  renderMgHistorialGrouped(mgFilteredHistorialCache);
 }
 
 function openHistorialDetail(id) {
@@ -4912,6 +5199,15 @@ function renderAdminJournal() {
     if (!groups[key]) { groups[key] = { label: label, key: key, records: [], year: d.getFullYear(), month: d.getMonth() }; groupOrder.push(key); }
     groups[key].records.push(r);
   });
+  // BUG POTENCIAL CORREGIDO: el orden dependía por completo de que
+  // adAllRecords/adFilteredRecords ya vinieran ordenados por TIMESTAMP
+  // desde donde se cargan (ver loadAdminData) — funcionaba, pero de forma
+  // frágil: cualquier reordenación futura de esos arrays (p.ej. un nuevo
+  // .filter() que no preservara el orden) rompería el "más reciente
+  // arriba" en silencio. Se ordena aquí también, igual que ya hace
+  // buildMiGroupedHtml (operario) de forma defensiva.
+  groupOrder.sort(function(a, b){ return a < b ? 1 : -1; });
+  groupOrder.forEach(function(key){ groups[key].records.sort(function(a,b){ return new Date(b.TIMESTAMP||0) - new Date(a.TIMESTAMP||0); }); });
 
   // Читаем свёрнутые группы из localStorage
   var collapsedKey = 'parte_ad_collapsed_' + currentPin;
