@@ -621,6 +621,13 @@ body.pin-mode{overflow:hidden}
 .auth-screen{position:fixed;inset:0;z-index:6500;background:#fff;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;opacity:0;transition:opacity .25s ease}
 .auth-screen.show{display:block;opacity:1}
 .auth-scroll{min-height:100%;display:flex;flex-direction:column;align-items:center;padding:7vh 24px calc(env(safe-area-inset-bottom,0px) + 32px);text-align:center;width:100%;box-sizing:border-box;position:relative}
+/* Pedido: el login (email+contraseña) se veía pegado arriba — a
+   diferencia de registro/OTP (contenido largo, mejor arriba para poder
+   scrollear con sentido), el login es corto y queda mejor centrado
+   verticalmente en la pantalla. Escobado solo a esta pantalla — el resto
+   de .auth-screen siguen arriba (justify-content:flex-start por defecto,
+   heredado de .auth-scroll). */
+#screenAuthLogin .auth-scroll{justify-content:center}
 
 .auth-back{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:14px;width:38px;height:38px;border-radius:50%;background:#f2f2f7;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;z-index:2}
 .auth-back svg{width:18px;height:18px;stroke:#000;fill:none;stroke-width:2.2}
@@ -932,7 +939,7 @@ body.pin-mode{overflow:hidden}
    cuadrada que ocultar sin necesidad de overflow:hidden. */
 .swipe-wrap{position:relative;margin:0 16px 10px}
 .swipe-wrap.r12{margin:0 16px 8px}
-.swipe-wrap>.mi-card,.swipe-wrap>.mg-card,.swipe-wrap>.ad-card{margin:0;position:relative;z-index:1;transition:transform .25s cubic-bezier(.25,.1,.25,1)}
+.swipe-wrap>.mi-card,.swipe-wrap>.mg-card,.swipe-wrap>.ad-card,.swipe-wrap>.adu-card{margin:0;position:relative;z-index:1;transition:transform .25s cubic-bezier(.25,.1,.25,1)}
 /* Acciones de swipe (2026-07-21): chip flotante, separado de la
    tarjeta por un margen horizontal — pero del MISMO alto que la
    tarjeta (top:0;bottom:0, no top/bottom:8px como en el primer intento:
@@ -990,6 +997,36 @@ body.pin-mode{overflow:hidden}
 .adu-meta{font-size:12.5px;color:#8e8e93;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .adu-meta i{font-size:13px}
 .adu-empty{text-align:center;padding:60px 20px;color:#8e8e93;font-size:13.5px}
+.adu-section-lbl{font-size:11.5px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:.3px;margin:6px 0 8px}
+
+/* Fila de email/teléfono "tocable" (reemplaza el <input readonly> plano):
+   toda la fila abre el diálogo de acción (escribir/llamar), el botón de
+   copiar es su propio hit-target aparte (stopPropagation en el onclick). */
+.adu-info-row{display:flex;align-items:center;gap:10px;background:#f2f2f7;border-radius:14px;padding:0 8px 0 14px;height:52px;cursor:pointer;touch-action:manipulation;transition:background .15s}
+.adu-info-row:active{background:#e9e9ee}
+.adu-info-row i:first-child{font-size:17px;color:#8e8e93;flex-shrink:0}
+.adu-info-value{flex:1;font-size:15px;color:#000;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.adu-info-row.empty{cursor:default}
+.adu-info-row.empty:active{background:#f2f2f7}
+.adu-info-row.empty .adu-info-value{color:#c7c7cc}
+.adu-copy-btn{width:36px;height:36px;border-radius:50%;border:none;background:transparent;color:#0049c5;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;touch-action:manipulation;font-size:16px}
+.adu-copy-btn:active{background:rgba(0,73,197,.1)}
+.adu-copy-btn.copied{color:#34c759}
+
+.adu-meta-chip{display:inline-flex;align-items:center;gap:6px;background:#eaf1ff;color:#0049c5;font-size:12px;font-weight:700;padding:6px 12px;border-radius:20px;margin-bottom:16px}
+.adu-meta-chip i{font-size:14px}
+
+/* Permisos de acceso agrupados por cliente — cada cliente es su propia
+   mini-sección con sus objetos como checkboxes debajo, así nunca se puede
+   marcar una combinación cliente/objeto que no exista de verdad (ver
+   getClienteObraPairs en Code_v5.gs). */
+.adu-perm-group{margin-bottom:4px}
+.adu-perm-group:last-child{margin-bottom:0}
+.adu-perm-client{display:flex;align-items:center;gap:8px;padding:10px 8px 4px;font-size:12px;font-weight:800;color:#0049c5;text-transform:uppercase;letter-spacing:.2px}
+.adu-perm-client i{font-size:14px}
+.adu-perm-obj{display:flex;align-items:center;gap:10px;padding:9px 8px 9px 30px;font-size:13.5px;color:#000;border-bottom:.5px solid #ececef}
+.adu-perm-group:last-child .adu-perm-obj:last-child{border-bottom:none}
+.adu-perm-obj input{accent-color:#0049c5;width:17px;height:17px;flex-shrink:0}
 .mi-seg{display:flex;gap:4px;background:#f4f4f7;border-radius:999px;padding:4px;margin:0 16px 14px}
 .mi-seg-btn{flex:1;padding:9px 0;border:none;border-radius:999px;background:transparent;font-family:inherit;font-size:13px;font-weight:700;color:#737687;cursor:pointer;touch-action:manipulation;transition:background .15s,color .15s}
 .mi-seg-btn.active{background:#0049c5;color:#fff;box-shadow:0 2px 6px rgba(0,73,197,.35)}
@@ -1556,12 +1593,14 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
 <!-- ═══ MODAL: ADMIN — GESTIÓN DE UN USUARIO ═══ -->
 <div class="mg-modal-overlay fullbleed" id="adUserModal" onclick="if(event.target===this)closeAdUserModal()">
   <div class="mg-modal mg-modal-full" style="height:100%;max-height:100%;border-radius:0;overflow:hidden;display:flex;flex-direction:column;padding:0">
-    <div style="padding:16px 16px 12px;border-bottom:.5px solid #e5e5ea;flex-shrink:0;display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+    <div style="padding:calc(env(safe-area-inset-top,0px) + 14px) 18px 12px;border-bottom:.5px solid #f0f0f0;flex-shrink:0;display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
       <div>
         <div class="mg-modal-title" id="adUmName" style="margin-bottom:4px">—</div>
         <span class="ad-status-badge" id="adUmStatusBadge">—</span>
       </div>
-      <button onclick="closeAdUserModal()" style="width:30px;height:30px;border-radius:50%;background:#f2f2f7;border:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;touch-action:manipulation"><i class="ti ti-x" style="font-size:16px;color:#636366"></i></button>
+      <button type="button" onclick="closeAdUserModal()" aria-label="Cerrar" style="flex-shrink:0;width:40px;height:40px;border-radius:50%;background:#f2f2f7;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation">
+        <i class="ti ti-x" style="font-size:19px;color:#000"></i>
+      </button>
     </div>
 
     <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px">
@@ -1570,14 +1609,24 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
       <div id="adUmFieldsWrap">
         <div class="auth-field" style="max-width:none">
           <label id="adUmEmailLbl">Email</label>
-          <div class="auth-input-wrap"><i class="ti ti-mail"></i><input type="text" id="adUmEmail" readonly></div>
+          <div class="adu-info-row" id="adUmEmailRow" onclick="tapAdUmField('email')">
+            <i class="ti ti-mail"></i>
+            <span class="adu-info-value" id="adUmEmailValue">—</span>
+            <button type="button" class="adu-copy-btn" onclick="event.stopPropagation();copyAdUmField('adUmEmailValue', this)" aria-label="Copiar"><i class="ti ti-copy"></i></button>
+          </div>
         </div>
         <div class="auth-field" style="max-width:none">
           <label id="adUmTelLbl">Teléfono</label>
-          <div class="auth-input-wrap"><i class="ti ti-phone"></i><input type="text" id="adUmTel" readonly></div>
+          <div class="adu-info-row" id="adUmTelRow" onclick="tapAdUmField('tel')">
+            <i class="ti ti-phone"></i>
+            <span class="adu-info-value" id="adUmTelValue">—</span>
+            <button type="button" class="adu-copy-btn" onclick="event.stopPropagation();copyAdUmField('adUmTelValue', this)" aria-label="Copiar"><i class="ti ti-copy"></i></button>
+          </div>
         </div>
 
-        <div style="font-size:11.5px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:.3px;margin:6px 0 8px" id="adUmRolLbl">Rol</div>
+        <div class="adu-meta-chip" id="adUmAuthMethodChip" style="display:none"><i class="ti ti-shield-check"></i><span id="adUmAuthMethodText"></span></div>
+
+        <div class="adu-section-lbl" id="adUmRolLbl">Rol</div>
         <div class="auth-role-row" style="max-width:none;margin-bottom:16px">
           <div class="auth-role-card" id="adUmRoleOperario" onclick="setAdUmRole('operario')">
             <div class="arc-top"><i class="ti ti-user"></i><div class="arc-radio"></div></div>
@@ -1594,10 +1643,10 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
         </div>
 
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <span style="font-size:11.5px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:.3px" id="adUmObjLbl">Objetos</span>
+          <span class="adu-section-lbl" id="adUmObjLbl" style="margin:0">Permisos de acceso</span>
           <label class="auth-checkbox" style="font-size:12px"><input type="checkbox" id="adUmAllAccess" onchange="onAdUmAllAccessChange()"><span id="adUmAllAccessLbl">Acceso total</span></label>
         </div>
-        <div id="adUmObjList" style="max-height:180px;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#f7f7f8;border-radius:14px;padding:8px;margin-bottom:16px"></div>
+        <div id="adUmObjList" style="max-height:260px;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#f7f7f8;border-radius:14px;padding:6px;margin-bottom:16px"></div>
 
         <div class="auth-field" style="max-width:none">
           <label id="adUmCodeLbl">Código rápido</label>
@@ -1617,7 +1666,7 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
       <div class="auth-error" id="adUmError"></div>
     </div>
 
-    <div style="padding:12px 16px calc(env(safe-area-inset-bottom,0px) + 12px);border-top:.5px solid #e5e5ea;flex-shrink:0;display:flex;flex-direction:column;gap:8px" id="adUmActions"></div>
+    <div style="padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 16px);flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:8px" id="adUmActions"></div>
   </div>
 </div>
 
@@ -2281,6 +2330,26 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
   </div>
 </div>
 
+<!-- MODAL genérico de confirmación de acción (usado por el email/teléfono
+     "tocables" del panel Usuarios — "escribir un correo" / "llamar" — en
+     vez del confirm() nativo del navegador, mismo lenguaje visual que
+     #confirmDeleteModal pero con icono/color/acción configurables por JS
+     (ver genericConfirm()). Reutilizable para cualquier futura acción
+     "¿seguro que quieres X?" que no sea específicamente un borrado. -->
+<div class="mg-modal-overlay" id="genericConfirmModal">
+  <div class="mg-modal" style="text-align:center">
+    <div style="width:64px;height:64px;border-radius:50%;background:#eaf1fd;display:flex;align-items:center;justify-content:center;margin:4px auto 14px">
+      <i class="ti ti-mail" id="genericConfirmIcon" style="font-size:28px;color:#0049c5"></i>
+    </div>
+    <div class="mg-modal-title" id="genericConfirmTitle" style="margin-bottom:6px">—</div>
+    <div class="mg-modal-sub" id="genericConfirmSub" style="margin-bottom:20px">—</div>
+    <div class="mg-modal-actions">
+      <button class="mg-modal-cancel" onclick="closeGenericConfirmModal()" id="genericConfirmCancelBtn">Cancelar</button>
+      <button class="mg-modal-confirm positive" id="genericConfirmYesBtn" onclick="genericConfirmYes()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: CONFIRMACIÓN BONITA tras guardar/reenviar una edición (antes
      era solo un toast — "una pequeña franja de texto"). Se autocierra
      sola, sin botón — ver showEditSavedDialog() en el JS. -->
@@ -2673,7 +2742,7 @@ var LANGS = {
     tab_ad_usuarios:'Usuarios',
     adu_status_unverified:'Email sin confirmar', adu_status_suspended:'Suspendido',
     adu_unverified_notice:'Este usuario todavía no ha confirmado su email. No hay nada que aprobar todavía.',
-    adu_obj_lbl:'Objetos', adu_all_access:'Acceso total',
+    adu_obj_lbl:'Permisos de acceso', adu_all_access:'Acceso total',
     adu_all_access_note:'Este usuario podrá ver y gestionar todos los clientes y obras',
     adu_code_lbl:'Código rápido', adu_active_lbl:'Cuenta activa', adu_role_admin:'ADMIN',
     adu_approve:'Aprobar', adu_reject:'Rechazar', adu_reactivate:'Reactivar cuenta',
@@ -2683,6 +2752,11 @@ var LANGS = {
     adu_toast_password_reset:'Nueva contraseña enviada por email',
     adu_confirm_reset_password:'¿Restablecer la contraseña de este usuario? Se le enviará una nueva por email.',
     adu_filter_pending:'Pendientes', adu_filter_active:'Activos', adu_filter_rejected:'Rechazados', adu_filter_suspended:'Suspendidos',
+    adu_via_google:'Registrado con Google', adu_via_password:'Registrado con contraseña',
+    adu_email_confirm_title:'Enviar un correo', adu_email_confirm_btn:'Escribir',
+    adu_tel_confirm_title:'Llamar por teléfono', adu_tel_confirm_btn:'Llamar',
+    adu_copied:'Copiado', adu_confirm_delete_title:'Eliminar usuario',
+    adu_confirm_delete_sub:'¿Eliminar esta cuenta? Esta acción no se puede deshacer.',
   },
   ru: {
     pin_title:'Введите код', pin_sub:'PIN из 4 цифр', pin_ok:'OK', pin_error:'Неверный код',
@@ -2763,7 +2837,7 @@ var LANGS = {
     tab_ad_usuarios:'Пользователи',
     adu_status_unverified:'Email не подтверждён', adu_status_suspended:'Заблокирован',
     adu_unverified_notice:'Этот пользователь ещё не подтвердил email. Пока нечего одобрять.',
-    adu_obj_lbl:'Объекты', adu_all_access:'Полный доступ',
+    adu_obj_lbl:'Разрешения доступа', adu_all_access:'Полный доступ',
     adu_all_access_note:'Этот пользователь сможет видеть и управлять всеми клиентами и объектами',
     adu_code_lbl:'Быстрый код', adu_active_lbl:'Аккаунт активен', adu_role_admin:'АДМИН',
     adu_approve:'Одобрить', adu_reject:'Отклонить', adu_reactivate:'Восстановить аккаунт',
@@ -2773,6 +2847,11 @@ var LANGS = {
     adu_toast_password_reset:'Новый пароль отправлен на почту',
     adu_confirm_reset_password:'Сбросить пароль этого пользователя? Новый пароль будет отправлен на почту.',
     adu_filter_pending:'На согласовании', adu_filter_active:'Активные', adu_filter_rejected:'Отклонённые', adu_filter_suspended:'Заблокированные',
+    adu_via_google:'Регистрация через Google', adu_via_password:'Регистрация по паролю',
+    adu_email_confirm_title:'Отправить письмо', adu_email_confirm_btn:'Написать',
+    adu_tel_confirm_title:'Позвонить по телефону', adu_tel_confirm_btn:'Позвонить',
+    adu_copied:'Скопировано', adu_confirm_delete_title:'Удалить пользователя',
+    adu_confirm_delete_sub:'Удалить этот аккаунт? Действие необратимо.',
   },
   en: {
     pin_title:'Enter your code', pin_sub:'4-digit PIN', pin_ok:'OK', pin_error:'Incorrect code',
@@ -2853,7 +2932,7 @@ var LANGS = {
     tab_ad_usuarios:'Users',
     adu_status_unverified:'Email not confirmed', adu_status_suspended:'Suspended',
     adu_unverified_notice:'This user has not confirmed their email yet. Nothing to approve yet.',
-    adu_obj_lbl:'Objects', adu_all_access:'Full access',
+    adu_obj_lbl:'Access permissions', adu_all_access:'Full access',
     adu_all_access_note:'This user will be able to see and manage every client and site',
     adu_code_lbl:'Quick code', adu_active_lbl:'Account active', adu_role_admin:'ADMIN',
     adu_approve:'Approve', adu_reject:'Reject', adu_reactivate:'Reactivate account',
@@ -2863,6 +2942,11 @@ var LANGS = {
     adu_toast_password_reset:'New password emailed',
     adu_confirm_reset_password:"Reset this user's password? A new one will be emailed to them.",
     adu_filter_pending:'Pending', adu_filter_active:'Active', adu_filter_rejected:'Rejected', adu_filter_suspended:'Suspended',
+    adu_via_google:'Signed up with Google', adu_via_password:'Signed up with password',
+    adu_email_confirm_title:'Send an email', adu_email_confirm_btn:'Write',
+    adu_tel_confirm_title:'Call by phone', adu_tel_confirm_btn:'Call',
+    adu_copied:'Copied', adu_confirm_delete_title:'Delete user',
+    adu_confirm_delete_sub:'Delete this account? This action cannot be undone.',
   }
 };
 
@@ -3842,6 +3926,12 @@ function onAuthSuccess(payload) {
   var status = payload.accountStatus || 'active';
   if (status === 'rejected') { showLoginScreen(); showAuthError('alError', t('auth_err_rejected')); return; }
   if (status === 'suspended') { showLoginScreen(); showAuthError('alError', t('auth_err_suspended')); return; }
+  // 'deleted' (ver adminDeleteUser en Code_v5.gs) solo puede llegar aquí
+  // desde la revalidación de una sesión guardada (startAppAfterGates) —
+  // login/googleLogin ya la tratan como "no existe" antes de esto. Se
+  // cierra la sesión local sin más aviso (no hay "tu cuenta fue borrada",
+  // simplemente vuelve al login como si nunca hubiera entrado).
+  if (status === 'deleted') { try { localStorage.removeItem('parte_user_pin'); } catch(e) {} currentPin = ''; currentUser = null; showLoginScreen(); return; }
   if (status !== 'active') { showWaitingScreen(); return; }
   showGreetThenRoute();
 }
@@ -5650,10 +5740,29 @@ function removeCardFromQueue(id) {
  * ahí, ver confirmDeleteModalYes(). */
 var _confirmDeleteId = null;
 var _confirmDeleteOnSuccess = null;
+var _confirmDeleteMode = 'report'; // 'report' | 'user' — ver callDeleteUser()
 
 function callDeleteReport(id, onSuccess) {
   _confirmDeleteId = id;
   _confirmDeleteOnSuccess = onSuccess;
+  _confirmDeleteMode = 'report';
+  setEl('confirmDeleteTitle', t('btn_eliminar_informe'));
+  setEl('confirmDeleteSub', t('confirm_eliminar'));
+  setEl('confirmDeleteYesBtn', t('swipe_eliminar'));
+  document.getElementById('confirmDeleteModal').classList.add('show');
+}
+
+// Mismo modal bonito que callDeleteReport, pero para borrar (soft-delete,
+// ver adminDeleteUser en Code_v5.gs) una cuenta desde el panel Usuarios —
+// reutiliza #confirmDeleteModal en vez de duplicar el diálogo, solo cambia
+// el texto y qué action/parámetros manda confirmDeleteModalYes().
+function callDeleteUser(targetCodigo, onSuccess) {
+  _confirmDeleteId = targetCodigo;
+  _confirmDeleteOnSuccess = onSuccess;
+  _confirmDeleteMode = 'user';
+  setEl('confirmDeleteTitle', t('adu_confirm_delete_title'));
+  setEl('confirmDeleteSub', t('adu_confirm_delete_sub'));
+  setEl('confirmDeleteYesBtn', t('swipe_eliminar'));
   document.getElementById('confirmDeleteModal').classList.add('show');
 }
 
@@ -5666,13 +5775,17 @@ function closeConfirmDeleteModal() {
 function confirmDeleteModalYes() {
   var id = _confirmDeleteId;
   var onSuccess = _confirmDeleteOnSuccess;
+  var mode = _confirmDeleteMode;
   if (!id) return;
   var btn = document.getElementById('confirmDeleteYesBtn');
   btn.disabled = true;
+  var payload = mode === 'user'
+    ? { action: 'adminDeleteUser', codigo: currentPin, targetCodigo: id }
+    : { action: 'deleteRecord', codigo: currentPin, id: id };
   fetch(WEBAPP_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ action:'deleteRecord', codigo: currentPin, id: id })
+    body: JSON.stringify(payload)
   })
   .then(function(r){ return r.json(); })
   .then(function(result){
@@ -5764,7 +5877,7 @@ function requestSwipeDeleteAdmin(id) {
 
   function closeSwipeDelete() {
     if (openEl) {
-      var card = openEl.querySelector('.mi-card,.mg-card,.ad-card');
+      var card = openEl.querySelector('.mi-card,.mg-card,.ad-card,.adu-card');
       if (card) card.style.transform = '';
       openEl.classList.remove('swipe-open-left', 'swipe-open-right');
       openEl = null;
@@ -5783,7 +5896,7 @@ function requestSwipeDeleteAdmin(id) {
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     baseX = wrap.classList.contains('swipe-open-left') ? -ACTION_W : (wrap.classList.contains('swipe-open-right') ? ACTION_W : 0);
-    var card = wrap.querySelector('.mi-card,.mg-card,.ad-card');
+    var card = wrap.querySelector('.mi-card,.mg-card,.ad-card,.adu-card');
     if (card) card.style.transition = 'none';
   }, { passive: true });
 
@@ -5799,7 +5912,7 @@ function requestSwipeDeleteAdmin(id) {
       var min = hasDelete ? -ACTION_W : 0;
       var max = hasEdit ? ACTION_W : 0;
       var next = Math.max(min, Math.min(max, baseX + dx));
-      var card = dragging.querySelector('.mi-card,.mg-card,.ad-card');
+      var card = dragging.querySelector('.mi-card,.mg-card,.ad-card,.adu-card');
       if (card) card.style.transform = 'translateX(' + next + 'px)';
       dragging.dataset.dragX = next;
     }
@@ -5807,7 +5920,7 @@ function requestSwipeDeleteAdmin(id) {
 
   document.addEventListener('touchend', function () {
     if (!dragging) return;
-    var card = dragging.querySelector('.mi-card,.mg-card,.ad-card');
+    var card = dragging.querySelector('.mi-card,.mg-card,.ad-card,.adu-card');
     if (card) card.style.transition = '';
     if (locked === 'x') {
       var next = parseFloat(dragging.dataset.dragX || '0');
@@ -6949,13 +7062,29 @@ function renderAdminUsers() {
     var statusLbl = t(AD_STATUS_LABEL_KEYS[u.status] || 'adu_status_suspended');
     var roleLbl = t(AD_ROLE_LABEL_KEYS[u.rol] || 'greet_worker');
     var displayName = ((u.nombre || '') + ' ' + (u.apellido || '')).trim() || u.email || u.codigo;
-    return '<div class="adu-card" onclick="openAdUserModalByCodigo(\'' + escapeHtml(u.codigo).replace(/'/g, "\\'") + '\')">' +
+    var safeCodigo = escapeHtml(u.codigo).replace(/'/g, "\\'");
+    // Mismo patrón Telegram-style que las tarjetas de informes (ver
+    // .swipe-wrap/.swipe-edit-action/.swipe-delete-action): deslizar a la
+    // derecha revela "Editar" (abre el mismo modal que un tap normal),
+    // a la izquierda "Eliminar" (soft-delete, ver adminDeleteUser).
+    return '<div class="swipe-wrap" data-id="' + safeCodigo + '">' +
+      '<button type="button" class="swipe-edit-action" onclick="event.stopPropagation();closeSwipeDelete();openAdUserModalByCodigo(\'' + safeCodigo + '\')"><span class="swipe-ic"><i class="ti ti-pencil"></i></span><span class="swipe-lbl">' + t('swipe_editar') + '</span></button>' +
+      '<button type="button" class="swipe-delete-action" onclick="event.stopPropagation();requestSwipeDeleteAdUser(\'' + safeCodigo + '\')"><span class="swipe-ic"><i class="ti ti-trash"></i></span><span class="swipe-lbl">' + t('swipe_eliminar') + '</span></button>' +
+      '<div class="adu-card" data-id="' + safeCodigo + '" onclick="openAdUserModalByCodigo(\'' + safeCodigo + '\')">' +
       '<div class="adu-card-top"><span class="adu-name">' + escapeHtml(displayName) + '</span>' +
       '<span class="ad-status-badge ' + statusCls + '">' + escapeHtml(statusLbl) + '</span></div>' +
       '<div class="adu-meta"><i class="ti ti-mail"></i>' + escapeHtml(u.email || '—') + '</div>' +
       '<div class="adu-meta"><i class="ti ti-id-badge-2"></i>' + escapeHtml(roleLbl) + '</div>' +
-      '</div>';
+      '</div></div>';
   }).join('');
+}
+
+function requestSwipeDeleteAdUser(codigo) {
+  closeSwipeDelete();
+  callDeleteUser(codigo, function() {
+    adUsersAll = adUsersAll.filter(function(u){ return u.codigo !== codigo; });
+    renderAdminUsers();
+  });
 }
 
 function ensureClienteObraPairs() {
@@ -6981,9 +7110,22 @@ function openAdUserModal(user) {
   badge.className = 'ad-status-badge ' + (AD_STATUS_CLASS[user.status] || 'st-suspended');
   badge.textContent = t(AD_STATUS_LABEL_KEYS[user.status] || 'adu_status_suspended');
 
-  document.getElementById('adUmEmail').value = user.email || '';
-  document.getElementById('adUmTel').value = user.telefono || '';
+  setAdUmInfoRow('adUmEmailRow', 'adUmEmailValue', user.email);
+  setAdUmInfoRow('adUmTelRow', 'adUmTelValue', user.telefono);
   document.getElementById('adUmCode').value = user.codigo || '';
+
+  var chip = document.getElementById('adUmAuthMethodChip');
+  if (user.viaGoogle) {
+    chip.style.display = 'inline-flex';
+    setEl('adUmAuthMethodText', t('adu_via_google'));
+    document.getElementById('adUmAuthMethodChip').querySelector('i').className = 'ti ti-brand-google';
+  } else if (user.hasPassword) {
+    chip.style.display = 'inline-flex';
+    setEl('adUmAuthMethodText', t('adu_via_password'));
+    document.getElementById('adUmAuthMethodChip').querySelector('i').className = 'ti ti-key';
+  } else {
+    chip.style.display = 'none';
+  }
 
   var isUnverified = user.status === 'pending_verification';
   document.getElementById('adUmFieldsWrap').style.display = isUnverified ? 'none' : 'block';
@@ -7019,6 +7161,77 @@ function closeAdUserModal() {
   document.getElementById('adUserModal').classList.remove('show');
 }
 
+function setAdUmInfoRow(rowId, valueId, value) {
+  var row = document.getElementById(rowId);
+  var val = String(value || '').trim();
+  document.getElementById(valueId).textContent = val || '—';
+  row.classList.toggle('empty', !val);
+}
+
+/* Tocar la fila de email/teléfono abre un diálogo bonito (no el confirm()
+ * nativo) preguntando si se quiere escribir/llamar — al confirmar, se usa
+ * mailto:/tel: (el propio SO abre Correo/Teléfono; no enviamos nada desde
+ * aquí, solo delegamos). Sin valor real → la fila es .empty, no hace nada. */
+function tapAdUmField(kind) {
+  if (!adUmCurrentUser) return;
+  if (kind === 'email') {
+    var email = (adUmCurrentUser.email || '').trim();
+    if (!email) return;
+    genericConfirm({
+      icon: 'ti-mail', title: t('adu_email_confirm_title'),
+      sub: email, confirmLabel: t('adu_email_confirm_btn'),
+      onConfirm: function() { window.location.href = 'mailto:' + email; }
+    });
+  } else if (kind === 'tel') {
+    var tel = (adUmCurrentUser.telefono || '').trim();
+    if (!tel) return;
+    genericConfirm({
+      icon: 'ti-phone', title: t('adu_tel_confirm_title'),
+      sub: tel, confirmLabel: t('adu_tel_confirm_btn'),
+      onConfirm: function() { window.location.href = 'tel:' + tel; }
+    });
+  }
+}
+
+function copyAdUmField(valueId, btn) {
+  var text = document.getElementById(valueId).textContent;
+  if (!text || text === '—') return;
+  var done = function() {
+    var icon = btn.querySelector('i');
+    icon.className = 'ti ti-check';
+    btn.classList.add('copied');
+    showToast(t('adu_copied'));
+    setTimeout(function() { icon.className = 'ti ti-copy'; btn.classList.remove('copied'); }, 1200);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(done);
+  } else {
+    done();
+  }
+}
+
+/* ── MODAL genérico de confirmación (email/llamada, reset de contraseña,
+ * y cualquier futura acción "¿seguro?" que no sea un borrado) ── */
+var _genericConfirmOnConfirm = null;
+function genericConfirm(opts) {
+  document.getElementById('genericConfirmIcon').className = 'ti ' + (opts.icon || 'ti-info-circle');
+  setEl('genericConfirmTitle', opts.title || '');
+  setEl('genericConfirmSub', opts.sub || '');
+  setEl('genericConfirmYesBtn', opts.confirmLabel || t('auth_login_btn'));
+  setEl('genericConfirmCancelBtn', opts.cancelLabel || t('btn_cancelar'));
+  _genericConfirmOnConfirm = opts.onConfirm || null;
+  document.getElementById('genericConfirmModal').classList.add('show');
+}
+function closeGenericConfirmModal() {
+  document.getElementById('genericConfirmModal').classList.remove('show');
+  _genericConfirmOnConfirm = null;
+}
+function genericConfirmYes() {
+  var fn = _genericConfirmOnConfirm;
+  closeGenericConfirmModal();
+  if (fn) fn();
+}
+
 function setAdUmRole(role) {
   adUmSelectedRole = role;
   document.getElementById('adUmRoleOperario').classList.toggle('active', role === 'operario');
@@ -7039,12 +7252,24 @@ function renderAdUmObjList() {
   ensureClienteObraPairs().then(function(pairs) {
     if (document.getElementById('adUmAllAccess').checked) return; // pudo cambiar mientras cargaba
     if (!pairs.length) { wrap.innerHTML = '<div style="padding:14px;text-align:center;font-size:12.5px;color:#8e8e93">—</div>'; return; }
-    wrap.innerHTML = pairs.map(function(p) {
-      var key = p.cliente + '::' + p.obra;
-      var checked = adUmSelectedObjs[key] ? 'checked' : '';
-      return '<label style="display:flex;align-items:center;gap:8px;padding:8px 6px;font-size:12.5px;color:#000;border-bottom:.5px solid #ececef">' +
-        '<input type="checkbox" ' + checked + ' onchange="toggleAdUmObj(\'' + key.replace(/'/g, "\\'") + '\', this.checked)" style="accent-color:#0049c5;width:16px;height:16px;flex-shrink:0">' +
-        '<span>' + escapeHtml(p.cliente) + ' — ' + escapeHtml(p.obra) + '</span></label>';
+    // Agrupado por cliente (2 niveles: CLIENTE arriba, sus OBJETOS debajo)
+    // en vez de una lista plana "cliente — obra" — así nunca se puede
+    // marcar una combinación cliente/objeto que no exista de verdad.
+    var order = [];
+    var byClient = {};
+    pairs.forEach(function(p) {
+      if (!byClient[p.cliente]) { byClient[p.cliente] = []; order.push(p.cliente); }
+      byClient[p.cliente].push(p.obra);
+    });
+    wrap.innerHTML = order.map(function(cliente) {
+      var objRows = byClient[cliente].map(function(obra) {
+        var key = cliente + '::' + obra;
+        var checked = adUmSelectedObjs[key] ? 'checked' : '';
+        return '<label class="adu-perm-obj">' +
+          '<input type="checkbox" ' + checked + ' onchange="toggleAdUmObj(\'' + key.replace(/'/g, "\\'") + '\', this.checked)">' +
+          '<span>' + escapeHtml(obra) + '</span></label>';
+      }).join('');
+      return '<div class="adu-perm-group"><div class="adu-perm-client"><i class="ti ti-building"></i>' + escapeHtml(cliente) + '</div>' + objRows + '</div>';
     }).join('');
   });
 }
@@ -7070,20 +7295,21 @@ function renderAdUmActions() {
   var wrap = document.getElementById('adUmActions');
   var status = adUmCurrentUser.status;
   if (status === 'pending_verification') { wrap.innerHTML = ''; return; }
+  var btnStyle = 'width:100%;max-width:320px';
   if (status === 'pending_approval') {
     wrap.innerHTML =
-      '<button class="mg-modal-confirm positive" style="width:100%" onclick="approveAdUser()">' + t('adu_approve') + '</button>' +
-      '<button class="mg-modal-confirm" style="width:100%" onclick="rejectAdUser()">' + t('adu_reject') + '</button>';
+      '<button class="mg-modal-confirm positive" style="' + btnStyle + '" onclick="approveAdUser()">' + t('adu_approve') + '</button>' +
+      '<button class="mg-modal-confirm" style="' + btnStyle + '" onclick="rejectAdUser()">' + t('adu_reject') + '</button>';
     return;
   }
   if (status === 'rejected' || status === 'suspended') {
-    wrap.innerHTML = '<button class="mg-modal-confirm positive" style="width:100%" onclick="reactivateAdUser()">' + t('adu_reactivate') + '</button>';
+    wrap.innerHTML = '<button class="mg-modal-confirm positive" style="' + btnStyle + '" onclick="reactivateAdUser()">' + t('adu_reactivate') + '</button>';
     return;
   }
   var resetBtnHtml = adUmCurrentUser.hasPassword
-    ? '<button class="mg-modal-cancel" style="width:100%" onclick="resetAdUserPassword()">' + t('adu_reset_password') + '</button>' : '';
+    ? '<button class="mg-modal-cancel" style="' + btnStyle + '" onclick="resetAdUserPassword()">' + t('adu_reset_password') + '</button>' : '';
   wrap.innerHTML =
-    '<button class="mg-modal-confirm positive" style="width:100%" onclick="saveAdUserChanges()">' + t('adu_save') + '</button>' + resetBtnHtml;
+    '<button class="mg-modal-confirm positive" style="' + btnStyle + '" onclick="saveAdUserChanges()">' + t('adu_save') + '</button>' + resetBtnHtml;
 }
 
 function adUmPostAction(action, extra, onSuccess) {
@@ -7138,9 +7364,14 @@ function saveAdUserChanges() {
 }
 
 function resetAdUserPassword() {
-  if (!confirm(t('adu_confirm_reset_password'))) return;
-  adUmPostAction('adminResetPassword', {}, function() {
-    showToast(t('adu_toast_password_reset'));
+  genericConfirm({
+    icon: 'ti-key', title: t('adu_reset_password'), sub: t('adu_confirm_reset_password'),
+    confirmLabel: t('adu_reset_password'),
+    onConfirm: function() {
+      adUmPostAction('adminResetPassword', {}, function() {
+        showToast(t('adu_toast_password_reset'));
+      });
+    }
   });
 }
 
@@ -8378,7 +8609,7 @@ document.addEventListener('visibilitychange', function() {
   var modalIds = [
     'reportDetailModal', 'mgDetailModal', 'editReportModal',
     'mgRejectModal', 'notifFullModal', 'photoGalleryModal', 'confirmDeleteModal',
-    'editSavedModal', 'adUserModal'
+    'editSavedModal', 'adUserModal', 'genericConfirmModal'
   ];
   // BUG CORREGIDO ("al confirmar borrar, Cancelar/Eliminar quedan tapados
   // por el tabbar inferior"): mgRejectModal/confirmDeleteModal son
