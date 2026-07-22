@@ -146,7 +146,17 @@ if ('serviceWorker' in navigator) {
 <script>
 // ЗАМЕНИТЕ на актуальный URL вашего развёрнутого Apps Script веб-приложения
 const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwiBvSurSTwZi1Cb7RCU296wCYcW9mMCuJ-b2UijvYMzp2RTziRQc3A6-9_XOI-3KoboA/exec";
+
+// Client ID de Google Sign-In — público (va también en el backend, ver
+// GOOGLE_CLIENT_ID en Code_v5.gs; el frontend solo lo usa para inicializar
+// el botón, la verificación real del token ocurre en el backend contra el
+// endpoint de Google). Vacío = el botón "Continuar con Google" se oculta
+// en vez de intentar inicializar un login que fallaría.
+const GOOGLE_CLIENT_ID = "568853502-dgdafjpbo0ifk7if46q6kkn8vr1289nb.apps.googleusercontent.com";
 </script>
+
+<!-- Google Identity Services — botón "Continuar con Google" en #screenAuthLogin -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -559,6 +569,24 @@ body.pin-mode{overflow:hidden}
 .ig-step-icon i{font-size:17px;color:#0049c5}
 .ig-step-text{font-size:13.5px;color:#000;font-weight:500;line-height:1.35}
 
+/* PANTALLA: HELLO — saludo animado estilo "Hello" de Apple, primerísima
+   pantalla que ve un dispositivo nuevo (antes incluso de elegir idioma).
+   Logo grande + palabra de bienvenida que va cambiando de idioma sola en
+   bucle + un botón azul pequeño para continuar manualmente (a diferencia
+   del Hello real de Apple, aquí no hay gesto de deslizar). */
+.hello-logo-tile{width:136px;height:136px;border-radius:32px;overflow:hidden;box-shadow:0 18px 44px rgba(0,0,0,.24);margin-bottom:36px;flex-shrink:0;animation:aioLogoFloat 3.6s ease-in-out infinite}
+.hello-logo-tile img{width:100%;height:100%;object-fit:cover;display:block}
+.hello-word-wrap{height:46px;display:flex;align-items:center;justify-content:center;margin-bottom:40px;overflow:hidden;width:100%;max-width:340px}
+.hello-word{font-size:32px;font-weight:800;color:#000;letter-spacing:-.5px;opacity:0;transform:translateY(14px) scale(.94);transition:opacity .45s cubic-bezier(.2,.7,.3,1),transform .45s cubic-bezier(.2,.7,.3,1);white-space:nowrap}
+.hello-word.show{opacity:1;transform:translateY(0) scale(1)}
+.hello-word.hide{opacity:0;transform:translateY(-14px) scale(.94)}
+.hello-continue-btn{padding:14px 44px;border-radius:999px;border:none;background:#0049c5;color:#fff;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;touch-action:manipulation;box-shadow:0 10px 24px -8px rgba(0,73,197,.55);transition:transform .15s,box-shadow .15s}
+.hello-continue-btn:active{transform:scale(.95)}
+@media (prefers-reduced-motion:reduce){
+  .hello-logo-tile{animation:none}
+  .hello-word{transition:opacity .2s}
+}
+
 /* PANTALLA: BIENVENIDA — IDIOMA */
 .lw-options{width:100%;max-width:320px;display:flex;flex-direction:column;gap:12px;margin-top:32px}
 .lw-opt{width:100%;padding:16px;border-radius:16px;border:1.5px solid #e5e5ea;background:#fff;font-size:16px;font-weight:600;color:#000;font-family:inherit;cursor:pointer;touch-action:manipulation;display:flex;align-items:center;gap:10px;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.1);transition:border-color .15s,background .15s,box-shadow .15s,color .15s}
@@ -573,6 +601,133 @@ body.pin-mode{overflow:hidden}
    lo ancla al viewport visual de verdad, igual que el tabbar inferior. */
 .lw-continue-btn{position:fixed;left:24px;right:24px;max-width:320px;margin:0 auto;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);background:#34c759;color:#fff;border:none;border-radius:16px;padding:16px;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation;box-shadow:0 8px 20px rgba(52,199,89,.35);opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .25s ease,transform .25s ease;z-index:10}
 .lw-continue-btn.show{opacity:1;transform:translateY(0);pointer-events:auto}
+/* Ahora también se reutiliza DESPUÉS del saludo (cuenta recién aprobada,
+   ver showGreetThenNotify) — en ese momento #mainFlexWrap (rol/tabbar) ya
+   está montado y visible detrás, así que ya no puede ser un simple bloque
+   en flujo normal (quedaría invisible: body tiene overflow:hidden y
+   #mainFlexWrap ya ocupa el 100% de su altura). Mismo patrón de overlay
+   que .greet-screen, con el mismo z-index para no competir con ella. */
+#screenLangWelcome{position:fixed;inset:0;z-index:7000;background:#fff}
+
+/* ═══ AUTH v2: login / registro / OTP / espera de aprobación ═══
+   Pantallas a pantalla completa, mismo lenguaje visual que .pin-screen
+   (fondo blanco, acento azul #0049c5, tarjetas "Soft Elevated"), pero con
+   scroll propio (formularios más largos que el keypad) — por eso NO
+   reutilizan .pin-screen (overflow:hidden, pensado para contenido que
+   siempre cabe) sino position:fixed;inset:0 + overflow-y:auto, igual que
+   .mg-modal-overlay.fullbleed. Añadidas al querySelectorAll de
+   applyRealHeight() (ver <script> justo tras <body>) para el mismo fix de
+   altura real en px que ya usan esos modales. */
+.auth-screen{position:fixed;inset:0;z-index:6500;background:#fff;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;opacity:0;transition:opacity .25s ease}
+.auth-screen.show{display:block;opacity:1}
+.auth-scroll{min-height:100%;display:flex;flex-direction:column;align-items:center;padding:7vh 24px calc(env(safe-area-inset-bottom,0px) + 32px);text-align:center;width:100%;box-sizing:border-box;position:relative}
+
+.auth-back{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:14px;width:38px;height:38px;border-radius:50%;background:#f2f2f7;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;z-index:2}
+.auth-back svg{width:18px;height:18px;stroke:#000;fill:none;stroke-width:2.2}
+
+.auth-icon-orbit{position:relative;width:150px;height:150px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;flex-shrink:0}
+.auth-icon-orbit .app-icon-tile{margin-bottom:0;position:relative;z-index:1;animation:aioLogoFloat 3.6s ease-in-out infinite}
+/* Anillos "radar" detrás del logo — dos copias desfasadas para que el
+   pulso salga de forma continua, no de golpe en golpe. */
+.auth-icon-orbit::before,.auth-icon-orbit::after{
+  content:'';position:absolute;inset:0;border-radius:50%;
+  border:1px solid rgba(0,73,197,.14);
+  animation:aioRingPulse 3.2s cubic-bezier(.2,.6,.35,1) infinite;
+}
+.auth-icon-orbit::after{animation-delay:1.6s}
+/* .orbit-ring gira como grupo rígido alrededor del centro — como los 3
+   badges son hijos suyos posicionados con top/left/bottom/right, girar
+   este único elemento basta para que "orbiten" el logo. Cada badge lleva
+   su PROPIA rotación inversa a la misma velocidad para no girar con el
+   anillo (el icono de dentro se queda siempre "de pie"). */
+.orbit-ring{position:absolute;inset:0;animation:aioOrbitSpin 16s linear infinite}
+.orbit-anchor{position:absolute}
+.orbit-anchor.tc{top:-6px;left:50%;transform:translateX(-50%)}
+.orbit-anchor.bl{bottom:6px;left:-2px}
+.orbit-anchor.br{bottom:6px;right:-2px}
+.auth-orbit-badge{width:42px;height:42px;border-radius:50%;background:#eaf1ff;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,73,197,.16);animation:aioOrbitCounterSpin 16s linear infinite}
+.auth-orbit-badge i{font-size:18px;color:#0049c5}
+
+@keyframes aioOrbitSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes aioOrbitCounterSpin{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+@keyframes aioLogoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes aioRingPulse{
+  0%{transform:scale(.7);opacity:.55}
+  75%{opacity:0}
+  100%{transform:scale(1.18);opacity:0}
+}
+@media (prefers-reduced-motion:reduce){
+  .orbit-ring,.auth-orbit-badge,.auth-icon-orbit .app-icon-tile,.auth-icon-orbit::before,.auth-icon-orbit::after{animation:none}
+}
+
+.auth-field{width:100%;max-width:360px;text-align:left;margin-bottom:13px;flex-shrink:0}
+.auth-field label{display:block;font-size:11.5px;font-weight:700;color:#8e8e93;margin-bottom:6px;padding-left:2px;text-transform:uppercase;letter-spacing:.3px}
+.auth-input-wrap{display:flex;align-items:center;gap:10px;background:#f2f2f7;border-radius:14px;padding:0 14px;height:52px;box-shadow:inset 0 0 0 1.5px transparent;transition:box-shadow .15s}
+.auth-input-wrap i{font-size:17px;color:#8e8e93;flex-shrink:0}
+.auth-input-wrap input,.auth-input-wrap select{flex:1;border:none;background:transparent;font-family:inherit;font-size:15px;color:#000;outline:none;height:100%;min-width:0}
+.auth-eye{border:none;background:transparent;color:#8e8e93;font-size:17px;padding:6px;cursor:pointer;touch-action:manipulation;flex-shrink:0;display:flex}
+.auth-check-icon{width:18px;height:18px;flex-shrink:0;color:#34c759;display:none}
+.auth-field.ok .auth-input-wrap{box-shadow:inset 0 0 0 1.5px #34c759}
+.auth-field.ok .auth-check-icon{display:block}
+.auth-field.err .auth-input-wrap{box-shadow:inset 0 0 0 1.5px #ff3b30}
+
+.auth-row-between{width:100%;max-width:360px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;font-size:12.5px;flex-shrink:0}
+.auth-checkbox{display:flex;align-items:center;gap:8px;color:#000;font-weight:600;cursor:pointer}
+.auth-checkbox input{width:17px;height:17px;accent-color:#0049c5;flex-shrink:0}
+.auth-link-sm{color:#0049c5;font-weight:700;cursor:pointer}
+.auth-link{color:#0049c5;font-weight:800;cursor:pointer}
+
+.auth-error{width:100%;max-width:360px;font-size:12.5px;font-weight:600;color:#ff3b30;margin-bottom:0;max-height:0;opacity:0;overflow:hidden;transition:opacity .2s,max-height .2s,margin-bottom .2s;flex-shrink:0}
+.auth-error.show{opacity:1;max-height:40px;margin-bottom:12px}
+
+.auth-btn{max-width:360px;flex-shrink:0}
+.auth-btn.ready{background:#0049c5;cursor:pointer;box-shadow:0 10px 20px -8px rgba(0,73,197,.5)}
+
+.auth-divider{width:100%;max-width:360px;display:flex;align-items:center;gap:12px;color:#c7c7cc;font-size:11.5px;font-weight:600;margin:20px 0;flex-shrink:0}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:#e5e5ea}
+
+.auth-google-wrap{width:100%;max-width:360px;margin-bottom:14px;display:flex;justify-content:center;flex-shrink:0}
+.auth-google-btn{width:100%;height:50px;border-radius:14px;border:1.5px solid #e5e5ea;background:#fff;display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit;font-size:14.5px;font-weight:700;color:#000;cursor:pointer;touch-action:manipulation}
+.auth-google-btn img{width:18px;height:18px;flex-shrink:0}
+
+.auth-code-btn{width:100%;max-width:360px;height:50px;border-radius:14px;border:none;background:#f2f2f7;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-size:13.5px;font-weight:700;color:#0049c5;cursor:pointer;touch-action:manipulation;margin-bottom:22px;flex-shrink:0}
+.auth-code-btn i{font-size:16px}
+
+.auth-footer{font-size:13.5px;color:#8e8e93;flex-shrink:0;margin-top:4px}
+
+/* Tarjetas de rol (registro) */
+.auth-role-row{width:100%;max-width:360px;display:flex;gap:10px;margin-bottom:16px;flex-shrink:0}
+.auth-role-card{flex:1;border-radius:16px;border:1.5px solid #e5e5ea;background:#fff;padding:13px 12px;text-align:left;cursor:pointer;touch-action:manipulation;transition:border-color .15s,background .15s}
+.auth-role-card.active{border-color:#0049c5;background:#eaf1ff}
+.auth-role-card .arc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.auth-role-card i{font-size:19px;color:#0049c5}
+.auth-role-card .arc-radio{width:17px;height:17px;border-radius:50%;border:2px solid #d1d1d6;flex-shrink:0}
+.auth-role-card.active .arc-radio{border-color:#0049c5;background:radial-gradient(circle,#0049c5 0 40%,transparent 42%)}
+.auth-role-card .arc-title{font-size:12.5px;font-weight:800;color:#000;letter-spacing:.3px;margin-bottom:2px;text-transform:uppercase}
+.auth-role-card .arc-sub{font-size:11px;color:#8e8e93;line-height:1.3}
+
+/* OTP */
+.otp-boxes{display:flex;gap:8px;width:100%;max-width:340px;justify-content:center;margin-bottom:18px;flex-shrink:0}
+.otp-box{width:15%;max-width:44px;aspect-ratio:.82;border-radius:12px;border:1.5px solid #e5e5ea;background:#fff;text-align:center;font-size:21px;font-weight:800;font-family:inherit;color:#000;outline:none;transition:border-color .15s,box-shadow .15s;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.otp-box:focus{border-color:#0049c5;box-shadow:0 2px 12px rgba(0,73,197,.18)}
+.otp-box.filled{border-color:#0049c5}
+.otp-box.err{border-color:#ff3b30;animation:shake .45s}
+.otp-email-chip{display:inline-flex;align-items:center;gap:8px;background:#f2f2f7;border-radius:20px;padding:8px 16px;font-size:12.5px;font-weight:700;color:#000;margin-bottom:24px;flex-shrink:0}
+.otp-hint{display:flex;align-items:center;gap:8px;background:#eaf1ff;border-radius:12px;padding:10px 14px;font-size:12px;color:#0049c5;font-weight:600;width:100%;max-width:340px;margin-bottom:22px;flex-shrink:0}
+.otp-hint i{font-size:15px;flex-shrink:0}
+.otp-resend{font-size:12.5px;color:#8e8e93;margin-bottom:8px;flex-shrink:0}
+.otp-resend .link{color:#0049c5;font-weight:700;cursor:pointer}
+.otp-resend .link.disabled{color:#c7c7cc;cursor:default}
+.otp-spam-card{display:flex;align-items:center;gap:12px;background:#fff;border:.5px solid #e5e5ea;border-radius:16px;padding:14px 16px;text-align:left;width:100%;max-width:340px;box-shadow:0 4px 14px rgba(0,0,0,.06);margin-top:6px;flex-shrink:0}
+.otp-spam-card i{font-size:20px;color:#0049c5;flex-shrink:0}
+.otp-spam-card .t{font-size:12.5px;font-weight:700;color:#000;margin-bottom:2px}
+.otp-spam-card .s{font-size:11.5px;color:#8e8e93;line-height:1.3}
+
+/* Espera de aprobación */
+.wait-icon-badge{width:96px;height:96px;border-radius:50%;background:#fff3cd;display:flex;align-items:center;justify-content:center;margin-bottom:22px;flex-shrink:0}
+.wait-icon-badge i{font-size:42px;color:#c88a00}
+.wait-refresh-btn{width:100%;max-width:320px;margin-top:26px;flex-shrink:0}
+.wait-support{font-size:12.5px;color:#8e8e93;margin-top:16px;flex-shrink:0}
 
 /* MIS INFORMES */
 .op-tabs{display:none}
@@ -818,6 +973,23 @@ body.pin-mode{overflow:hidden}
 .ad-flt-btn.st-approved.active{background:#34c759;color:#fff}
 .ad-flt-btn.st-rejected{background:#fff0f0;color:#ff3b30}
 .ad-flt-btn.st-rejected.active{background:#ff3b30;color:#fff}
+/* Dos estados nuevos del panel Usuarios (no existían para informes):
+   pending_verification (aún sin confirmar email) y suspended (cuenta
+   activa desactivada por el admin) — mismo patrón visual, gris neutro. */
+.ad-flt-btn.st-unverified{background:#f2f2f7;color:#8e8e93}
+.ad-flt-btn.st-unverified.active{background:#8e8e93;color:#fff}
+.ad-flt-btn.st-suspended{background:#f2f2f7;color:#636366}
+.ad-flt-btn.st-suspended.active{background:#636366;color:#fff}
+.ad-status-badge.st-unverified{background:#f2f2f7;color:#8e8e93}
+.ad-status-badge.st-suspended{background:#f2f2f7;color:#636366}
+
+/* ── Panel Usuarios (admin) ── */
+.adu-card{background:#fff;border-radius:16px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,.06);cursor:pointer;touch-action:manipulation}
+.adu-card-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.adu-name{font-size:14.5px;font-weight:700;color:#000}
+.adu-meta{font-size:12.5px;color:#8e8e93;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.adu-meta i{font-size:13px}
+.adu-empty{text-align:center;padding:60px 20px;color:#8e8e93;font-size:13.5px}
 .mi-seg{display:flex;gap:4px;background:#f4f4f7;border-radius:999px;padding:4px;margin:0 16px 14px}
 .mi-seg-btn{flex:1;padding:9px 0;border:none;border-radius:999px;background:transparent;font-family:inherit;font-size:13px;font-weight:700;color:#737687;cursor:pointer;touch-action:manipulation;transition:background .15s,color .15s}
 .mi-seg-btn.active{background:#0049c5;color:#fff;box-shadow:0 2px 6px rgba(0,73,197,.35)}
@@ -980,6 +1152,13 @@ body.pin-mode{overflow:hidden}
   pointer-events:none;
 }
 .bottom-tabbar.tab-1-active .tab-indicator{transform:translateX(100%)}
+/* #tabbarAdmin tiene 3 pestañas (Diario/Análisis/Usuarios), no 2 — mismo
+   patrón que arriba pero a 33.33% en vez de 50%, con su propia 3ª parada.
+   Selector por id, más específico que .tab-indicator/.tab-1-active
+   genéricos, así operario/manager (2 pestañas) no se ven afectados. */
+#tabbarAdmin .tab-indicator{width:33.3333%}
+#tabbarAdmin.tab-1-active .tab-indicator{transform:translateX(100%)}
+#tabbarAdmin.tab-2-active .tab-indicator{transform:translateX(200%)}
 /* 2026-07-17: tamaño de toque revisado a petición explícita ("iconos de
    un tamaño que sean clicables y encajen visualmente") — .bottom-tab ya
    era el área de toque completa (flex:1, todo el ancho de su mitad de la
@@ -1098,7 +1277,7 @@ body.pin-mode{overflow:hidden}
     // Con la altura real en px puesta aquí, top:0 (heredado de inset:0)
     // + height:Xpx define la caja completa y el navegador ignora el
     // bottom:0 implícito — el parche de los 60px ya no hace falta.
-    document.querySelectorAll('.mg-modal-overlay.fullbleed').forEach(function(el) {
+    document.querySelectorAll('.mg-modal-overlay.fullbleed, .auth-screen').forEach(function(el) {
       el.style.height = px;
     });
   }
@@ -1372,8 +1551,275 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
   </div>
 </div>
 
+<!-- ═══ AUTH v2 ═══ -->
+
+<!-- ═══ MODAL: ADMIN — GESTIÓN DE UN USUARIO ═══ -->
+<div class="mg-modal-overlay fullbleed" id="adUserModal" onclick="if(event.target===this)closeAdUserModal()">
+  <div class="mg-modal mg-modal-full" style="height:100%;max-height:100%;border-radius:0;overflow:hidden;display:flex;flex-direction:column;padding:0">
+    <div style="padding:16px 16px 12px;border-bottom:.5px solid #e5e5ea;flex-shrink:0;display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+      <div>
+        <div class="mg-modal-title" id="adUmName" style="margin-bottom:4px">—</div>
+        <span class="ad-status-badge" id="adUmStatusBadge">—</span>
+      </div>
+      <button onclick="closeAdUserModal()" style="width:30px;height:30px;border-radius:50%;background:#f2f2f7;border:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;touch-action:manipulation"><i class="ti ti-x" style="font-size:16px;color:#636366"></i></button>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px">
+      <div id="adUmPendingVerifNotice" style="display:none;background:#f2f2f7;border-radius:14px;padding:14px;font-size:13px;color:#8e8e93;margin-bottom:14px"></div>
+
+      <div id="adUmFieldsWrap">
+        <div class="auth-field" style="max-width:none">
+          <label id="adUmEmailLbl">Email</label>
+          <div class="auth-input-wrap"><i class="ti ti-mail"></i><input type="text" id="adUmEmail" readonly></div>
+        </div>
+        <div class="auth-field" style="max-width:none">
+          <label id="adUmTelLbl">Teléfono</label>
+          <div class="auth-input-wrap"><i class="ti ti-phone"></i><input type="text" id="adUmTel" readonly></div>
+        </div>
+
+        <div style="font-size:11.5px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:.3px;margin:6px 0 8px" id="adUmRolLbl">Rol</div>
+        <div class="auth-role-row" style="max-width:none;margin-bottom:16px">
+          <div class="auth-role-card" id="adUmRoleOperario" onclick="setAdUmRole('operario')">
+            <div class="arc-top"><i class="ti ti-user"></i><div class="arc-radio"></div></div>
+            <div class="arc-title" id="adUmRoleOperarioTitle">OPERARIO</div>
+          </div>
+          <div class="auth-role-card" id="adUmRoleManager" onclick="setAdUmRole('manager')">
+            <div class="arc-top"><i class="ti ti-briefcase"></i><div class="arc-radio"></div></div>
+            <div class="arc-title" id="adUmRoleManagerTitle">MANAGER</div>
+          </div>
+          <div class="auth-role-card" id="adUmRoleAdmin" onclick="setAdUmRole('admin')">
+            <div class="arc-top"><i class="ti ti-shield"></i><div class="arc-radio"></div></div>
+            <div class="arc-title" id="adUmRoleAdminTitle">ADMIN</div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:11.5px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:.3px" id="adUmObjLbl">Objetos</span>
+          <label class="auth-checkbox" style="font-size:12px"><input type="checkbox" id="adUmAllAccess" onchange="onAdUmAllAccessChange()"><span id="adUmAllAccessLbl">Acceso total</span></label>
+        </div>
+        <div id="adUmObjList" style="max-height:180px;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#f7f7f8;border-radius:14px;padding:8px;margin-bottom:16px"></div>
+
+        <div class="auth-field" style="max-width:none">
+          <label id="adUmCodeLbl">Código rápido</label>
+          <div class="auth-input-wrap">
+            <i class="ti ti-key"></i>
+            <input type="text" id="adUmCode" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+            <button type="button" class="auth-eye" onclick="generateAdUmCode()" title="Generar"><i class="ti ti-dice-5"></i></button>
+          </div>
+        </div>
+
+        <div id="adUmStatusRow" style="display:none;align-items:center;justify-content:space-between;background:#f7f7f8;border-radius:14px;padding:12px 14px;margin-bottom:14px">
+          <span style="font-size:13px;font-weight:600;color:#000" id="adUmActiveLbl">Cuenta activa</span>
+          <label class="auth-checkbox"><input type="checkbox" id="adUmActiveToggle" onchange="onAdUmActiveToggle()"></label>
+        </div>
+      </div>
+
+      <div class="auth-error" id="adUmError"></div>
+    </div>
+
+    <div style="padding:12px 16px calc(env(safe-area-inset-bottom,0px) + 12px);border-top:.5px solid #e5e5ea;flex-shrink:0;display:flex;flex-direction:column;gap:8px" id="adUmActions"></div>
+  </div>
+</div>
+
+<!-- ═══ PANTALLA: LOGIN ═══ -->
+<div id="screenAuthLogin" class="auth-screen">
+  <div class="auth-scroll">
+    <div class="auth-icon-orbit">
+      <div class="orbit-ring">
+        <div class="orbit-anchor tc"><div class="auth-orbit-badge"><i class="ti ti-file-text"></i></div></div>
+        <div class="orbit-anchor bl"><div class="auth-orbit-badge"><i class="ti ti-clock"></i></div></div>
+        <div class="orbit-anchor br"><div class="auth-orbit-badge"><i class="ti ti-currency-euro"></i></div></div>
+      </div>
+      <div class="app-icon-tile"><img src="icon-192.png" alt="AEDIS"></div>
+    </div>
+    <div class="pin-title" id="alTitle">Iniciar sesión</div>
+    <div class="pin-sub" id="alSub">Introduce tus datos para acceder a tu cuenta</div>
+
+    <div class="auth-field" id="alEmailField">
+      <label id="alEmailLbl">Correo electrónico</label>
+      <div class="auth-input-wrap">
+        <i class="ti ti-mail"></i>
+        <input type="email" id="alEmail" autocomplete="username" inputmode="email" oninput="onAuthLoginInput()" placeholder="tu@email.com">
+      </div>
+    </div>
+    <div class="auth-field" id="alPasswordField">
+      <label id="alPasswordLbl">Contraseña</label>
+      <div class="auth-input-wrap">
+        <i class="ti ti-lock"></i>
+        <input type="password" id="alPassword" autocomplete="current-password" oninput="onAuthLoginInput()" placeholder="••••••••">
+        <button type="button" class="auth-eye" onclick="toggleAuthPasswordVisibility('alPassword', this)"><i class="ti ti-eye"></i></button>
+      </div>
+    </div>
+
+    <div class="auth-row-between">
+      <label class="auth-checkbox"><input type="checkbox" id="alRemember" checked><span id="alRememberLbl">Recordarme</span></label>
+      <span class="auth-link-sm" id="alForgotLbl" onclick="showForgotPasswordHint()">¿Has olvidado tu contraseña?</span>
+    </div>
+
+    <div class="auth-error" id="alError"></div>
+
+    <button class="pin-ok-btn auth-btn" id="alSubmitBtn" onclick="submitAuthLogin()" disabled>Iniciar sesión</button>
+
+    <div class="auth-divider"><span id="alOrLbl">o bien</span></div>
+
+    <div id="googleBtnContainer" class="auth-google-wrap" style="display:none"></div>
+
+    <button class="auth-code-btn" onclick="showPinKeypadFromLogin()">
+      <i class="ti ti-key"></i><span id="alQuickCodeLbl">Entrar con código rápido</span>
+    </button>
+
+    <div class="auth-footer">
+      <span id="alNoAccountLbl">¿No tienes cuenta?</span> <span class="auth-link" id="alRegisterLink" onclick="showRegisterScreen()">Regístrate</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PANTALLA: REGISTRO ═══ -->
+<div id="screenRegister" class="auth-screen">
+  <div class="auth-scroll">
+    <div class="auth-back" onclick="showLoginScreen()"><svg viewBox="0 0 24 24"><polyline points="15,4 7,12 15,20"/></svg></div>
+    <div class="pin-title" id="regTitle" style="margin-top:26px">Registro</div>
+    <div class="pin-sub" id="regSub">Crea una cuenta para empezar a trabajar</div>
+
+    <div class="auth-field" id="regNombreField">
+      <label id="regNombreLbl">Nombre</label>
+      <div class="auth-input-wrap">
+        <i class="ti ti-user"></i>
+        <input type="text" id="regNombre" autocomplete="given-name" oninput="onRegisterInput()">
+        <svg class="auth-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+    </div>
+    <div class="auth-field" id="regApellidoField">
+      <label id="regApellidoLbl">Apellido</label>
+      <div class="auth-input-wrap">
+        <i class="ti ti-user"></i>
+        <input type="text" id="regApellido" autocomplete="family-name" oninput="onRegisterInput()">
+        <svg class="auth-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+    </div>
+    <div class="auth-field" id="regTelefonoField">
+      <label id="regTelefonoLbl">Teléfono</label>
+      <div class="auth-input-wrap">
+        <i class="ti ti-phone"></i>
+        <input type="tel" id="regTelefono" autocomplete="tel" inputmode="tel" oninput="onRegisterInput()">
+        <svg class="auth-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+    </div>
+    <div class="auth-field" id="regEmailField">
+      <label id="regEmailLbl">Email</label>
+      <div class="auth-input-wrap">
+        <i class="ti ti-mail"></i>
+        <input type="email" id="regEmail" autocomplete="username" inputmode="email" oninput="onRegisterInput()">
+        <svg class="auth-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+    </div>
+    <div class="auth-field" id="regPasswordField">
+      <label id="regPasswordLbl">Contraseña</label>
+      <div class="auth-input-wrap">
+        <i class="ti ti-lock"></i>
+        <input type="password" id="regPassword" autocomplete="new-password" oninput="onRegisterInput()">
+        <button type="button" class="auth-eye" onclick="toggleAuthPasswordVisibility('regPassword', this)"><i class="ti ti-eye"></i></button>
+      </div>
+    </div>
+    <div class="auth-field" id="regConfirmField">
+      <label id="regConfirmLbl">Confirmar contraseña</label>
+      <div class="auth-input-wrap">
+        <i class="ti ti-lock"></i>
+        <input type="password" id="regConfirm" autocomplete="new-password" oninput="onRegisterInput()">
+        <button type="button" class="auth-eye" onclick="toggleAuthPasswordVisibility('regConfirm', this)"><i class="ti ti-eye"></i></button>
+      </div>
+    </div>
+
+    <div style="width:100%;max-width:360px;text-align:left;margin-bottom:8px">
+      <label style="display:block;font-size:11.5px;font-weight:700;color:#8e8e93;margin-bottom:8px;padding-left:2px;text-transform:uppercase;letter-spacing:.3px" id="regRolLbl">Tu rol en el sistema</label>
+    </div>
+    <div class="auth-role-row">
+      <div class="auth-role-card active" id="regRoleOperario" onclick="setRegisterRole('operario')">
+        <div class="arc-top"><i class="ti ti-user"></i><div class="arc-radio"></div></div>
+        <div class="arc-title" id="regRoleOperarioTitle">OPERARIO</div>
+        <div class="arc-sub" id="regRoleOperarioSub">Realizo trabajos en obra</div>
+      </div>
+      <div class="auth-role-card" id="regRoleManager" onclick="setRegisterRole('manager')">
+        <div class="arc-top"><i class="ti ti-briefcase"></i><div class="arc-radio"></div></div>
+        <div class="arc-title" id="regRoleManagerTitle">MANAGER</div>
+        <div class="arc-sub" id="regRoleManagerSub">Creo y gestiono trabajos</div>
+      </div>
+    </div>
+
+    <div class="auth-row-between" style="justify-content:flex-start;gap:0">
+      <label class="auth-checkbox" style="align-items:flex-start;text-align:left" id="regTermsWrap">
+        <input type="checkbox" id="regTerms" onchange="onRegisterInput()" style="margin-top:2px">
+        <span id="regTermsLbl">Acepto los términos de uso y la política de privacidad</span>
+      </label>
+    </div>
+
+    <div class="auth-error" id="regError"></div>
+
+    <button class="pin-ok-btn auth-btn" id="regSubmitBtn" onclick="submitRegister()" disabled>Registrarse</button>
+
+    <div class="auth-footer">
+      <span id="regHasAccountLbl">¿Ya tienes cuenta?</span> <span class="auth-link" id="regLoginLink" onclick="showLoginScreen()">Entrar</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PANTALLA: VERIFICACIÓN OTP ═══ -->
+<div id="screenOtpVerify" class="auth-screen">
+  <div class="auth-scroll">
+    <div class="auth-back" onclick="showLoginScreen()"><svg viewBox="0 0 24 24"><polyline points="15,4 7,12 15,20"/></svg></div>
+    <div class="auth-icon-orbit" style="margin-top:26px">
+      <div class="app-icon-tile" style="background:#eaf1ff;display:flex;align-items:center;justify-content:center"><i class="ti ti-shield-lock" style="font-size:38px;color:#0049c5"></i></div>
+    </div>
+    <div class="pin-title" id="otpTitle">Confirma tu acceso</div>
+    <div class="pin-sub" id="otpSub" style="max-width:320px">Hemos enviado un código de 6 dígitos para confirmar el inicio de sesión en tu correo</div>
+
+    <div class="otp-email-chip"><i class="ti ti-mail"></i><span id="otpEmailText">—</span></div>
+
+    <div class="otp-boxes" id="otpBoxes">
+      <input class="otp-box" inputmode="numeric" maxlength="1" data-i="0">
+      <input class="otp-box" inputmode="numeric" maxlength="1" data-i="1">
+      <input class="otp-box" inputmode="numeric" maxlength="1" data-i="2">
+      <input class="otp-box" inputmode="numeric" maxlength="1" data-i="3">
+      <input class="otp-box" inputmode="numeric" maxlength="1" data-i="4">
+      <input class="otp-box" inputmode="numeric" maxlength="1" data-i="5">
+    </div>
+
+    <div class="otp-hint"><i class="ti ti-shield-check"></i><span id="otpValidText">Código válido durante 10 minutos</span></div>
+
+    <div class="auth-error" id="otpError"></div>
+
+    <button class="pin-ok-btn auth-btn" id="otpSubmitBtn" onclick="submitOtpVerify()" disabled>Confirmar</button>
+
+    <div class="otp-resend" style="margin-top:18px">
+      <span id="otpResendLbl">¿No has recibido el código?</span>
+      <span class="link" id="otpResendLink" onclick="requestResendOtp()">Reenviar código</span>
+      <span id="otpResendCountdown"></span>
+    </div>
+
+    <div class="otp-spam-card">
+      <i class="ti ti-alert-circle"></i>
+      <div>
+        <div class="t" id="otpSpamTitle">¿No lo encuentras?</div>
+        <div class="s" id="otpSpamSub">Revisa la carpeta de Spam o Correo no deseado</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PANTALLA: ESPERA DE APROBACIÓN ═══ -->
+<div id="screenWaitingApproval" class="auth-screen">
+  <div class="auth-scroll" style="justify-content:center;min-height:100%">
+    <div class="wait-icon-badge"><i class="ti ti-hourglass"></i></div>
+    <div class="pin-title" id="waitTitle">Solicitud enviada</div>
+    <div class="pin-sub" id="waitSub" style="max-width:320px">Tu solicitud ha sido recibida y está pendiente de confirmación por un administrador</div>
+    <button class="pin-ok-btn ready auth-btn wait-refresh-btn" onclick="refreshWaitingStatus()"><i class="ti ti-refresh" id="waitRefreshIcon"></i> <span id="waitRefreshLbl">Actualizar</span></button>
+    <div class="wait-support" id="waitSupportText">Recibirás una notificación en cuanto tu cuenta sea aprobada</div>
+  </div>
+</div>
+
 <!-- ═══ PANTALLA: PIN ENTRY ═══ -->
 <div id="screenPin" class="pin-screen" style="display:none">
+  <div class="auth-back" id="pinBackBtn" style="position:fixed" onclick="showLoginScreen()"><svg viewBox="0 0 24 24"><polyline points="15,4 7,12 15,20"/></svg></div>
   <div class="pin-logo">
     <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/><circle cx="12" cy="19.5" r=".5" fill="#fff"/></svg>
   </div>
@@ -1415,6 +1861,15 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
   <div class="pin-title" id="igTitle">Instala AEDIS</div>
   <div class="pin-sub" id="igSub">Añádela a tu pantalla de inicio para poder usarla y recibir avisos</div>
   <div class="ig-steps" id="igSteps"></div>
+</div>
+
+<!-- ═══ PANTALLA: HELLO (saludo animado, la primerísima pantalla — antes
+     incluso de elegir idioma — solo la primera vez que se abre la app ya
+     instalada en este dispositivo) ═══ -->
+<div id="screenHello" class="pin-screen" style="display:none">
+  <div class="hello-logo-tile"><img src="icon-192.png" alt="AEDIS"></div>
+  <div class="hello-word-wrap"><span class="hello-word" id="helloWord">Добро пожаловать</span></div>
+  <button class="hello-continue-btn" id="helloContinueBtn" onclick="confirmHelloScreen()" ontouchend="event.preventDefault();confirmHelloScreen()">Continuar</button>
 </div>
 
 <!-- ═══ PANTALLA: BIENVENIDA — ELEGIR IDIOMA (solo la primera vez que se
@@ -1904,8 +2359,11 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
 <!-- ═══ PANTALLA: ADMIN ═══ -->
 <div id="screenAdmin" style="display:none">
 
-  <!-- ── ПОИСК + ФИЛЬТРЫ ── -->
-  <div style="padding:10px 14px 6px">
+  <!-- ── ПОИСК + ФИЛЬТРЫ (solo para la pestaña Diario — ver switchAdTab,
+       antes se quedaba visible también en Análisis/Usuarios porque nunca
+       se ocultaba explícitamente; con el nuevo panel Usuarios (que tiene
+       su propia barra de búsqueda) el duplicado ya se notaba de verdad) ── -->
+  <div style="padding:10px 14px 6px" id="adJournalSearchBar">
 
     <!-- Строка: поле поиска + иконка фильтра -->
     <div style="display:flex;gap:8px;align-items:center">
@@ -2033,6 +2491,25 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
     <div id="anContent" style="padding:10px 0 20px"></div>
   </div>
 
+  <!-- ── PANEL: USUARIOS (AUTH v2) ── -->
+  <div id="adPanelUsuarios" style="display:none">
+    <div style="padding:10px 14px 6px">
+      <div style="flex:1;position:relative">
+        <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:#8e8e93;fill:none;stroke-width:2;stroke-linecap:round;pointer-events:none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="adUsSearch" oninput="renderAdminUsers()"
+          style="width:100%;padding:9px 12px 9px 33px;border-radius:12px;border:none;background:#f2f2f7;font-family:inherit;font-size:14px;color:#000;outline:none">
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px" id="adUsStatusFilters">
+        <button class="ad-flt-btn active" data-status="" onclick="setAdUsStatusFilter(this,'')" id="adUsF-all">Todos</button>
+        <button class="ad-flt-btn st-pending" data-status="pending_approval" onclick="setAdUsStatusFilter(this,'pending_approval')" id="adUsF-pending">Pendientes</button>
+        <button class="ad-flt-btn st-approved" data-status="active" onclick="setAdUsStatusFilter(this,'active')" id="adUsF-active">Activos</button>
+        <button class="ad-flt-btn st-rejected" data-status="rejected" onclick="setAdUsStatusFilter(this,'rejected')" id="adUsF-rejected">Rechazados</button>
+        <button class="ad-flt-btn st-suspended" data-status="suspended" onclick="setAdUsStatusFilter(this,'suspended')" id="adUsF-suspended">Suspendidos</button>
+      </div>
+    </div>
+    <div id="adUsersList" style="padding:10px 14px 20px"></div>
+  </div>
+
 </div>
 
 </div><!-- /#appScroll -->
@@ -2073,6 +2550,10 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
   <div class="bottom-tab" id="tabAdAnalisis" onclick="switchAdTab('analisis')">
     <div class="tab-icon"><i class="ti ti-chart-bar"></i></div>
     <span>Análisis</span>
+  </div>
+  <div class="bottom-tab" id="tabAdUsuarios" onclick="switchAdTab('usuarios')">
+    <div class="tab-icon"><i class="ti ti-users"></i></div>
+    <span id="adUsuariosTabLbl">Usuarios</span>
   </div>
 </div>
 </div><!-- /#mainFlexWrap -->
@@ -2164,6 +2645,44 @@ var LANGS = {
     btn_eliminar_informe:'Eliminar informe', confirm_eliminar:'¿Eliminar este informe? Esta acción no se puede deshacer.', swipe_eliminar:'Eliminar', swipe_editar:'Editar',
     confirm_cerrar_sin_guardar:'¿Deseas cerrar sin guardar los cambios?',
     toast_eliminado:'Informe eliminado', toast_eliminar_error:'No se pudo eliminar el informe',
+    auth_login_title:'Iniciar sesión', auth_login_sub:'Introduce tus datos para acceder a tu cuenta',
+    auth_email_lbl:'Correo electrónico', auth_password_lbl:'Contraseña', auth_remember:'Recordarme',
+    auth_forgot:'¿Has olvidado tu contraseña?', auth_forgot_hint:'Contacta con tu administrador para restablecerla',
+    auth_login_btn:'Iniciar sesión', auth_signing_in:'Entrando…', auth_or:'o bien',
+    auth_quick_code:'Entrar con código rápido', auth_no_account:'¿No tienes cuenta?', auth_register_link:'Regístrate',
+    auth_err_invalid:'Correo o contraseña incorrectos', auth_err_blocked:'Demasiados intentos. Espera unos minutos.',
+    auth_err_rejected:'Tu solicitud de acceso no ha sido aprobada', auth_err_suspended:'Tu cuenta está desactivada. Contacta con tu administrador.',
+    auth_err_network:'Error de conexión', auth_err_generic:'Algo salió mal, inténtalo de nuevo',
+    auth_google_btn:'Continuar con Google',
+    auth_reg_title:'Registro', auth_reg_sub:'Crea una cuenta para empezar a trabajar',
+    auth_reg_nombre:'Nombre', auth_reg_apellido:'Apellido', auth_reg_telefono:'Teléfono', auth_reg_email:'Email',
+    auth_reg_password:'Contraseña', auth_reg_confirm:'Confirmar contraseña', auth_reg_rol:'Tu rol en el sistema',
+    auth_reg_rol_operario:'OPERARIO', auth_reg_rol_operario_sub:'Realizo trabajos en obra',
+    auth_reg_rol_manager:'MANAGER', auth_reg_rol_manager_sub:'Creo y gestiono trabajos',
+    auth_reg_terms:'Acepto los términos de uso y la política de privacidad',
+    auth_register_btn:'Registrarse', auth_registering:'Registrando…',
+    auth_has_account:'¿Ya tienes cuenta?', auth_login_link:'Entrar',
+    auth_otp_title:'Confirma tu acceso', auth_otp_sub:'Hemos enviado un código de 6 dígitos para confirmar el inicio de sesión en tu correo',
+    auth_otp_valid:'Código válido durante 10 minutos', auth_otp_confirm:'Confirmar',
+    auth_otp_no_code:'¿No has recibido el código?', auth_otp_resend:'Reenviar código', auth_otp_resent:'Código reenviado',
+    auth_otp_spam_title:'¿No lo encuentras?', auth_otp_spam_sub:'Revisa la carpeta de Spam o Correo no deseado',
+    auth_otp_expired:'El código ha caducado, pide uno nuevo', auth_otp_invalid:'Código incorrecto',
+    auth_wait_title:'Solicitud enviada', auth_wait_sub:'Tu solicitud ha sido recibida y está pendiente de confirmación por un administrador',
+    auth_wait_refresh:'Actualizar', auth_wait_support:'Recibirás una notificación en cuanto tu cuenta sea aprobada',
+    auth_still_pending:'Todavía pendiente de aprobación',
+    tab_ad_usuarios:'Usuarios',
+    adu_status_unverified:'Email sin confirmar', adu_status_suspended:'Suspendido',
+    adu_unverified_notice:'Este usuario todavía no ha confirmado su email. No hay nada que aprobar todavía.',
+    adu_obj_lbl:'Objetos', adu_all_access:'Acceso total',
+    adu_all_access_note:'Este usuario podrá ver y gestionar todos los clientes y obras',
+    adu_code_lbl:'Código rápido', adu_active_lbl:'Cuenta activa', adu_role_admin:'ADMIN',
+    adu_approve:'Aprobar', adu_reject:'Rechazar', adu_reactivate:'Reactivar cuenta',
+    adu_reset_password:'Restablecer contraseña', adu_save:'Guardar cambios',
+    adu_toast_approved:'Usuario aprobado', adu_toast_rejected:'Solicitud rechazada',
+    adu_toast_reactivated:'Cuenta reactivada', adu_toast_saved:'Cambios guardados',
+    adu_toast_password_reset:'Nueva contraseña enviada por email',
+    adu_confirm_reset_password:'¿Restablecer la contraseña de este usuario? Se le enviará una nueva por email.',
+    adu_filter_pending:'Pendientes', adu_filter_active:'Activos', adu_filter_rejected:'Rechazados', adu_filter_suspended:'Suspendidos',
   },
   ru: {
     pin_title:'Введите код', pin_sub:'PIN из 4 цифр', pin_ok:'OK', pin_error:'Неверный код',
@@ -2216,6 +2735,44 @@ var LANGS = {
     btn_eliminar_informe:'Удалить отчёт', confirm_eliminar:'Удалить этот отчёт? Действие необратимо.', swipe_eliminar:'Удалить', swipe_editar:'Изменить',
     confirm_cerrar_sin_guardar:'Закрыть без сохранения изменений?',
     toast_eliminado:'Отчёт удалён', toast_eliminar_error:'Не удалось удалить отчёт',
+    auth_login_title:'Вход', auth_login_sub:'Введите данные для доступа к аккаунту',
+    auth_email_lbl:'Электронная почта', auth_password_lbl:'Пароль', auth_remember:'Запомнить меня',
+    auth_forgot:'Забыли пароль?', auth_forgot_hint:'Обратитесь к администратору для сброса пароля',
+    auth_login_btn:'Войти', auth_signing_in:'Вход…', auth_or:'или',
+    auth_quick_code:'Войти по быстрому коду', auth_no_account:'Нет аккаунта?', auth_register_link:'Зарегистрироваться',
+    auth_err_invalid:'Неверная почта или пароль', auth_err_blocked:'Слишком много попыток. Подождите несколько минут.',
+    auth_err_rejected:'Ваша заявка на доступ не была одобрена', auth_err_suspended:'Ваш аккаунт отключён. Обратитесь к администратору.',
+    auth_err_network:'Ошибка соединения', auth_err_generic:'Что-то пошло не так, попробуйте ещё раз',
+    auth_google_btn:'Продолжить с Google',
+    auth_reg_title:'Регистрация', auth_reg_sub:'Создайте аккаунт, чтобы начать работу',
+    auth_reg_nombre:'Имя', auth_reg_apellido:'Фамилия', auth_reg_telefono:'Телефон', auth_reg_email:'Email',
+    auth_reg_password:'Пароль', auth_reg_confirm:'Подтвердите пароль', auth_reg_rol:'Ваша роль в системе',
+    auth_reg_rol_operario:'ОПЕРАРИО', auth_reg_rol_operario_sub:'Я выполняю работы на объекте',
+    auth_reg_rol_manager:'МЕНЕДЖЕР', auth_reg_rol_manager_sub:'Я создаю заявки и управляю работами',
+    auth_reg_terms:'Я принимаю условия использования и политику конфиденциальности',
+    auth_register_btn:'Зарегистрироваться', auth_registering:'Регистрация…',
+    auth_has_account:'Уже есть аккаунт?', auth_login_link:'Войти',
+    auth_otp_title:'Подтвердите вход', auth_otp_sub:'Мы отправили 6-значный код для подтверждения входа на вашу почту',
+    auth_otp_valid:'Код действителен в течение 10 минут', auth_otp_confirm:'Подтвердить',
+    auth_otp_no_code:'Не получили код?', auth_otp_resend:'Отправить код повторно', auth_otp_resent:'Код отправлен повторно',
+    auth_otp_spam_title:'Не можете найти письмо?', auth_otp_spam_sub:'Проверьте папку «Спам» или «Нежелательная почта»',
+    auth_otp_expired:'Код истёк, запросите новый', auth_otp_invalid:'Неверный код',
+    auth_wait_title:'Заявка отправлена', auth_wait_sub:'Ваша заявка принята и ожидает подтверждения администратора',
+    auth_wait_refresh:'Обновить', auth_wait_support:'Вы получите уведомление, как только ваш аккаунт будет одобрен',
+    auth_still_pending:'Всё ещё ожидает одобрения',
+    tab_ad_usuarios:'Пользователи',
+    adu_status_unverified:'Email не подтверждён', adu_status_suspended:'Заблокирован',
+    adu_unverified_notice:'Этот пользователь ещё не подтвердил email. Пока нечего одобрять.',
+    adu_obj_lbl:'Объекты', adu_all_access:'Полный доступ',
+    adu_all_access_note:'Этот пользователь сможет видеть и управлять всеми клиентами и объектами',
+    adu_code_lbl:'Быстрый код', adu_active_lbl:'Аккаунт активен', adu_role_admin:'АДМИН',
+    adu_approve:'Одобрить', adu_reject:'Отклонить', adu_reactivate:'Восстановить аккаунт',
+    adu_reset_password:'Сбросить пароль', adu_save:'Сохранить изменения',
+    adu_toast_approved:'Пользователь одобрен', adu_toast_rejected:'Заявка отклонена',
+    adu_toast_reactivated:'Аккаунт восстановлен', adu_toast_saved:'Изменения сохранены',
+    adu_toast_password_reset:'Новый пароль отправлен на почту',
+    adu_confirm_reset_password:'Сбросить пароль этого пользователя? Новый пароль будет отправлен на почту.',
+    adu_filter_pending:'На согласовании', adu_filter_active:'Активные', adu_filter_rejected:'Отклонённые', adu_filter_suspended:'Заблокированные',
   },
   en: {
     pin_title:'Enter your code', pin_sub:'4-digit PIN', pin_ok:'OK', pin_error:'Incorrect code',
@@ -2268,6 +2825,44 @@ var LANGS = {
     btn_eliminar_informe:'Delete report', confirm_eliminar:'Delete this report? This action cannot be undone.', swipe_eliminar:'Delete', swipe_editar:'Edit',
     confirm_cerrar_sin_guardar:'Close without saving your changes?',
     toast_eliminado:'Report deleted', toast_eliminar_error:'Could not delete the report',
+    auth_login_title:'Sign in', auth_login_sub:'Enter your details to access your account',
+    auth_email_lbl:'Email', auth_password_lbl:'Password', auth_remember:'Remember me',
+    auth_forgot:'Forgot your password?', auth_forgot_hint:'Contact your administrator to reset it',
+    auth_login_btn:'Sign in', auth_signing_in:'Signing in…', auth_or:'or',
+    auth_quick_code:'Sign in with quick code', auth_no_account:"Don't have an account?", auth_register_link:'Sign up',
+    auth_err_invalid:'Incorrect email or password', auth_err_blocked:'Too many attempts. Wait a few minutes.',
+    auth_err_rejected:'Your access request was not approved', auth_err_suspended:'Your account is disabled. Contact your administrator.',
+    auth_err_network:'Connection error', auth_err_generic:'Something went wrong, try again',
+    auth_google_btn:'Continue with Google',
+    auth_reg_title:'Sign up', auth_reg_sub:'Create an account to start working',
+    auth_reg_nombre:'First name', auth_reg_apellido:'Last name', auth_reg_telefono:'Phone', auth_reg_email:'Email',
+    auth_reg_password:'Password', auth_reg_confirm:'Confirm password', auth_reg_rol:'Your role in the system',
+    auth_reg_rol_operario:'WORKER', auth_reg_rol_operario_sub:'I do work on site',
+    auth_reg_rol_manager:'MANAGER', auth_reg_rol_manager_sub:'I create and manage jobs',
+    auth_reg_terms:'I accept the terms of use and privacy policy',
+    auth_register_btn:'Sign up', auth_registering:'Signing up…',
+    auth_has_account:'Already have an account?', auth_login_link:'Sign in',
+    auth_otp_title:'Confirm your sign-in', auth_otp_sub:'We sent a 6-digit code to your email to confirm sign-in',
+    auth_otp_valid:'Code valid for 10 minutes', auth_otp_confirm:'Confirm',
+    auth_otp_no_code:"Didn't get the code?", auth_otp_resend:'Resend code', auth_otp_resent:'Code resent',
+    auth_otp_spam_title:"Can't find it?", auth_otp_spam_sub:'Check your Spam or Junk folder',
+    auth_otp_expired:'The code expired, request a new one', auth_otp_invalid:'Incorrect code',
+    auth_wait_title:'Request sent', auth_wait_sub:'Your request has been received and is pending admin approval',
+    auth_wait_refresh:'Refresh', auth_wait_support:"You'll get a notification as soon as your account is approved",
+    auth_still_pending:'Still pending approval',
+    tab_ad_usuarios:'Users',
+    adu_status_unverified:'Email not confirmed', adu_status_suspended:'Suspended',
+    adu_unverified_notice:'This user has not confirmed their email yet. Nothing to approve yet.',
+    adu_obj_lbl:'Objects', adu_all_access:'Full access',
+    adu_all_access_note:'This user will be able to see and manage every client and site',
+    adu_code_lbl:'Quick code', adu_active_lbl:'Account active', adu_role_admin:'ADMIN',
+    adu_approve:'Approve', adu_reject:'Reject', adu_reactivate:'Reactivate account',
+    adu_reset_password:'Reset password', adu_save:'Save changes',
+    adu_toast_approved:'User approved', adu_toast_rejected:'Request rejected',
+    adu_toast_reactivated:'Account reactivated', adu_toast_saved:'Changes saved',
+    adu_toast_password_reset:'New password emailed',
+    adu_confirm_reset_password:"Reset this user's password? A new one will be emailed to them.",
+    adu_filter_pending:'Pending', adu_filter_active:'Active', adu_filter_rejected:'Rejected', adu_filter_suspended:'Suspended',
   }
 };
 
@@ -2281,11 +2876,57 @@ function setPh(id, text) { var el = document.getElementById(id); if (el) el.plac
 
 function applyLang() {
   // PIN
-  var pinTitle = document.querySelector('.pin-title');
-  var pinSub   = document.querySelector('.pin-sub');
+  // AUTH v2 añadió más pantallas que reutilizan las clases .pin-title/
+  // .pin-sub por estilo (login/registro/OTP/espera, cada una con su propio
+  // texto vía id — ver más abajo) — el querySelector genérico de antes
+  // (sin ámbito) ya no vale, ahora tiene que apuntar solo al de #screenPin.
+  var pinTitle = document.querySelector('#screenPin .pin-title');
+  var pinSub   = document.querySelector('#screenPin .pin-sub');
   if (pinTitle) pinTitle.textContent = t('pin_title');
   if (pinSub)   pinSub.textContent   = t('pin_sub');
   setEl('pinOkBtn', t('pin_ok'));
+
+  // AUTH v2: login / registro / OTP / espera de aprobación
+  setEl('alTitle', t('auth_login_title')); setEl('alSub', t('auth_login_sub'));
+  setEl('alEmailLbl', t('auth_email_lbl')); setEl('alPasswordLbl', t('auth_password_lbl'));
+  setEl('alRememberLbl', t('auth_remember')); setEl('alForgotLbl', t('auth_forgot'));
+  setEl('alSubmitBtn', t('auth_login_btn'));
+  setEl('alOrLbl', t('auth_or')); setEl('alQuickCodeLbl', t('auth_quick_code'));
+  setEl('alNoAccountLbl', t('auth_no_account')); setEl('alRegisterLink', t('auth_register_link'));
+  setPh('alEmail', 'tu@email.com');
+
+  setEl('regTitle', t('auth_reg_title')); setEl('regSub', t('auth_reg_sub'));
+  setEl('regNombreLbl', t('auth_reg_nombre')); setEl('regApellidoLbl', t('auth_reg_apellido'));
+  setEl('regTelefonoLbl', t('auth_reg_telefono')); setEl('regEmailLbl', t('auth_reg_email'));
+  setEl('regPasswordLbl', t('auth_reg_password')); setEl('regConfirmLbl', t('auth_reg_confirm'));
+  setEl('regRolLbl', t('auth_reg_rol'));
+  setEl('regRoleOperarioTitle', t('auth_reg_rol_operario')); setEl('regRoleOperarioSub', t('auth_reg_rol_operario_sub'));
+  setEl('regRoleManagerTitle', t('auth_reg_rol_manager')); setEl('regRoleManagerSub', t('auth_reg_rol_manager_sub'));
+  setEl('regTermsLbl', t('auth_reg_terms'));
+  setEl('regSubmitBtn', t('auth_register_btn'));
+  setEl('regHasAccountLbl', t('auth_has_account')); setEl('regLoginLink', t('auth_login_link'));
+
+  setEl('otpTitle', t('auth_otp_title')); setEl('otpSub', t('auth_otp_sub'));
+  setEl('otpValidText', t('auth_otp_valid')); setEl('otpSubmitBtn', t('auth_otp_confirm'));
+  setEl('otpResendLbl', t('auth_otp_no_code')); setEl('otpResendLink', t('auth_otp_resend'));
+  setEl('otpSpamTitle', t('auth_otp_spam_title')); setEl('otpSpamSub', t('auth_otp_spam_sub'));
+
+  setEl('waitTitle', t('auth_wait_title')); setEl('waitSub', t('auth_wait_sub'));
+  setEl('waitRefreshLbl', t('auth_wait_refresh')); setEl('waitSupportText', t('auth_wait_support'));
+
+  // AUTH v2: panel admin — Usuarios
+  setEl('adUsuariosTabLbl', t('tab_ad_usuarios'));
+  setPh('adUsSearch', t('search_ph'));
+  setEl('adUsF-all', t('flt_todos')); setEl('adUsF-pending', t('adu_filter_pending'));
+  setEl('adUsF-active', t('adu_filter_active')); setEl('adUsF-rejected', t('adu_filter_rejected'));
+  setEl('adUsF-suspended', t('adu_filter_suspended'));
+  setEl('adUmEmailLbl', t('auth_email_lbl')); setEl('adUmTelLbl', t('auth_reg_telefono'));
+  setEl('adUmRolLbl', t('auth_reg_rol'));
+  setEl('adUmRoleOperarioTitle', t('auth_reg_rol_operario')); setEl('adUmRoleManagerTitle', t('auth_reg_rol_manager'));
+  setEl('adUmRoleAdminTitle', t('adu_role_admin'));
+  setEl('adUmObjLbl', t('adu_obj_lbl')); setEl('adUmAllAccessLbl', t('adu_all_access'));
+  setEl('adUmCodeLbl', t('adu_code_lbl')); setEl('adUmActiveLbl', t('adu_active_lbl'));
+  if (adUmCurrentUser) renderAdUmActions(); // los botones del footer se generan con innerHTML+t(), hay que regenerarlos al cambiar idioma
 
   // Nav — el nombre del usuario va en navTitle (no se traduce, es un
   // nombre propio); el título de pantalla que antes iba ahí ahora es el
@@ -2296,7 +2937,7 @@ function applyLang() {
   }
 
   // Tabbar
-  var tabs = {tabOpNew:'tab_nuevo',tabOpMine:'tab_mis',tabMgPending:'tab_pending',tabMgHistory:'tab_hist',tabAdJournal:'tab_journal',tabAdAnalisis:'tab_analisis'};
+  var tabs = {tabOpNew:'tab_nuevo',tabOpMine:'tab_mis',tabMgPending:'tab_pending',tabMgHistory:'tab_hist',tabAdJournal:'tab_journal',tabAdAnalisis:'tab_analisis',tabAdUsuarios:'tab_ad_usuarios'};
   Object.keys(tabs).forEach(function(id){
     var el = document.getElementById(id);
     if (el) { var s = el.querySelector('span'); if (s) s.textContent = t(tabs[id]); }
@@ -2724,7 +3365,9 @@ function changeUser() {
   document.getElementById('mainNav').style.display = 'none';
   document.body.classList.add('pin-mode');
   renderPinDots();
-  document.getElementById('screenPin').style.display = 'flex';
+  // AUTH v2: "cambiar de usuario" vuelve al login general, no directo al
+  // keypad — el siguiente usuario puede querer entrar por otro método.
+  showLoginScreen();
 }
 
 function submitPin() {
@@ -2770,6 +3413,439 @@ function submitPin() {
     });
 }
 
+/* ════════ AUTH v2: login por email/contraseña, Google, registro, OTP,
+ * espera de aprobación admin. Todas las vías convergen en onAuthSuccess()
+ * — mismo destino que submitPin() (currentUser/saveUserToDevice/
+ * saveUserCache/idioma), así el resto de la app (routeToRoleScreen,
+ * OneSignal, etc.) no necesita saber qué método se usó para entrar.
+ * ════════ */
+var AUTH_SCREENS = ['screenAuthLogin', 'screenRegister', 'screenOtpVerify', 'screenWaitingApproval'];
+var pendingOtpEmail = '';
+var registerPrefill = null; // nombre/apellido/email que llegan desde Google cuando hace falta completar el registro
+var registerSelectedRole = 'operario';
+var langWelcomeNextStep = null; // ver confirmInitialLang() / showGreetThenNotify()
+
+function hideAllAuthScreens() {
+  AUTH_SCREENS.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.remove('show');
+  });
+}
+function showAuthScreen(id) {
+  hideAllAuthScreens();
+  document.getElementById('screenPin').style.display = 'none';
+  var el = document.getElementById(id);
+  if (el) el.classList.add('show');
+}
+function showLoginScreen() {
+  showAuthScreen('screenAuthLogin');
+}
+function showRegisterScreen(prefill) {
+  showAuthScreen('screenRegister');
+  if (prefill) {
+    document.getElementById('regNombre').value = prefill.nombre || '';
+    document.getElementById('regApellido').value = prefill.apellido || '';
+    document.getElementById('regEmail').value = prefill.email || '';
+    document.getElementById('regEmail').readOnly = !!prefill.email;
+    registerPrefill = prefill;
+  } else {
+    document.getElementById('regEmail').readOnly = false;
+    registerPrefill = null;
+  }
+  onRegisterInput();
+}
+// Punto de entrada del botón "Entrar con código rápido" — el keypad
+// existente (#screenPin) no cambia en absoluto, solo se muestra bajo
+// demanda en vez de ser la pantalla por defecto.
+function showPinKeypadFromLogin() {
+  hideAllAuthScreens();
+  // currentPin es también el buffer de dígitos del keypad mientras se
+  // teclea (ver pressKey/renderPinDots) — si veníamos de otro método de
+  // login currentPin puede contener un código largo, no 4 dígitos, y
+  // pressKey() bloquearía cualquier tecla nueva (currentPin.length>=4).
+  currentPin = '';
+  renderPinDots();
+  document.getElementById('pinError').classList.remove('show');
+  document.getElementById('screenPin').style.display = 'flex';
+}
+
+function toggleAuthPasswordVisibility(inputId, btn) {
+  var input = document.getElementById(inputId);
+  var icon = btn.querySelector('i');
+  if (input.type === 'password') { input.type = 'text'; icon.className = 'ti ti-eye-off'; }
+  else { input.type = 'password'; icon.className = 'ti ti-eye'; }
+}
+
+function showAuthError(elId, msg) {
+  var el = document.getElementById(elId);
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function clearAuthError(elId) {
+  var el = document.getElementById(elId);
+  if (el) el.classList.remove('show');
+}
+function showForgotPasswordHint() {
+  showAuthError('alError', t('auth_forgot_hint'));
+}
+
+/* ── LOGIN por email/contraseña ── */
+function onAuthLoginInput() {
+  clearAuthError('alError');
+  var email = document.getElementById('alEmail').value.trim();
+  var pass = document.getElementById('alPassword').value;
+  var ready = email.indexOf('@') > -1 && pass.length > 0;
+  var btn = document.getElementById('alSubmitBtn');
+  btn.disabled = !ready;
+  btn.classList.toggle('ready', ready);
+}
+
+function submitAuthLogin() {
+  var btn = document.getElementById('alSubmitBtn');
+  if (btn.disabled) return;
+  var email = document.getElementById('alEmail').value.trim();
+  var password = document.getElementById('alPassword').value;
+  clearAuthError('alError');
+  btn.disabled = true;
+  setEl('alSubmitBtn', t('auth_signing_in'));
+
+  fetch(WEBAPP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'loginPassword', email: email, password: password })
+  }).then(function(r){ return r.json(); }).then(function(result) {
+    btn.disabled = false;
+    setEl('alSubmitBtn', t('auth_login_btn'));
+    onAuthLoginInput();
+    if (result && result.valid) {
+      onAuthSuccess(result);
+    } else if (result && result.needsVerification) {
+      openOtpScreen(result.email);
+    } else if (result && result.blocked) {
+      showAuthError('alError', result.message || t('auth_err_blocked'));
+    } else if (result && result.rejected) {
+      showAuthError('alError', t('auth_err_rejected'));
+    } else if (result && result.suspended) {
+      showAuthError('alError', t('auth_err_suspended'));
+    } else {
+      showAuthError('alError', t('auth_err_invalid'));
+    }
+  }).catch(function() {
+    btn.disabled = false;
+    setEl('alSubmitBtn', t('auth_login_btn'));
+    onAuthLoginInput();
+    showAuthError('alError', t('auth_err_network'));
+  });
+}
+
+/* ── REGISTRO ── */
+function setRegisterRole(role) {
+  registerSelectedRole = role;
+  document.getElementById('regRoleOperario').classList.toggle('active', role === 'operario');
+  document.getElementById('regRoleManager').classList.toggle('active', role === 'manager');
+}
+
+function onRegisterInput() {
+  clearAuthError('regError');
+  ['regNombre','regApellido','regTelefono'].forEach(function(id) {
+    var ok = document.getElementById(id).value.trim().length > 1;
+    document.getElementById(id + 'Field').classList.toggle('ok', ok);
+  });
+  var email = document.getElementById('regEmail').value.trim();
+  var emailOk = email.indexOf('@') > -1 && email.indexOf('.') > -1;
+  document.getElementById('regEmailField').classList.toggle('ok', emailOk);
+
+  var isGoogle = !!(registerPrefill && registerPrefill.email);
+  var pass = document.getElementById('regPassword').value;
+  var confirm = document.getElementById('regConfirm').value;
+  var passOk = isGoogle || pass.length >= 6;
+  var confirmOk = isGoogle || (confirm.length > 0 && pass === confirm);
+  document.getElementById('regPasswordField').classList.toggle('ok', passOk && !isGoogle);
+  document.getElementById('regConfirmField').classList.toggle('ok', confirmOk && !isGoogle);
+
+  var nombre = document.getElementById('regNombre').value.trim();
+  var apellido = document.getElementById('regApellido').value.trim();
+  var telefono = document.getElementById('regTelefono').value.trim();
+  var terms = document.getElementById('regTerms').checked;
+
+  var ready = nombre.length > 1 && apellido.length > 1 && telefono.length > 5 &&
+              emailOk && passOk && confirmOk && terms;
+  var btn = document.getElementById('regSubmitBtn');
+  btn.disabled = !ready;
+  btn.classList.toggle('ready', ready);
+}
+
+function submitRegister() {
+  var btn = document.getElementById('regSubmitBtn');
+  if (btn.disabled) return;
+  clearAuthError('regError');
+  btn.disabled = true;
+  setEl('regSubmitBtn', t('auth_registering'));
+
+  var payload = {
+    action: 'registerUser',
+    nombre: document.getElementById('regNombre').value.trim(),
+    apellido: document.getElementById('regApellido').value.trim(),
+    telefono: document.getElementById('regTelefono').value.trim(),
+    email: document.getElementById('regEmail').value.trim(),
+    password: document.getElementById('regPassword').value,
+    rol: registerSelectedRole,
+    lang: currentLang
+  };
+  if (registerPrefill && registerPrefill.email) {
+    payload.viaGoogle = true;
+    payload.googleSub = registerPrefill.googleSub || '';
+  }
+
+  fetch(WEBAPP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  }).then(function(r){ return r.json(); }).then(function(result) {
+    btn.disabled = false;
+    setEl('regSubmitBtn', t('auth_register_btn'));
+    if (result && result.status === 'ok') {
+      if (result.needsVerification) {
+        openOtpScreen(result.email);
+      } else {
+        // Registro vía Google: el email ya viene confirmado por Google —
+        // se salta el paso de OTP y va directo a la pantalla de espera,
+        // igual que tras verificar un código por email.
+        onAuthSuccess({
+          codigo: result.codigo, rol: result.rol, nombre: result.nombre,
+          accountStatus: result.accountStatus, lang: currentLang, obras: [], allAccess: false
+        });
+      }
+    } else {
+      showAuthError('regError', (result && result.message) || t('auth_err_generic'));
+      onRegisterInput();
+    }
+  }).catch(function() {
+    btn.disabled = false;
+    setEl('regSubmitBtn', t('auth_register_btn'));
+    showAuthError('regError', t('auth_err_network'));
+  });
+}
+
+/* ── VERIFICACIÓN OTP ── */
+function openOtpScreen(email) {
+  pendingOtpEmail = email;
+  setEl('otpEmailText', email);
+  showAuthScreen('screenOtpVerify');
+  clearAuthError('otpError');
+  var boxes = document.querySelectorAll('#otpBoxes .otp-box');
+  boxes.forEach(function(b){ b.value = ''; b.classList.remove('filled','err'); });
+  var submitBtn = document.getElementById('otpSubmitBtn');
+  submitBtn.disabled = true;
+  submitBtn.classList.remove('ready');
+  startOtpResendCooldown();
+  setTimeout(function(){ boxes[0] && boxes[0].focus(); }, 350);
+}
+
+function otpCurrentCode() {
+  var code = '';
+  document.querySelectorAll('#otpBoxes .otp-box').forEach(function(b){ code += b.value; });
+  return code;
+}
+
+function onOtpBoxesReady() {
+  var boxes = document.querySelectorAll('#otpBoxes .otp-box');
+  boxes.forEach(function(box, i) {
+    box.addEventListener('input', function() {
+      box.value = box.value.replace(/[^0-9]/g, '').slice(0, 1);
+      box.classList.toggle('filled', !!box.value);
+      clearAuthError('otpError');
+      if (box.value && boxes[i + 1]) boxes[i + 1].focus();
+      var ready = otpCurrentCode().length === 6;
+      var submitBtn = document.getElementById('otpSubmitBtn');
+      submitBtn.disabled = !ready;
+      submitBtn.classList.toggle('ready', ready);
+      if (ready) submitOtpVerify();
+    });
+    box.addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace' && !box.value && boxes[i - 1]) boxes[i - 1].focus();
+    });
+    box.addEventListener('paste', function(e) {
+      e.preventDefault();
+      var text = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+      text.split('').forEach(function(ch, idx) { if (boxes[idx]) { boxes[idx].value = ch; boxes[idx].classList.add('filled'); } });
+      var last = boxes[Math.min(text.length, 6) - 1];
+      if (last) last.focus();
+      var ready = otpCurrentCode().length === 6;
+      var submitBtn = document.getElementById('otpSubmitBtn');
+      submitBtn.disabled = !ready;
+      submitBtn.classList.toggle('ready', ready);
+      if (ready) submitOtpVerify();
+    });
+  });
+}
+
+function submitOtpVerify() {
+  var code = otpCurrentCode();
+  if (code.length !== 6) return;
+  clearAuthError('otpError');
+  var boxes = document.querySelectorAll('#otpBoxes .otp-box');
+
+  fetch(WEBAPP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'verifyOtp', email: pendingOtpEmail, code: code })
+  }).then(function(r){ return r.json(); }).then(function(result) {
+    if (result && result.valid) {
+      onAuthSuccess(result);
+    } else {
+      boxes.forEach(function(b){ b.classList.add('err'); b.value = ''; b.classList.remove('filled'); });
+      setTimeout(function(){ boxes.forEach(function(b){ b.classList.remove('err'); }); boxes[0].focus(); }, 500);
+      showAuthError('otpError', result && result.expired ? t('auth_otp_expired') : t('auth_otp_invalid'));
+      document.getElementById('otpSubmitBtn').disabled = true;
+      document.getElementById('otpSubmitBtn').classList.remove('ready');
+    }
+  }).catch(function() {
+    showAuthError('otpError', t('auth_err_network'));
+  });
+}
+
+var otpResendTimer = null;
+function startOtpResendCooldown() {
+  var seconds = 45;
+  var link = document.getElementById('otpResendLink');
+  var cd = document.getElementById('otpResendCountdown');
+  link.classList.add('disabled');
+  if (otpResendTimer) clearInterval(otpResendTimer);
+  cd.textContent = ' (' + seconds + 's)';
+  otpResendTimer = setInterval(function() {
+    seconds--;
+    if (seconds <= 0) {
+      clearInterval(otpResendTimer);
+      link.classList.remove('disabled');
+      cd.textContent = '';
+    } else {
+      cd.textContent = ' (' + seconds + 's)';
+    }
+  }, 1000);
+}
+
+function requestResendOtp() {
+  var link = document.getElementById('otpResendLink');
+  if (link.classList.contains('disabled')) return;
+  fetch(WEBAPP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'resendOtp', email: pendingOtpEmail })
+  }).then(function(r){ return r.json(); }).then(function(result) {
+    if (result && result.status === 'ok') { showToast(t('auth_otp_resent')); startOtpResendCooldown(); }
+    else { showToast((result && result.message) || t('auth_err_generic'), true); }
+  }).catch(function() { showToast(t('auth_err_network'), true); });
+}
+
+/* ── ESPERA DE APROBACIÓN ──
+ * OneSignal se enlaza YA aquí (no solo al llegar a la pantalla del rol,
+ * como hace routeToRoleScreen) — si no, el push de "cuenta aprobada" no
+ * tendría ningún external_id de OneSignal al que llegar, porque este
+ * dispositivo nunca se habría vinculado antes de la aprobación. */
+function showWaitingScreen() {
+  showAuthScreen('screenWaitingApproval');
+  linkOneSignalUser();
+  ensureNotifyPermission();
+}
+
+function refreshWaitingStatus() {
+  var icon = document.getElementById('waitRefreshIcon');
+  icon.style.animation = 'spin .7s linear infinite';
+  fetch(WEBAPP_URL + '?action=getStatusFor&codigo=' + encodeURIComponent(currentPin) + '&t=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(result) {
+      icon.style.animation = '';
+      if (result && result.valid) onAuthSuccess(result);
+      else showToast(t('auth_still_pending'));
+    }).catch(function() {
+      icon.style.animation = '';
+      showToast(t('auth_err_network'), true);
+    });
+}
+
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible') {
+    var w = document.getElementById('screenWaitingApproval');
+    if (w && w.classList.contains('show')) refreshWaitingStatus();
+  }
+});
+
+/* ── LOGIN / REGISTRO CON GOOGLE ──
+ * initGoogleSignIn() se llama una vez al arrancar la app (initApp) — si no
+ * hay Client ID configurado, el botón se queda oculto (display:none de
+ * fábrica en #googleBtnContainer) en vez de intentar inicializar un login
+ * que fallaría. El SDK de Google (accounts.google.com/gsi/client) se carga
+ * async/defer, así que puede no estar listo todavía en el primer intento
+ * — se reintenta con un backoff corto en vez de fallar silenciosamente. */
+function initGoogleSignIn(retriesLeft) {
+  if (!GOOGLE_CLIENT_ID) return;
+  if (!(window.google && window.google.accounts && window.google.accounts.id)) {
+    if (retriesLeft === undefined) retriesLeft = 10;
+    if (retriesLeft <= 0) return;
+    setTimeout(function(){ initGoogleSignIn(retriesLeft - 1); }, 300);
+    return;
+  }
+  try {
+    google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredential });
+    var container = document.getElementById('googleBtnContainer');
+    container.style.display = 'flex';
+    google.accounts.id.renderButton(container, {
+      type: 'standard', theme: 'outline', size: 'large', shape: 'rectangular',
+      text: 'continue_with', width: 340
+    });
+  } catch (e) { console.log('[GoogleSignIn] init error:', e && e.message); }
+}
+
+function handleGoogleCredential(response) {
+  fetch(WEBAPP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'googleLogin', idToken: response.credential })
+  }).then(function(r){ return r.json(); }).then(function(result) {
+    if (result && result.valid) {
+      onAuthSuccess(result);
+    } else if (result && result.needsRegistration) {
+      showRegisterScreen({
+        nombre: result.prefill.nombre, apellido: result.prefill.apellido,
+        email: result.prefill.email, googleSub: result.googleSub
+      });
+    } else if (result && result.rejected) {
+      showLoginScreen();
+      showAuthError('alError', t('auth_err_rejected'));
+    } else if (result && result.suspended) {
+      showLoginScreen();
+      showAuthError('alError', t('auth_err_suspended'));
+    } else {
+      showLoginScreen();
+      showAuthError('alError', t('auth_err_invalid'));
+    }
+  }).catch(function() {
+    showLoginScreen();
+    showAuthError('alError', t('auth_err_network'));
+  });
+}
+
+/* ── DESTINO ÚNICO tras cualquier login exitoso (PIN / contraseña / Google
+ * / OTP) — replica lo que hacía submitPin() (currentUser/saveUserToDevice/
+ * saveUserCache/idioma) y luego bifurca según accountStatus: activo → el
+ * flujo de siempre (greet→ruta de rol); pendiente → pantalla de espera;
+ * rechazado/suspendido → de vuelta al login con el mensaje correspondiente. */
+function onAuthSuccess(payload) {
+  currentUser = payload;
+  currentPin = payload.codigo;
+  saveUserToDevice(payload.codigo);
+  saveUserCache(payload, payload.codigo);
+  if (payload.lang) { currentLang = payload.lang; saveLangToDevice(payload.lang); applyLang(); }
+
+  var status = payload.accountStatus || 'active';
+  if (status === 'rejected') { showLoginScreen(); showAuthError('alError', t('auth_err_rejected')); return; }
+  if (status === 'suspended') { showLoginScreen(); showAuthError('alError', t('auth_err_suspended')); return; }
+  if (status !== 'active') { showWaitingScreen(); return; }
+  showGreetThenRoute();
+}
+
 /* ════════ CARGA → SALUDO → PERMISO DE NOTIFICACIONES ════════
  * Pedido: tras el PIN correcto, el orden visible debe ser siempre carga
  * (spinner, reutiliza #splashScreen) → una vez los datos están listos,
@@ -2781,6 +3857,7 @@ function submitPin() {
  * comentario de revealActiveTabbar()), nunca antes. */
 function showGreetThenRoute() {
   document.getElementById('screenPin').style.display = 'none';
+  hideAllAuthScreens();
 
   var splash = document.getElementById('splashScreen');
   if (splash) { splash.classList.remove('hide'); splash.style.display = 'flex'; }
@@ -2819,7 +3896,16 @@ function showGreetThenNotify() {
   // pide el permiso de notificaciones.
   setTimeout(function() {
     document.getElementById('screenGreet').style.display = 'none';
-    ensureNotifyPermission();
+    // Si el usuario nunca ha elegido idioma explícitamente (caso típico:
+    // cuenta recién aprobada, primera vez que llega hasta aquí),
+    // reutilizamos la misma pantalla de bienvenida-idioma que ya existía
+    // para el primer arranque — ver #screenLangWelcome / confirmInitialLang().
+    if (!getSavedLang()) {
+      langWelcomeNextStep = function() { ensureNotifyPermission(); };
+      document.getElementById('screenLangWelcome').style.display = 'flex';
+    } else {
+      ensureNotifyPermission();
+    }
   }, 900);
 }
 
@@ -2828,6 +3914,7 @@ function routeToRoleScreen(deferTabbar) {
   document.getElementById('mainNav').style.display = '';
   document.body.classList.remove('pin-mode');
   document.getElementById('screenPin').style.display = 'none';
+  hideAllAuthScreens();
   // BUG CORREGIDO ("las secciones quedan tapadas bajo la cabecera"): la
   // primera medición de syncNavHeight() ocurre en DOMContentLoaded, ANTES
   // del login, cuando mainNav todavía está display:none (altura 0) — deja
@@ -5590,10 +6677,15 @@ function switchAdTab(tab) {
   if (tab !== 'journal') markVisibleQueueAsSeen();
   document.getElementById('tabAdJournal').classList.toggle('active', tab === 'journal');
   document.getElementById('tabAdAnalisis').classList.toggle('active', tab === 'analisis');
+  document.getElementById('tabAdUsuarios').classList.toggle('active', tab === 'usuarios');
   document.getElementById('tabbarAdmin').classList.toggle('tab-1-active', tab === 'analisis');
+  document.getElementById('tabbarAdmin').classList.toggle('tab-2-active', tab === 'usuarios');
   document.getElementById('adPanelJournal').style.display = tab === 'journal' ? 'block' : 'none';
   document.getElementById('adPanelAnalisis').style.display = tab === 'analisis' ? 'block' : 'none';
+  document.getElementById('adPanelUsuarios').style.display = tab === 'usuarios' ? 'block' : 'none';
+  document.getElementById('adJournalSearchBar').style.display = tab === 'journal' ? 'block' : 'none';
   if (tab === 'analisis') initAnalisis();
+  if (tab === 'usuarios') loadAdminUsers();
 }
 
 /* ════════ ADMIN: ANÁLISIS ════════ */
@@ -5785,6 +6877,271 @@ function re_renderAnalisisOb() { renderAnalisis(); }
 
 function initAdminScreen() {
   return loadAdminData();
+}
+
+/* ════════ ADMIN: PANEL USUARIOS (AUTH v2) ════════
+ * Gestión de altas: aprobar/rechazar solicitudes, editar rol/objetos/
+ * código rápido/estado de cuentas activas, restablecer contraseña (sin
+ * poder verla — ver la nota de seguridad en Code_v5.gs). Todo pasa por un
+ * único modal reutilizable (#adUserModal) cuyo footer de acciones cambia
+ * según el status del usuario (ver renderAdUmActions). */
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+  });
+}
+
+var adUsersAll = [];
+var adUsStatusFilter = '';
+var adClienteObraPairs = null;
+var adUmCurrentUser = null;
+var adUmSelectedRole = 'operario';
+var adUmSelectedObjs = {};
+
+var AD_STATUS_LABEL_KEYS = {
+  pending_verification: 'adu_status_unverified', pending_approval: 'status_pending',
+  active: 'status_approved', rejected: 'status_rejected', suspended: 'adu_status_suspended'
+};
+var AD_STATUS_CLASS = {
+  pending_verification: 'st-unverified', pending_approval: 'st-pending',
+  active: 'st-approved', rejected: 'st-rejected', suspended: 'st-suspended'
+};
+var AD_ROLE_LABEL_KEYS = { operario: 'greet_worker', manager: 'greet_manager', admin: 'greet_admin' };
+
+function loadAdminUsers() {
+  document.getElementById('adUsersList').innerHTML = '<div class="adu-empty">' + t('loading') + '</div>';
+  fetch(WEBAPP_URL + '?action=adminListUsers&codigo=' + encodeURIComponent(currentPin) + '&t=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(result) {
+      if (result && result.status === 'ok') { adUsersAll = result.users || []; renderAdminUsers(); }
+      else document.getElementById('adUsersList').innerHTML = '<div class="adu-empty">' + t('auth_err_generic') + '</div>';
+    })
+    .catch(function() {
+      document.getElementById('adUsersList').innerHTML = '<div class="adu-empty">' + t('auth_err_network') + '</div>';
+    });
+}
+
+function setAdUsStatusFilter(btn, status) {
+  document.querySelectorAll('#adUsStatusFilters .ad-flt-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  adUsStatusFilter = status;
+  renderAdminUsers();
+}
+
+function renderAdminUsers() {
+  var q = (document.getElementById('adUsSearch').value || '').trim().toLowerCase();
+  var list = adUsersAll.filter(function(u) {
+    if (adUsStatusFilter && u.status !== adUsStatusFilter) return false;
+    if (!q) return true;
+    var hay = ((u.nombre||'') + ' ' + (u.apellido||'') + ' ' + (u.email||'') + ' ' + (u.telefono||'')).toLowerCase();
+    return hay.indexOf(q) > -1;
+  });
+  list.sort(function(a, b) {
+    var pa = a.status === 'pending_approval' ? 0 : 1;
+    var pb = b.status === 'pending_approval' ? 0 : 1;
+    if (pa !== pb) return pa - pb;
+    return (a.nombre || '').localeCompare(b.nombre || '');
+  });
+  var container = document.getElementById('adUsersList');
+  if (!list.length) { container.innerHTML = '<div class="adu-empty">' + t('flt_sin_resultados') + '</div>'; return; }
+  container.innerHTML = list.map(function(u) {
+    var statusCls = AD_STATUS_CLASS[u.status] || 'st-suspended';
+    var statusLbl = t(AD_STATUS_LABEL_KEYS[u.status] || 'adu_status_suspended');
+    var roleLbl = t(AD_ROLE_LABEL_KEYS[u.rol] || 'greet_worker');
+    var displayName = ((u.nombre || '') + ' ' + (u.apellido || '')).trim() || u.email || u.codigo;
+    return '<div class="adu-card" onclick="openAdUserModalByCodigo(\'' + escapeHtml(u.codigo).replace(/'/g, "\\'") + '\')">' +
+      '<div class="adu-card-top"><span class="adu-name">' + escapeHtml(displayName) + '</span>' +
+      '<span class="ad-status-badge ' + statusCls + '">' + escapeHtml(statusLbl) + '</span></div>' +
+      '<div class="adu-meta"><i class="ti ti-mail"></i>' + escapeHtml(u.email || '—') + '</div>' +
+      '<div class="adu-meta"><i class="ti ti-id-badge-2"></i>' + escapeHtml(roleLbl) + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+function ensureClienteObraPairs() {
+  if (adClienteObraPairs) return Promise.resolve(adClienteObraPairs);
+  return fetch(WEBAPP_URL + '?action=getClienteObraPairs&t=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(result) { adClienteObraPairs = (result && result.pairs) || []; return adClienteObraPairs; })
+    .catch(function() { adClienteObraPairs = []; return adClienteObraPairs; });
+}
+
+function openAdUserModalByCodigo(codigo) {
+  var u = adUsersAll.filter(function(x){ return x.codigo === codigo; })[0];
+  if (u) openAdUserModal(u);
+}
+
+function openAdUserModal(user) {
+  adUmCurrentUser = user;
+  adUmSelectedObjs = {};
+  clearAuthError('adUmError');
+
+  setEl('adUmName', ((user.nombre || '') + ' ' + (user.apellido || '')).trim() || user.email || user.codigo);
+  var badge = document.getElementById('adUmStatusBadge');
+  badge.className = 'ad-status-badge ' + (AD_STATUS_CLASS[user.status] || 'st-suspended');
+  badge.textContent = t(AD_STATUS_LABEL_KEYS[user.status] || 'adu_status_suspended');
+
+  document.getElementById('adUmEmail').value = user.email || '';
+  document.getElementById('adUmTel').value = user.telefono || '';
+  document.getElementById('adUmCode').value = user.codigo || '';
+
+  var isUnverified = user.status === 'pending_verification';
+  document.getElementById('adUmFieldsWrap').style.display = isUnverified ? 'none' : 'block';
+  var notice = document.getElementById('adUmPendingVerifNotice');
+  notice.style.display = isUnverified ? 'block' : 'none';
+  if (isUnverified) notice.textContent = t('adu_unverified_notice');
+
+  setAdUmRole(user.rol || 'operario');
+
+  var isAllAccess = user.obras === '*';
+  document.getElementById('adUmAllAccess').checked = isAllAccess;
+  if (!isAllAccess && user.obras) {
+    user.obras.split(',').forEach(function(pair) {
+      var parts = pair.split(':');
+      if (parts.length === 2) adUmSelectedObjs[parts[0].trim() + '::' + parts[1].trim()] = true;
+    });
+  }
+  renderAdUmObjList();
+
+  var statusRow = document.getElementById('adUmStatusRow');
+  if (user.status === 'active' || user.status === 'suspended') {
+    statusRow.style.display = 'flex';
+    document.getElementById('adUmActiveToggle').checked = user.status === 'active';
+  } else {
+    statusRow.style.display = 'none';
+  }
+
+  renderAdUmActions();
+  document.getElementById('adUserModal').classList.add('show');
+}
+
+function closeAdUserModal() {
+  document.getElementById('adUserModal').classList.remove('show');
+}
+
+function setAdUmRole(role) {
+  adUmSelectedRole = role;
+  document.getElementById('adUmRoleOperario').classList.toggle('active', role === 'operario');
+  document.getElementById('adUmRoleManager').classList.toggle('active', role === 'manager');
+  document.getElementById('adUmRoleAdmin').classList.toggle('active', role === 'admin');
+}
+
+function onAdUmAllAccessChange() { renderAdUmObjList(); }
+
+function renderAdUmObjList() {
+  var allAccess = document.getElementById('adUmAllAccess').checked;
+  var wrap = document.getElementById('adUmObjList');
+  if (allAccess) {
+    wrap.innerHTML = '<div style="padding:14px;text-align:center;font-size:12.5px;color:#8e8e93">' + t('adu_all_access_note') + '</div>';
+    return;
+  }
+  wrap.innerHTML = '<div style="padding:14px;text-align:center;font-size:12.5px;color:#8e8e93">' + t('loading') + '</div>';
+  ensureClienteObraPairs().then(function(pairs) {
+    if (document.getElementById('adUmAllAccess').checked) return; // pudo cambiar mientras cargaba
+    if (!pairs.length) { wrap.innerHTML = '<div style="padding:14px;text-align:center;font-size:12.5px;color:#8e8e93">—</div>'; return; }
+    wrap.innerHTML = pairs.map(function(p) {
+      var key = p.cliente + '::' + p.obra;
+      var checked = adUmSelectedObjs[key] ? 'checked' : '';
+      return '<label style="display:flex;align-items:center;gap:8px;padding:8px 6px;font-size:12.5px;color:#000;border-bottom:.5px solid #ececef">' +
+        '<input type="checkbox" ' + checked + ' onchange="toggleAdUmObj(\'' + key.replace(/'/g, "\\'") + '\', this.checked)" style="accent-color:#0049c5;width:16px;height:16px;flex-shrink:0">' +
+        '<span>' + escapeHtml(p.cliente) + ' — ' + escapeHtml(p.obra) + '</span></label>';
+    }).join('');
+  });
+}
+
+function toggleAdUmObj(key, checked) {
+  if (checked) adUmSelectedObjs[key] = true; else delete adUmSelectedObjs[key];
+}
+
+function generateAdUmCode() {
+  var code = '';
+  for (var i = 0; i < 4; i++) code += Math.floor(Math.random() * 10);
+  document.getElementById('adUmCode').value = code;
+}
+
+function onAdUmActiveToggle() {} // se lee directamente al guardar
+
+function buildAdUmObrasString() {
+  if (document.getElementById('adUmAllAccess').checked) return '*';
+  return Object.keys(adUmSelectedObjs).map(function(k){ return k.replace('::', ':'); }).join(',');
+}
+
+function renderAdUmActions() {
+  var wrap = document.getElementById('adUmActions');
+  var status = adUmCurrentUser.status;
+  if (status === 'pending_verification') { wrap.innerHTML = ''; return; }
+  if (status === 'pending_approval') {
+    wrap.innerHTML =
+      '<button class="mg-modal-confirm positive" style="width:100%" onclick="approveAdUser()">' + t('adu_approve') + '</button>' +
+      '<button class="mg-modal-confirm" style="width:100%" onclick="rejectAdUser()">' + t('adu_reject') + '</button>';
+    return;
+  }
+  if (status === 'rejected' || status === 'suspended') {
+    wrap.innerHTML = '<button class="mg-modal-confirm positive" style="width:100%" onclick="reactivateAdUser()">' + t('adu_reactivate') + '</button>';
+    return;
+  }
+  var resetBtnHtml = adUmCurrentUser.hasPassword
+    ? '<button class="mg-modal-cancel" style="width:100%" onclick="resetAdUserPassword()">' + t('adu_reset_password') + '</button>' : '';
+  wrap.innerHTML =
+    '<button class="mg-modal-confirm positive" style="width:100%" onclick="saveAdUserChanges()">' + t('adu_save') + '</button>' + resetBtnHtml;
+}
+
+function adUmPostAction(action, extra, onSuccess) {
+  clearAuthError('adUmError');
+  var payload = Object.assign({ action: action, codigo: currentPin, targetCodigo: adUmCurrentUser.codigo }, extra || {});
+  return fetch(WEBAPP_URL, {
+    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload)
+  }).then(function(r){ return r.json(); }).then(function(result) {
+    if (result && result.status === 'ok') { onSuccess(result); }
+    else { showAuthError('adUmError', (result && result.message) || t('auth_err_generic')); }
+  }).catch(function() { showAuthError('adUmError', t('auth_err_network')); });
+}
+
+function approveAdUser() {
+  var newCodigo = document.getElementById('adUmCode').value.trim();
+  adUmPostAction('adminApproveUser', {
+    rol: adUmSelectedRole, obras: buildAdUmObrasString(), newCodigo: newCodigo
+  }, function() {
+    showToast(t('adu_toast_approved'));
+    closeAdUserModal();
+    loadAdminUsers();
+  });
+}
+
+function rejectAdUser() {
+  adUmPostAction('adminRejectUser', {}, function() {
+    showToast(t('adu_toast_rejected'));
+    closeAdUserModal();
+    loadAdminUsers();
+  });
+}
+
+function reactivateAdUser() {
+  adUmPostAction('adminUpdateUser', { status: 'active' }, function() {
+    showToast(t('adu_toast_reactivated'));
+    closeAdUserModal();
+    loadAdminUsers();
+  });
+}
+
+function saveAdUserChanges() {
+  var newCodigo = document.getElementById('adUmCode').value.trim();
+  var isActive = document.getElementById('adUmActiveToggle').checked;
+  adUmPostAction('adminUpdateUser', {
+    rol: adUmSelectedRole, obras: buildAdUmObrasString(),
+    status: isActive ? 'active' : 'suspended', newCodigo: newCodigo
+  }, function() {
+    showToast(t('adu_toast_saved'));
+    closeAdUserModal();
+    loadAdminUsers();
+  });
+}
+
+function resetAdUserPassword() {
+  if (!confirm(t('adu_confirm_reset_password'))) return;
+  adUmPostAction('adminResetPassword', {}, function() {
+    showToast(t('adu_toast_password_reset'));
+  });
 }
 
 /* ════════ NOTIFICACIONES INTERNAS ════════ */
@@ -7021,7 +8378,7 @@ document.addEventListener('visibilitychange', function() {
   var modalIds = [
     'reportDetailModal', 'mgDetailModal', 'editReportModal',
     'mgRejectModal', 'notifFullModal', 'photoGalleryModal', 'confirmDeleteModal',
-    'editSavedModal'
+    'editSavedModal', 'adUserModal'
   ];
   // BUG CORREGIDO ("al confirmar borrar, Cancelar/Eliminar quedan tapados
   // por el tabbar inferior"): mgRejectModal/confirmDeleteModal son
@@ -7090,12 +8447,14 @@ document.addEventListener('visibilitychange', function() {
 function startAppAfterGates(){
   var saved = getSavedPin();
 
-  // Если PIN не сохранён — роль ещё не выбрана. Мгновенно, синхронно
-  // прячем splash без анимации и показываем экран ввода PIN.
+  // Если сессия не сохранена — роль ещё не выбрана. Мгновенно, синхронно
+  // прячем splash без анимации и показываем экран логина (AUTH v2 — antes
+  // era directamente el keypad de PIN; ahora el PIN es una vía alternativa
+  // que se abre desde este login, ver showPinKeypadFromLogin()).
   if (!saved) {
     var s0 = document.getElementById('splashScreen');
     if (s0) s0.style.display = 'none';
-    document.getElementById('screenPin').style.display = 'flex';
+    showLoginScreen();
     return;
   }
 
@@ -7132,24 +8491,44 @@ function startAppAfterGates(){
     // Есть кеш — рендерим экран сразу (он скрыт под splash), но splash
     // держим до тех пор, пока список действительно не подгрузится свежим.
     currentUser = cached;
-    var readyPromise = routeToRoleScreen(true);
-    hideSplashWhenReady(readyPromise, 3000);
-    // Фоновая проверка актуальности PIN.
+    // AUTH v2: el caché ya trae accountStatus (viene de buildAuthPayload en
+    // el backend, ver onAuthSuccess) — una cuenta que quedó pendiente/
+    // rechazada/suspendida NO debe entrar a routeToRoleScreen, tiene que
+    // volver a la pantalla que le corresponde (espera/login+mensaje).
+    // onAuthSuccess ya sabe hacer esa bifurcación, así que se reutiliza
+    // tal cual en vez de duplicar la lógica aquí.
+    if ((cached.accountStatus || 'active') !== 'active') {
+      hideSplash(150);
+      onAuthSuccess(cached);
+    } else {
+      var readyPromise = routeToRoleScreen(true);
+      hideSplashWhenReady(readyPromise, 3000);
+    }
+    // Фоновая проверка актуальности сесии — getStatusFor (no checkUser):
+    // checkUser() exige ACTIVO==='TRUE', que es FALSE mientras una cuenta
+    // nueva está pending_verification/pending_approval, así que confundiría
+    // "todavía no aprobado" con "código inválido". getStatusFor() no exige
+    // ACTIVO, devuelve el mismo accountStatus real que ya usamos arriba.
     // BUG CORREGIDO ("la app pide el PIN constantemente"): antes CUALQUIER
     // respuesta que no fuera exactamente {status:'ok',valid:true} borraba
-    // el PIN guardado y forzaba el login — pero checkUser() en Code_v5.gs
-    // solo devuelve {status:'ok',valid:false} cuando el PIN es REALMENTE
-    // inválido. Cualquier otra forma (p.ej. {status:'error',message:...}
-    // o un cold-start/cuota de Apps Script) es un fallo de infraestructura,
-    // no un "PIN incorrecto", y se trataba igual, cerrando sesión sin
-    // motivo. Ahora solo se cierra sesión ante el "no válido" EXPLÍCITO.
-    fetch(WEBAPP_URL + '?action=checkUser&codigo=' + encodeURIComponent(saved) + '&t=' + Date.now())
+    // la sesión guardada y forzaba el login — pero el backend solo
+    // devuelve {status:'ok',valid:false} cuando el código es REALMENTE
+    // inválido (fila no encontrada). Cualquier otra forma (p.ej.
+    // {status:'error',message:...} o un cold-start/cuota de Apps Script)
+    // es un fallo de infraestructura, no un "código incorrecto", y se
+    // trataba igual, cerrando sesión sin motivo. Ahora solo se cierra
+    // sesión ante el "no válido" EXPLÍCITO.
+    fetch(WEBAPP_URL + '?action=getStatusFor&codigo=' + encodeURIComponent(saved) + '&t=' + Date.now())
       .then(function(r){ return r.json(); })
       .then(function(result){
         if (result && result.status === 'ok' && result.valid) {
+          var statusChanged = (result.accountStatus || 'active') !== (cached.accountStatus || 'active');
           currentUser = result;
           saveUserCache(result, saved);
           if (result.lang && result.lang !== currentLang) { currentLang = result.lang; saveLangToDevice(result.lang); applyLang(); }
+          // El estado cambió mientras la app estaba cerrada (p.ej. se
+          // aprobó/rechazó una solicitud) — re-decide qué pantalla toca.
+          if (statusChanged) onAuthSuccess(result);
         } else if (result && result.status === 'ok' && result.valid === false) {
           try { localStorage.removeItem('parte_user_pin'); } catch(e) {}
           changeUser();
@@ -7160,11 +8539,13 @@ function startAppAfterGates(){
     return;
   }
 
-  // Нет кеша — отправляем сохранённый PIN на сервер (splash показывается пока ждём).
-  // Mismo criterio que arriba: solo se pide el PIN de nuevo si el servidor
-  // dice explícitamente que ya no es válido, nunca por un fallo de red o
-  // una respuesta inesperada.
-  fetch(WEBAPP_URL + '?action=checkUser&codigo=' + encodeURIComponent(saved) + '&t=' + Date.now())
+  // Нет кеша — отправляем сохранённую сессию на сервер (splash показывается
+  // пока ждём). getStatusFor, no checkUser — mismo motivo que arriba
+  // (accountStatus-aware, no exige ACTIVO==='TRUE'). Mismo criterio de
+  // siempre: solo volvemos al login si el servidor dice explícitamente que
+  // el código ya no es válido, nunca por un fallo de red o una respuesta
+  // inesperada.
+  fetch(WEBAPP_URL + '?action=getStatusFor&codigo=' + encodeURIComponent(saved) + '&t=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(result){
       if (result && result.status === 'ok' && result.valid) {
@@ -7172,22 +8553,27 @@ function startAppAfterGates(){
         saveUserCache(result, saved);
         currentPin = saved;
         if (result.lang) { currentLang = result.lang; saveLangToDevice(result.lang); applyLang(); }
-        var readyPromise2 = routeToRoleScreen(true);
-        hideSplashWhenReady(readyPromise2, 3000);
+        if ((result.accountStatus || 'active') !== 'active') {
+          hideSplash(150);
+          onAuthSuccess(result);
+        } else {
+          var readyPromise2 = routeToRoleScreen(true);
+          hideSplashWhenReady(readyPromise2, 3000);
+        }
       } else if (result && result.status === 'ok' && result.valid === false) {
-        // PIN больше не валиден — de verdad, lo dice el servidor
+        // Código ya no válido — de verdad, lo dice el servidor
         try { localStorage.removeItem('parte_user_pin'); } catch(e) {}
         currentPin = '';
         hideSplash(300);
-        document.getElementById('screenPin').style.display = 'flex';
+        showLoginScreen();
       } else {
-        // Respuesta inesperada (no un "PIN inválido" real): no cerramos
+        // Respuesta inesperada (no un "código inválido" real): no cerramos
         // sesión. Reintentamos una vez tras una breve espera por si fue
         // un cold-start de Apps Script; si vuelve a fallar, dejamos ver
-        // el PIN para que el usuario pueda entrar a mano sin quedar
-        // atascado en el splash — pero SIN borrar el PIN guardado.
+        // el login para que el usuario pueda entrar a mano sin quedar
+        // atascado en el splash — pero SIN borrar la sesión guardada.
         setTimeout(function(){
-          fetch(WEBAPP_URL + '?action=checkUser&codigo=' + encodeURIComponent(saved) + '&t=' + Date.now())
+          fetch(WEBAPP_URL + '?action=getStatusFor&codigo=' + encodeURIComponent(saved) + '&t=' + Date.now())
             .then(function(r){ return r.json(); })
             .then(function(retryResult){
               if (retryResult && retryResult.status === 'ok' && retryResult.valid) {
@@ -7195,30 +8581,35 @@ function startAppAfterGates(){
                 saveUserCache(retryResult, saved);
                 currentPin = saved;
                 if (retryResult.lang) { currentLang = retryResult.lang; saveLangToDevice(retryResult.lang); applyLang(); }
-                var readyPromise3 = routeToRoleScreen(true);
-                hideSplashWhenReady(readyPromise3, 3000);
+                if ((retryResult.accountStatus || 'active') !== 'active') {
+                  hideSplash(150);
+                  onAuthSuccess(retryResult);
+                } else {
+                  var readyPromise3 = routeToRoleScreen(true);
+                  hideSplashWhenReady(readyPromise3, 3000);
+                }
               } else if (retryResult && retryResult.status === 'ok' && retryResult.valid === false) {
                 try { localStorage.removeItem('parte_user_pin'); } catch(e) {}
                 currentPin = '';
                 hideSplash(300);
-                document.getElementById('screenPin').style.display = 'flex';
+                showLoginScreen();
               } else {
                 hideSplash(300);
-                document.getElementById('screenPin').style.display = 'flex';
+                showLoginScreen();
               }
             })
             .catch(function(){
               hideSplash(300);
-              document.getElementById('screenPin').style.display = 'flex';
+              showLoginScreen();
             });
         }, 1500);
       }
     })
     .catch(function(){
-      // Нет сети — показываем PIN для ввода вручную
+      // Нет сети — показываем логин для ввода вручную
       hideSplash(300);
       currentPin = '';
-      document.getElementById('screenPin').style.display = 'flex';
+      showLoginScreen();
     });
 }
 
@@ -7245,6 +8636,57 @@ function renderInstallGateSteps() {
 // resalta la opción en azul y revela el botón "Continuar", que es quien
 // realmente confirma y avanza. currentLang se actualiza ya (vista previa)
 // para que el propio botón "Continuar" se traduzca al idioma elegido.
+/* ════════ PANTALLA HELLO: saludo cíclico multi-idioma ════════
+ * Puramente decorativo/de marca — no depende de LANGS/t() a propósito,
+ * porque en este punto el usuario todavía no ha elegido idioma (esta
+ * pantalla es anterior al selector). El botón de continuar cambia de
+ * texto en el mismo idioma que la palabra mostrada en ese instante, por
+ * coherencia visual, pero no persiste nada — el idioma real se elige en
+ * la siguiente pantalla (#screenLangWelcome). */
+var HELLO_WORDS = [
+  { word: 'Добро пожаловать', btn: 'Продолжить' },
+  { word: 'Bienvenido',       btn: 'Continuar' },
+  { word: 'Welcome',          btn: 'Continue' },
+  { word: '欢迎',              btn: '继续' },
+  { word: 'Benvingut',        btn: 'Continua' },
+  { word: 'Bienvenue',        btn: 'Continuer' }
+];
+var helloIndex = 0;
+var helloTimer = null;
+
+function startHelloCycle() {
+  var wordEl = document.getElementById('helloWord');
+  var btnEl = document.getElementById('helloContinueBtn');
+  helloIndex = 0;
+  wordEl.textContent = HELLO_WORDS[0].word;
+  btnEl.textContent = HELLO_WORDS[0].btn;
+  wordEl.classList.remove('hide');
+  wordEl.classList.add('show');
+  if (helloTimer) clearInterval(helloTimer);
+  helloTimer = setInterval(function() {
+    wordEl.classList.remove('show');
+    wordEl.classList.add('hide');
+    setTimeout(function() {
+      helloIndex = (helloIndex + 1) % HELLO_WORDS.length;
+      wordEl.textContent = HELLO_WORDS[helloIndex].word;
+      btnEl.textContent = HELLO_WORDS[helloIndex].btn;
+      wordEl.classList.remove('hide');
+      void wordEl.offsetWidth; // fuerza reflow para que la transición de entrada vuelva a jugar
+      wordEl.classList.add('show');
+    }, 260);
+  }, 1700);
+}
+
+function stopHelloCycle() {
+  if (helloTimer) { clearInterval(helloTimer); helloTimer = null; }
+}
+
+function confirmHelloScreen() {
+  stopHelloCycle();
+  document.getElementById('screenHello').style.display = 'none';
+  document.getElementById('screenLangWelcome').style.display = 'flex';
+}
+
 var initialLangSelected = null;
 
 function selectInitialLang(lang) {
@@ -7263,7 +8705,13 @@ function confirmInitialLang() {
   if (!initialLangSelected) return;
   saveLangToDevice(initialLangSelected);
   document.getElementById('screenLangWelcome').style.display = 'none';
-  startAppAfterGates();
+  if (langWelcomeNextStep) {
+    var fn = langWelcomeNextStep;
+    langWelcomeNextStep = null;
+    fn();
+  } else {
+    startAppAfterGates();
+  }
 }
 
 // ═══ MODO DESARROLLADOR: varios iconos en la pantalla de inicio, cada
@@ -7392,6 +8840,8 @@ function showLayoutDebugPanel() {
 }
 
 (function initApp(){
+  onOtpBoxesReady(); // listeners de los 6 boxes de #screenOtpVerify — no depende de qué pantalla se muestre
+  initGoogleSignIn(); // no-op si GOOGLE_CLIENT_ID está vacío
   applyDevModeIfPresent();
   if (new URLSearchParams(window.location.search).get('debug') === 'layout') {
     // Se dispara tras el primer frame para que #appScroll ya tenga su
@@ -7435,11 +8885,14 @@ function showLayoutDebugPanel() {
   }
 
   // GATE 2: primera vez que se abre la app YA instalada en este
-  // dispositivo (nunca eligió idioma) — se pregunta antes que nada.
+  // dispositivo (nunca eligió idioma) — antes de preguntar nada, un saludo
+  // de marca (#screenHello, estilo "Hello" de Apple) que al confirmarse
+  // (confirmHelloScreen()) muestra el selector de idioma de siempre.
   if (!savedLang) {
     var s1 = document.getElementById('splashScreen');
     if (s1) s1.style.display = 'none';
-    document.getElementById('screenLangWelcome').style.display = 'flex';
+    document.getElementById('screenHello').style.display = 'flex';
+    startHelloCycle();
     return;
   }
 
