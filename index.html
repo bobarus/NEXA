@@ -991,6 +991,7 @@ body.pin-mode{overflow:hidden}
 .ad-flt-btn.st-suspended.active{background:#636366;color:#fff}
 #adUsStatusFilters{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 #adUsStatusFilters::-webkit-scrollbar{display:none}
+#adJournalStatusQuick::-webkit-scrollbar{display:none}
 #adUsStatusFilters .ad-flt-btn{padding:4px 10px;font-size:11px;flex-shrink:0;white-space:nowrap}
 .ad-status-badge.st-unverified{background:#f2f2f7;color:#8e8e93}
 .ad-status-badge.st-suspended{background:#f2f2f7;color:#636366}
@@ -1021,10 +1022,12 @@ body.pin-mode{overflow:hidden}
 .adu-meta-chip{display:inline-flex;align-items:center;gap:6px;background:#eaf1ff;color:#0049c5;font-size:12px;font-weight:700;padding:6px 12px;border-radius:20px;margin-bottom:16px}
 .adu-meta-chip i{font-size:14px}
 
-/* Permisos de acceso agrupados por cliente — cada cliente es su propia
-   mini-sección con sus objetos como checkboxes debajo, así nunca se puede
-   marcar una combinación cliente/objeto que no exista de verdad (ver
-   getClienteObraPairs en Code_v5.gs). */
+/* Permisos de acceso: dos ventanas planas (Clientes/Objetos, ver
+   setAdUmPermTab/renderAdUmObjList en el JS) — cliente y objeto son listas
+   independientes (LISTS.clientes/LISTS.obras, las mismas del formulario
+   "Nuevo informe"), no pares fijos, así que ya no se agrupan objetos bajo
+   un cliente. .adu-perm-group/.adu-perm-client quedan por si algún día
+   hace falta una lista agrupada, pero el picker de permisos ya no las usa. */
 .adu-perm-group{margin-bottom:4px}
 .adu-perm-group:last-child{margin-bottom:0}
 .adu-perm-client{display:flex;align-items:center;gap:8px;padding:10px 8px 4px;font-size:12px;font-weight:800;color:#0049c5;text-transform:uppercase;letter-spacing:.2px}
@@ -1699,7 +1702,7 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
           <div class="row">
             <div class="rbadge"><i class="ti ti-key"></i></div>
             <span class="rlabel" id="adUmCodeLbl">Código rápido</span>
-            <input class="rinput" type="text" id="adUmCode" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="max-width:120px">
+            <input class="rinput" type="text" id="adUmCode" maxlength="4" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)" style="max-width:120px">
             <button type="button" onclick="generateAdUmCode()" title="Generar" style="background:none;border:none;color:#0049c5;font-size:17px;padding:4px;margin-left:8px;cursor:pointer;touch-action:manipulation;flex-shrink:0"><i class="ti ti-dice-5"></i></button>
           </div>
           <div class="row" id="adUmStatusRow" style="display:none">
@@ -2562,6 +2565,19 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
       </button>
     </div>
 
+    <!-- Переключатель статуса под поиском (тот же паттерн, что и на
+         странице "Пользователи", #adUsStatusFilters) — те же кнопки
+         data-ftype="status", что в раскрывающейся панели ниже, просто
+         второй набор DOM-элементов с теми же data-val; setFilterBtn()
+         синхронизирует .active по data-val между ОБОИМИ рядами, так что
+         выбор здесь отражается в панели фильтров и наоборот. -->
+    <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none" id="adJournalStatusQuick">
+      <button class="ad-flt-btn active" data-ftype="status" data-val="" onclick="setFilterBtn(this,'status')" id="flt-st-all-q" style="flex-shrink:0;white-space:nowrap">Todos</button>
+      <button class="ad-flt-btn st-pending" data-ftype="status" data-val="pending" onclick="setFilterBtn(this,'status')" id="flt-st-pending-q" style="flex-shrink:0;white-space:nowrap">Pendiente</button>
+      <button class="ad-flt-btn st-approved" data-ftype="status" data-val="approved" onclick="setFilterBtn(this,'status')" id="flt-st-approved-q" style="flex-shrink:0;white-space:nowrap">Aprobado</button>
+      <button class="ad-flt-btn st-rejected" data-ftype="status" data-val="rejected" onclick="setFilterBtn(this,'status')" id="flt-st-rejected-q" style="flex-shrink:0;white-space:nowrap">Rechazado</button>
+    </div>
+
     <!-- Раскрывающаяся панель фильтров (скрыта по умолчанию) -->
     <div id="adFilterPanel" style="display:none;margin-top:10px;background:#fff;border-radius:14px;border:.5px solid #e5e5ea;box-shadow:0 2px 10px rgba(0,0,0,.07);padding:12px;display:none">
 
@@ -2807,6 +2823,7 @@ var LANGS = {
     flt_label_estado:'Estado', flt_todos:'Todos', flt_resetear:'Resetear filtros', flt_sin_resultados:'Sin resultados para estos filtros',
     no_pending:'No hay informes pendientes', no_mine:'No tienes informes pendientes', loading:'Cargando...',
     status_pending:'Pendiente', status_approved:'Aprobado', status_rejected:'Rechazado',
+    lbl_aprobo:'Aprobó', lbl_rechazo:'Rechazó',
     greet_worker:'Operario', greet_manager:'Manager', greet_admin:'Administrador',
     ph_select:'Seleccione', ph_no_assistant:'Sin ayudante', lbl_periodo:'Período',
     ct_lista:'Lista', ct_otro:'Otro', ct_nueva:'Nueva', ct_nuevo:'Nuevo', ct_nueva_obra:'Nueva',
@@ -2906,6 +2923,7 @@ var LANGS = {
     flt_label_estado:'Статус', flt_todos:'Все', flt_resetear:'Сбросить фильтры', flt_sin_resultados:'Ничего не найдено по этим фильтрам',
     no_pending:'Нет ожидающих отчётов', no_mine:'У вас нет ожидающих отчётов', loading:'Загрузка...',
     status_pending:'Ожидает', status_approved:'Одобрено', status_rejected:'Отклонено',
+    lbl_aprobo:'Одобрил(а)', lbl_rechazo:'Отклонил(а)',
     greet_worker:'Рабочий', greet_manager:'Менеджер', greet_admin:'Администратор',
     ph_select:'Выбрать', ph_no_assistant:'Без помощника', lbl_periodo:'Период',
     ct_lista:'Список', ct_otro:'Другой', ct_nueva:'Новая', ct_nuevo:'Новый', ct_nueva_obra:'Новый',
@@ -3005,6 +3023,7 @@ var LANGS = {
     flt_label_estado:'Status', flt_todos:'All', flt_resetear:'Reset filters', flt_sin_resultados:'No results for these filters',
     no_pending:'No pending reports', no_mine:'You have no pending reports', loading:'Loading...',
     status_pending:'Pending', status_approved:'Approved', status_rejected:'Rejected',
+    lbl_aprobo:'Approved by', lbl_rechazo:'Rejected by',
     greet_worker:'Worker', greet_manager:'Manager', greet_admin:'Administrator',
     ph_select:'Select', ph_no_assistant:'No assistant', lbl_periodo:'Period',
     ct_lista:'List', ct_otro:'Other', ct_nueva:'New', ct_nuevo:'New', ct_nueva_obra:'New',
@@ -3321,6 +3340,10 @@ function applyLang() {
   setEl('flt-st-pending',  t('status_pending'));
   setEl('flt-st-approved', t('status_approved'));
   setEl('flt-st-rejected', t('status_rejected'));
+  setEl('flt-st-all-q',      t('flt_todos'));
+  setEl('flt-st-pending-q',  t('status_pending'));
+  setEl('flt-st-approved-q', t('status_approved'));
+  setEl('flt-st-rejected-q', t('status_rejected'));
 
   // Обязательные поля
   setEl('req-badge-obligatorio', t('lbl_obligatorio'));
@@ -6732,9 +6755,15 @@ function hasActiveFilters() {
 }
 
 /* Кнопки-пилюли для статуса */
+// Pedido: el switcher rápido bajo el buscador y las pastillas de Estado
+// dentro del panel de filtros son dos filas de botones DISTINTAS pero
+// representan el mismo filtro — sincronizamos por data-val (no solo el
+// botón pulsado) para que elegir en una fila se refleje en la otra.
 function setFilterBtn(btn, type) {
-  document.querySelectorAll('.ad-flt-btn[data-ftype="'+type+'"]').forEach(function(b){ b.classList.remove('active'); });
-  btn.classList.add('active');
+  var val = btn.dataset.val;
+  document.querySelectorAll('.ad-flt-btn[data-ftype="'+type+'"]').forEach(function(b){
+    b.classList.toggle('active', b.dataset.val === val);
+  });
   applyAdminFilters();
 }
 
@@ -6748,8 +6777,7 @@ function resetAdminFilters() {
   document.getElementById('adFCompania').value = '';
   document.getElementById('adFDateFrom').value = '';
   document.getElementById('adFDateTo').value = '';
-  document.querySelectorAll('.ad-flt-btn[data-ftype="status"]').forEach(function(b){ b.classList.remove('active'); });
-  document.querySelector('.ad-flt-btn[data-ftype="status"][data-val=""]').classList.add('active');
+  document.querySelectorAll('.ad-flt-btn[data-ftype="status"]').forEach(function(b){ b.classList.toggle('active', b.dataset.val === ''); });
   document.getElementById('adFilterToggle').classList.remove('has-filters');
   applyAdminFilters();
 }
@@ -6885,22 +6913,18 @@ function renderAdminJournal() {
       html += rightEl + '</div>';
       html += '<div style="font-size:12px;color:#8e8e93;font-weight:600;margin-bottom:10px">'+r.OPERARIO+'</div>';
       html += '<div style="font-size:22px;font-weight:700;color:#000;letter-spacing:-0.3px;margin-bottom:5px">'+r.ID+'</div>';
-      html += '<div style="font-size:13px;font-weight:600;color:#8e8e93;margin-bottom:'+(((st==='approved'||st==='rejected')&&r.MANAGER_NOMBRE)||r.COMENTARIO_MANAGER?'10px':'0')+'">'+r.CLIENTE+' · '+r.OBRA+'</div>';
-      if (!isNew) {
-        // Статус-бейдж показываем снизу только у просмотренных (у новых он уже сверху справа)
-        if (st === 'pending') {
-          html += '<span class="ad-status-badge st-pending" style="margin-bottom:'+(r.MANAGER_NOMBRE?'8px':'0')+'">' + t('status_pending') + '</span>';
-        }
-      }
+      html += '<div style="font-size:13px;font-weight:600;color:#8e8e93;margin-bottom:'+(((st==='approved'||st==='rejected')&&r.MANAGER_NOMBRE)||r.COMENTARIO_MANAGER?'6px':'0')+'">'+r.CLIENTE+' · '+r.OBRA+'</div>';
+      // BUG CORREGIDO (pedido): el badge de estado ya se muestra arriba a
+      // la derecha en cuanto la tarjeta deja de ser "nueva" (ver rightEl
+      // más arriba) — el badge "ОЖИДАЕТ" que se repetía aquí abajo para
+      // pending era 100% redundante (estado duplicado en la misma
+      // tarjeta). Para aprobado/rechazado ya no es una caja con fondo y
+      // borde, solo texto de quién decidió, alineado a la derecha —
+      // verde si aprobó, rojo si rechazó.
       if ((st === 'approved' || st === 'rejected') && r.MANAGER_NOMBRE) {
-        var mgLabel = st === 'approved' ? 'Aprobó' : 'Rechazó';
-        var bgClr = st === 'approved' ? 'rgba(52,199,89,.12)' : 'rgba(255,59,48,.12)';
-        var bdClr = st === 'approved' ? 'rgba(52,199,89,.3)' : 'rgba(255,59,48,.3)';
+        var mgLabel = st === 'approved' ? t('lbl_aprobo') : t('lbl_rechazo');
         var txClr = st === 'approved' ? '#34c759' : '#ff3b30';
-        html += '<div style="background:'+bgClr+';border:1px solid '+bdClr+';border-radius:12px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">';
-        html += '<span style="font-size:12px;font-weight:700;color:'+txClr+';text-transform:uppercase;letter-spacing:0.3px">'+mgLabel+'</span>';
-        html += '<span style="font-size:13px;font-weight:600;color:'+txClr+'">'+r.MANAGER_NOMBRE+'</span>';
-        html += '</div>';
+        html += '<div style="text-align:right;font-size:12px;font-weight:600;color:'+txClr+'">'+mgLabel+' · '+r.MANAGER_NOMBRE+'</div>';
       }
       if (r.COMENTARIO_MANAGER && String(r.COMENTARIO_MANAGER).trim()) {
         html += '<div class="mi-comment full" style="margin-top:8px;margin-bottom:0">'
@@ -7266,7 +7290,6 @@ function escapeHtml(s) {
 
 var adUsersAll = [];
 var adUsStatusFilter = '';
-var adClienteObraPairs = null;
 var adUmCurrentUser = null;
 var adUmSelectedRole = 'operario';
 var adUmSelectedObjs = {};
@@ -7365,12 +7388,17 @@ function requestSwipeDeleteAdUser(codigo) {
   });
 }
 
-function ensureClienteObraPairs() {
-  if (adClienteObraPairs) return Promise.resolve(adClienteObraPairs);
-  return fetch(WEBAPP_URL + '?action=getClienteObraPairs&t=' + Date.now())
-    .then(function(r){ return r.json(); })
-    .then(function(result) { adClienteObraPairs = (result && result.pairs) || []; return adClienteObraPairs; })
-    .catch(function() { adClienteObraPairs = []; return adClienteObraPairs; });
+// Cliente y obra son dos listas independientes (no pares fijos por fila —
+// confirmado con el usuario: la hoja 'servicio' se llena como dos columnas
+// separadas, igual que ya asume getListsData/LISTS, que es lo que ya usa
+// el formulario "Nuevo informe"). Reutilizamos exactamente esa misma
+// LISTS/loadLists() aquí en vez de mantener una fuente de datos aparte —
+// así cualquier cliente/objeto añadido o quitado desde "Nuevo" en el
+// formulario de informes aparece aquí automáticamente sin nada más que
+// hacer, sin necesidad de un endpoint dedicado.
+function ensureAdUmLists() {
+  if ((LISTS.clientes && LISTS.clientes.length) || (LISTS.obras && LISTS.obras.length)) return Promise.resolve(LISTS);
+  return loadLists().then(function(){ return LISTS; });
 }
 
 function openAdUserModalByCodigo(codigo) {
@@ -7397,7 +7425,14 @@ function openAdUserModal(user) {
   document.getElementById('adUmApellidoInput').value = user.apellido || '';
   document.getElementById('adUmEmailInput').value = user.email || '';
   document.getElementById('adUmTelInput').value = user.telefono || '';
-  document.getElementById('adUmCode').value = user.codigo || '';
+  // El código rápido siempre debe ser de 4 dígitos — si el codigo actual
+  // del usuario todavía es el interno largo (10 dígitos aleatorios, ver
+  // "Column A" en CLAUDE.md — se usa para el login por email/Google antes
+  // de tener un código rápido asignado), se autorrellena uno de 4 dígitos
+  // de una vez en vez de dejar el campo con un valor que no sirve para el
+  // teclado PIN ni obligar al admin a pulsar el dado a mano.
+  var codigoActual = user.codigo || '';
+  document.getElementById('adUmCode').value = /^\d{4}$/.test(codigoActual) ? codigoActual : generateAdUmCodeValue();
 
   var chip = document.getElementById('adUmAuthMethodChip');
   if (user.viaGoogle) {
@@ -7530,7 +7565,13 @@ function renderAdUmViewPermissions() {
   if (!keys.length) { body.innerHTML = '<div style="padding:4px;text-align:center;font-size:12.5px;color:#8e8e93">—</div>'; return; }
   body.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px">' + keys.map(function(k) {
     var parts = k.split('::');
-    return '<span class="adu-perm-chip">' + escapeHtml(parts[1]) + '<small>' + escapeHtml(parts[0]) + '</small></span>';
+    var cliente = parts[0], obra = parts[1];
+    // "cliente:*" → concesión por cliente entero; "*:obra" → por objeto
+    // entero (cualquier cliente); un par exacto es un dato heredado de
+    // antes del modelo de comodines (ver userCanAccess en Code_v5.gs).
+    if (obra === '*') return '<span class="adu-perm-chip">' + escapeHtml(cliente) + '<small>' + t('adu_perm_clientes') + '</small></span>';
+    if (cliente === '*') return '<span class="adu-perm-chip">' + escapeHtml(obra) + '<small>' + t('adu_perm_objetos') + '</small></span>';
+    return '<span class="adu-perm-chip">' + escapeHtml(obra) + '<small>' + escapeHtml(cliente) + '</small></span>';
   }).join('') + '</div>';
 }
 
@@ -7607,15 +7648,18 @@ function setAdUmRole(role) {
 
 function onAdUmAllAccessChange() { renderAdUmObjList(); checkAdUmDirty(); }
 
-/* Dos "ventanas" separadas (pedido explícito: no una lista larga con dos
- * secciones, sino un toggle tipo Lista/Nuevo — mismo patrón .mode-toggle/
- * .ct que el resto de la app) con los mismos pares cliente:obra (ver
- * getClienteObraPairs). "Clientes" es un atajo que marca/desmarca TODOS
- * los objetos de ese cliente de golpe, "Objetos" permite acceso puntual a
- * uno solo. No son permisos distintos: el string final
- * (buildAdUmObrasString) sigue siendo la misma lista plana de pares
- * cliente:obra en ambos casos. El scroll interno de #adUmObjList (mismo
- * contenedor de siempre, max-height:260px) se conserva tal cual. */
+/* Dos "ventanas" separadas (toggle tipo Lista/Nuevo — mismo patrón
+ * .mode-toggle/.ct que el resto de la app). Confirmado con el usuario:
+ * cliente y objeto son dos listas INDEPENDIENTES (cada objeto puede tener
+ * su propio manager, sin depender de a qué cliente pertenezca en un caso
+ * concreto) — así que "Clientes" concede acceso a TODOS los informes de
+ * ese cliente ("cliente:*") y "Objetos" concede acceso a TODOS los
+ * informes con ese objeto, en cualquier cliente ("*:obra"). Un manager
+ * puede tener cualquier combinación de concesiones de ambos tipos a la
+ * vez; el backend (userCanAccess/getPinsWithAccess en Code_v5.gs) hace OR
+ * entre todas ellas. El scroll interno de #adUmObjList (mismo contenedor
+ * de siempre, max-height:260px) se conserva tal cual — no se re-renderiza
+ * la lista en cada click, solo se marca/desmarca el checkbox tocado. */
 var adUmPermTab = 'clientes';
 function setAdUmPermTab(tab) {
   adUmPermTab = tab;
@@ -7635,57 +7679,45 @@ function renderAdUmObjList() {
   }
   toggle.style.display = 'flex';
   wrap.innerHTML = '<div style="padding:14px;text-align:center;font-size:12.5px;color:#8e8e93">' + t('loading') + '</div>';
-  ensureClienteObraPairs().then(function(pairs) {
+  ensureAdUmLists().then(function(lists) {
     if (document.getElementById('adUmAllAccess').checked) return; // pudo cambiar mientras cargaba
-    if (!pairs.length) { wrap.innerHTML = '<div style="padding:14px;text-align:center;font-size:12.5px;color:#8e8e93">—</div>'; return; }
-    var order = [];
-    var byClient = {};
-    pairs.forEach(function(p) {
-      if (!byClient[p.cliente]) { byClient[p.cliente] = []; order.push(p.cliente); }
-      byClient[p.cliente].push(p.obra);
-    });
-    if (adUmPermTab === 'clientes') {
-      wrap.innerHTML = order.map(function(cliente) {
-        var objs = byClient[cliente];
-        var allChecked = objs.every(function(o){ return adUmSelectedObjs[cliente + '::' + o]; });
-        return '<label class="adu-perm-obj top">' +
-          '<input type="checkbox" ' + (allChecked ? 'checked' : '') + ' onchange="toggleAdUmClient(\'' + cliente.replace(/'/g, "\\'") + '\', this.checked)">' +
-          '<span>' + escapeHtml(cliente) + '</span></label>';
-      }).join('');
-    } else {
-      wrap.innerHTML = order.map(function(cliente) {
-        var objRows = byClient[cliente].map(function(obra) {
-          var key = cliente + '::' + obra;
-          var checked = adUmSelectedObjs[key] ? 'checked' : '';
-          return '<label class="adu-perm-obj">' +
-            '<input type="checkbox" ' + checked + ' onchange="toggleAdUmObj(\'' + key.replace(/'/g, "\\'") + '\', this.checked)">' +
-            '<span>' + escapeHtml(obra) + '</span></label>';
-        }).join('');
-        return '<div class="adu-perm-group"><div class="adu-perm-client"><i class="ti ti-building"></i>' + escapeHtml(cliente) + '</div>' + objRows + '</div>';
-      }).join('');
-    }
+    var items = (adUmPermTab === 'clientes' ? lists.clientes : lists.obras) || [];
+    if (!items.length) { wrap.innerHTML = '<div style="padding:14px;text-align:center;font-size:12.5px;color:#8e8e93">—</div>'; return; }
+    var sorted = items.slice().sort();
+    var handler = adUmPermTab === 'clientes' ? 'toggleAdUmClient' : 'toggleAdUmObj';
+    wrap.innerHTML = sorted.map(function(name) {
+      var key = adUmPermTab === 'clientes' ? (name + '::*') : ('*::' + name);
+      var checked = adUmSelectedObjs[key] ? 'checked' : '';
+      return '<label class="adu-perm-obj top">' +
+        '<input type="checkbox" ' + checked + ' onchange="' + handler + '(\'' + name.replace(/'/g, "\\'") + '\', this.checked)">' +
+        '<span>' + escapeHtml(name) + '</span></label>';
+    }).join('');
   });
 }
 
 function toggleAdUmClient(cliente, checked) {
-  (adClienteObraPairs || []).filter(function(p){ return p.cliente === cliente; }).forEach(function(p) {
-    var key = cliente + '::' + p.obra;
-    if (checked) adUmSelectedObjs[key] = true; else delete adUmSelectedObjs[key];
-  });
-  renderAdUmObjList();
-  checkAdUmDirty();
-}
-
-function toggleAdUmObj(key, checked) {
+  var key = cliente + '::*';
   if (checked) adUmSelectedObjs[key] = true; else delete adUmSelectedObjs[key];
-  renderAdUmObjList();
   checkAdUmDirty();
 }
 
-function generateAdUmCode() {
+function toggleAdUmObj(obra, checked) {
+  var key = '*::' + obra;
+  if (checked) adUmSelectedObjs[key] = true; else delete adUmSelectedObjs[key];
+  checkAdUmDirty();
+}
+
+// Pedido: el código rápido SIEMPRE es de 4 dígitos automáticamente — ya no
+// hace falta pulsar el dado a mano. generateAdUmCodeValue() es la parte
+// pura (reutilizada también por openAdUserModal() para autorrellenar en
+// cuanto se abre la ficha, ver ahí).
+function generateAdUmCodeValue() {
   var code = '';
   for (var i = 0; i < 4; i++) code += Math.floor(Math.random() * 10);
-  document.getElementById('adUmCode').value = code;
+  return code;
+}
+function generateAdUmCode() {
+  document.getElementById('adUmCode').value = generateAdUmCodeValue();
   checkAdUmDirty();
 }
 
