@@ -1740,6 +1740,97 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
   </div>
 </div>
 
+<!-- ═══ MODAL: ADMIN — ASISTENTE "CREAR INFORME" (Parte 5 del plan) ═══
+     Mismo chrome que adUserModal/reportDetailModal (.mg-modal-overlay
+     fullbleed) — pero por dentro son varios "pasos" con display toggled
+     por JS (rbStep), no una sola pantalla, ya que el asistente vive
+     dentro del contexto admin ya abierto (no tiene sentido pelearse con
+     el z-index/stacking de .auth-screen, pensado para el flujo previo al
+     login). -->
+<div class="mg-modal-overlay fullbleed" id="reportBuilderModal">
+  <div class="mg-modal mg-modal-full" style="height:100%;max-height:100%;border-radius:0;overflow:hidden;display:flex;flex-direction:column;padding:0">
+    <div style="display:flex;align-items:center;padding:14px 16px;flex-shrink:0;border-bottom:.5px solid #eee">
+      <button type="button" onclick="closeReportBuilder()" aria-label="Cerrar" style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:#f2f2f7;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation"><i class="ti ti-x"></i></button>
+      <div style="flex:1;text-align:center;font-size:15px;font-weight:700;color:#000" id="rbTitle">Crear informe</div>
+      <div style="width:36px;flex-shrink:0;text-align:right;font-size:12px;color:#8e8e93;font-weight:600" id="rbStepIndicator"></div>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px">
+      <!-- Paso 1: formato -->
+      <div id="rbStepFormato">
+        <div class="slabel" style="padding:0 0 10px" id="rbLblFormato">Formato del archivo</div>
+        <div style="display:flex;gap:10px">
+          <div class="auth-role-card" id="rbFormatoPdf" onclick="rbSetFormato('pdf')" style="flex:1">
+            <div class="arc-top"><i class="ti ti-file-type-pdf"></i><div class="arc-radio"></div></div>
+            <div class="arc-title">PDF</div>
+          </div>
+          <div class="auth-role-card" id="rbFormatoExcel" onclick="rbSetFormato('xlsx')" style="flex:1">
+            <div class="arc-top"><i class="ti ti-file-type-xls"></i><div class="arc-radio"></div></div>
+            <div class="arc-title">EXCEL</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paso 2: período -->
+      <div id="rbStepPeriodo" style="display:none">
+        <div class="slabel" style="padding:0 0 10px" id="rbLblPeriodo">Período del informe</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="date" id="rbDesde" onchange="rbOnPeriodoChange()" style="flex:1;padding:12px 14px;border-radius:14px;border:none;background:#f2f2f7;font-family:inherit;font-size:14px;font-weight:600;color:#000">
+          <span style="font-size:12px;color:#8e8e93;flex-shrink:0">—</span>
+          <input type="date" id="rbHasta" onchange="rbOnPeriodoChange()" style="flex:1;padding:12px 14px;border-radius:14px;border:none;background:#f2f2f7;font-family:inherit;font-size:14px;font-weight:600;color:#000">
+        </div>
+      </div>
+
+      <!-- Paso 3: objetos -->
+      <div id="rbStepObjetos" style="display:none">
+        <div class="slabel" style="padding:0 0 10px" id="rbLblObjetos">Objetos a incluir</div>
+        <div id="rbObjetosList" style="max-height:400px;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#f7f7f8;border-radius:14px;padding:6px"></div>
+      </div>
+
+      <!-- Paso 4: preview editable -->
+      <div id="rbStepPreview" style="display:none">
+        <div class="slabel" style="padding:0 0 10px" id="rbLblPreview">Resumen del informe</div>
+        <div id="rbPreviewTable"></div>
+
+        <div class="card" style="margin:16px 0 0;padding:14px">
+          <div class="row" style="border-bottom:.5px solid #eef0f4;padding-bottom:12px;margin-bottom:2px">
+            <span class="rlabel" id="rbLblPctMat" style="flex:1">Recargo materiales</span>
+            <input type="number" id="rbPctMateriales" value="0" step="0.1" inputmode="decimal" oninput="rbRecalc()" style="width:70px;text-align:right;border:none;outline:none;background:transparent;font-family:inherit;font-size:16px;font-weight:700;color:#0049c5">
+            <span style="font-size:13px;font-weight:600;color:#0049c5;opacity:.6;margin-left:4px">%</span>
+          </div>
+          <div class="row" style="border-bottom:.5px solid #eef0f4;padding-bottom:12px;margin-bottom:2px">
+            <span class="rlabel" id="rbLblPctTrab" style="flex:1">Recargo trabajo</span>
+            <input type="number" id="rbPctTrabajo" value="0" step="0.1" inputmode="decimal" oninput="rbRecalc()" style="width:70px;text-align:right;border:none;outline:none;background:transparent;font-family:inherit;font-size:16px;font-weight:700;color:#0049c5">
+            <span style="font-size:13px;font-weight:600;color:#0049c5;opacity:.6;margin-left:4px">%</span>
+          </div>
+          <div class="row" style="padding-top:2px">
+            <span class="rlabel" id="rbLblRate" style="flex:1">Precio/hora (todo el período)</span>
+            <input type="number" id="rbRateOverride" placeholder="—" step="0.5" inputmode="decimal" oninput="rbRecalc()" style="width:70px;text-align:right;border:none;outline:none;background:transparent;font-family:inherit;font-size:16px;font-weight:700;color:#0049c5">
+            <span style="font-size:13px;font-weight:600;color:#0049c5;opacity:.6;margin-left:4px">€</span>
+          </div>
+          <div style="font-size:11px;color:#8e8e93;padding:6px 14px 0" id="rbRateHint"></div>
+        </div>
+      </div>
+
+      <!-- Paso 5: éxito -->
+      <div id="rbStepSuccess" style="display:none;text-align:center;padding-top:40px">
+        <div style="width:72px;height:72px;border-radius:50%;background:#e5f9ec;display:flex;align-items:center;justify-content:center;margin:0 auto 18px"><i class="ti ti-check" style="font-size:34px;color:#34c759"></i></div>
+        <div style="font-size:18px;font-weight:700;color:#000;margin-bottom:6px" id="rbSuccessTitle">Informe creado</div>
+        <div style="font-size:13px;color:#8e8e93" id="rbSuccessSub">El archivo se guardó en Google Drive</div>
+      </div>
+    </div>
+
+    <div style="padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 16px);flex-shrink:0;display:flex;gap:10px" id="rbFooterSteps">
+      <button type="button" class="mg-modal-cancel" style="flex:1" id="rbBackBtn" onclick="rbBack()">Atrás</button>
+      <button type="button" class="mg-modal-confirm positive" style="flex:2" id="rbNextBtn" onclick="rbNext()">Siguiente</button>
+    </div>
+    <div style="padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 16px);flex-shrink:0;display:none;gap:10px" id="rbFooterSuccess">
+      <button type="button" class="mg-modal-cancel" style="flex:1" onclick="rbOpenFile()" id="rbBtnVerArchivo">Ver archivo</button>
+      <button type="button" class="mg-modal-confirm positive" style="flex:1" onclick="closeReportBuilder()" id="rbBtnNuevoInforme">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ PANTALLA: LOGIN ═══ -->
 <div id="screenAuthLogin" class="auth-screen">
   <div class="auth-scroll">
@@ -2695,8 +2786,30 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
   <!-- ── PANEL: ANÁLISIS ── -->
   <div id="adPanelAnalisis" style="display:none">
 
-    <!-- Выбор года и интервала дат -->
-    <div style="padding:10px 14px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <!-- Resumen dinámico por intervalo arbitrario — pedido: trabajadores/
+         materiales/trabajo/total que cambian según el rango elegido,
+         independiente del selector año+mes de más abajo (que sigue dando
+         las tablas mes a mes por operario/cliente/obra, no se toca). -->
+    <div class="slabel" style="padding:12px 16px 8px" id="anSlabelResumen">Resumen del período</div>
+    <div style="padding:0 14px 10px;display:flex;gap:8px;align-items:center">
+      <input type="date" id="anDateFrom" onchange="loadAnalyticsDynamic()" style="flex:1;padding:9px 10px;border-radius:12px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;font-weight:600;color:#000">
+      <span style="font-size:12px;color:#8e8e93;flex-shrink:0">—</span>
+      <input type="date" id="anDateTo" onchange="loadAnalyticsDynamic()" style="flex:1;padding:9px 10px;border-radius:12px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;font-weight:600;color:#000">
+    </div>
+    <div id="anSummaryTiles" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px 16px"></div>
+
+    <div class="slabel" style="padding:4px 16px 8px" id="anSlabelObjetos">Objetos del período</div>
+    <div id="anObjectsList" style="padding:0 14px 10px"></div>
+
+    <div style="padding:4px 14px 6px">
+      <button type="button" class="btn-new" style="width:100%" onclick="openReportBuilder()" id="anCrearInformeBtn">
+        <i class="ti ti-file-plus" aria-hidden="true"></i> Crear informe
+      </button>
+    </div>
+
+    <!-- Selector año+mes original — tablas mensuales por operario/cliente/obra -->
+    <div class="slabel" style="padding:20px 16px 8px" id="anSlabelMensual">Detalle mensual</div>
+    <div style="padding:0 14px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <select id="anYear" onchange="loadAnalisis()" style="padding:8px 10px;border-radius:12px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;font-weight:600;color:#000;-webkit-appearance:none;appearance:none;flex:1;min-width:80px">
       </select>
       <select id="anMonthFrom" onchange="loadAnalisis()" style="padding:8px 10px;border-radius:12px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;font-weight:600;color:#000;-webkit-appearance:none;appearance:none;flex:1;min-width:80px">
@@ -2707,6 +2820,14 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
     </div>
 
     <div id="anContent" style="padding:10px 0 20px"></div>
+
+    <div class="slabel" style="padding:4px 16px 8px;display:flex;align-items:center;justify-content:space-between">
+      <span id="anSlabelGenerados">Informes generados</span>
+      <span class="auth-link-sm" onclick="toggleGeneratedReportsList()" id="anToggleGeneradosLbl" style="font-size:12px">Ver</span>
+    </div>
+    <div id="anGeneratedReportsWrap" style="display:none;padding:0 14px 20px">
+      <div id="anGeneratedReportsList"></div>
+    </div>
   </div>
 
   <!-- ── PANEL: USUARIOS (AUTH v2) ── -->
@@ -2844,6 +2965,16 @@ var LANGS = {
     flt_tipos:'Todos los tipos', flt_companias:'Todas las compañías',
     flt_label_estado:'Estado', flt_todos:'Todos', flt_resetear:'Resetear filtros', flt_sin_resultados:'Sin resultados para estos filtros',
     no_pending:'No hay informes pendientes', no_mine:'No tienes informes pendientes', loading:'Cargando...',
+    lbl_materiales:'Materiales', lbl_trabajo:'Trabajo', lbl_total_objetos:'Total de todos los objetos',
+    an_resumen_periodo:'Resumen del período', an_detalle_mensual:'Detalle mensual', an_informes_generados:'Informes generados', an_ver:'Ver', an_ocultar:'Ocultar',
+    rb_title:'Crear informe', rb_step_formato:'Formato del archivo', rb_formato_pdf:'PDF', rb_formato_excel:'Excel',
+    rb_step_periodo:'Período del informe', rb_step_objetos:'Objetos a incluir', rb_objetos_empty:'No hay objetos con datos en este período',
+    rb_step_preview:'Resumen del informe', rb_pct_materiales:'Recargo materiales', rb_pct_trabajo:'Recargo trabajo',
+    rb_precio_hora_override:'Precio/hora (todo el período)', rb_valor_original:'Original',
+    rb_col_obra:'Obra', rb_col_dias:'Días', rb_col_horas:'Horas', rb_col_materiales:'Materiales', rb_col_trabajo:'Trabajo', rb_col_total:'Total', rb_row_total:'TOTAL',
+    rb_btn_siguiente:'Siguiente', rb_btn_atras:'Atrás', rb_btn_previsualizar:'Previsualizar', rb_btn_crear:'Crear informe', rb_btn_generando:'Generando...',
+    rb_success_title:'Informe creado', rb_success_sub:'El archivo se guardó en Google Drive', rb_btn_ver_archivo:'Ver archivo', rb_btn_cerrar:'Cerrar',
+    rg_empty:'Aún no hay informes generados', rg_btn_regenerar:'Regenerar', rg_btn_eliminar:'Eliminar', rg_periodo:'Período',
     status_pending:'Pendiente', status_approved:'Aprobado', status_rejected:'Rechazado',
     lbl_aprobo:'Aprobó', lbl_rechazo:'Rechazó',
     greet_worker:'Operario', greet_manager:'Manager', greet_admin:'Administrador',
@@ -2944,6 +3075,16 @@ var LANGS = {
     flt_tipos:'Все типы', flt_companias:'Все компании',
     flt_label_estado:'Статус', flt_todos:'Все', flt_resetear:'Сбросить фильтры', flt_sin_resultados:'Ничего не найдено по этим фильтрам',
     no_pending:'Нет ожидающих отчётов', no_mine:'У вас нет ожидающих отчётов', loading:'Загрузка...',
+    lbl_materiales:'Материалы', lbl_trabajo:'Работа', lbl_total_objetos:'Итого по всем объектам',
+    an_resumen_periodo:'Сводка за период', an_detalle_mensual:'Детализация по месяцам', an_informes_generados:'Созданные отчёты', an_ver:'Смотреть', an_ocultar:'Скрыть',
+    rb_title:'Создать отчёт', rb_step_formato:'Формат файла', rb_formato_pdf:'PDF', rb_formato_excel:'Excel',
+    rb_step_periodo:'Период отчёта', rb_step_objetos:'Объекты для отчёта', rb_objetos_empty:'Нет данных по объектам за этот период',
+    rb_step_preview:'Сводка отчёта', rb_pct_materiales:'Наценка на материалы', rb_pct_trabajo:'Наценка на работу',
+    rb_precio_hora_override:'Цена/час (весь период)', rb_valor_original:'Исходно',
+    rb_col_obra:'Объект', rb_col_dias:'Дни', rb_col_horas:'Часы', rb_col_materiales:'Материалы', rb_col_trabajo:'Работа', rb_col_total:'Итого', rb_row_total:'ИТОГО',
+    rb_btn_siguiente:'Далее', rb_btn_atras:'Назад', rb_btn_previsualizar:'Предпросмотр', rb_btn_crear:'Создать отчёт', rb_btn_generando:'Формируется...',
+    rb_success_title:'Отчёт создан', rb_success_sub:'Файл сохранён в Google Диске', rb_btn_ver_archivo:'Открыть файл', rb_btn_cerrar:'Закрыть',
+    rg_empty:'Пока нет созданных отчётов', rg_btn_regenerar:'Перегенерировать', rg_btn_eliminar:'Удалить', rg_periodo:'Период',
     status_pending:'Ожидает', status_approved:'Одобрено', status_rejected:'Отклонено',
     lbl_aprobo:'Одобрил(а)', lbl_rechazo:'Отклонил(а)',
     greet_worker:'Рабочий', greet_manager:'Менеджер', greet_admin:'Администратор',
@@ -3044,6 +3185,16 @@ var LANGS = {
     flt_tipos:'All types', flt_companias:'All companies',
     flt_label_estado:'Status', flt_todos:'All', flt_resetear:'Reset filters', flt_sin_resultados:'No results for these filters',
     no_pending:'No pending reports', no_mine:'You have no pending reports', loading:'Loading...',
+    lbl_materiales:'Materials', lbl_trabajo:'Labor', lbl_total_objetos:'Total for all objects',
+    an_resumen_periodo:'Period summary', an_detalle_mensual:'Monthly detail', an_informes_generados:'Generated reports', an_ver:'View', an_ocultar:'Hide',
+    rb_title:'Create report', rb_step_formato:'File format', rb_formato_pdf:'PDF', rb_formato_excel:'Excel',
+    rb_step_periodo:'Report period', rb_step_objetos:'Objects to include', rb_objetos_empty:'No data for any object in this period',
+    rb_step_preview:'Report summary', rb_pct_materiales:'Materials markup', rb_pct_trabajo:'Labor markup',
+    rb_precio_hora_override:'Rate/hour (whole period)', rb_valor_original:'Original',
+    rb_col_obra:'Site', rb_col_dias:'Days', rb_col_horas:'Hours', rb_col_materiales:'Materials', rb_col_trabajo:'Labor', rb_col_total:'Total', rb_row_total:'TOTAL',
+    rb_btn_siguiente:'Next', rb_btn_atras:'Back', rb_btn_previsualizar:'Preview', rb_btn_crear:'Create report', rb_btn_generando:'Generating...',
+    rb_success_title:'Report created', rb_success_sub:'The file was saved to Google Drive', rb_btn_ver_archivo:'Open file', rb_btn_cerrar:'Close',
+    rg_empty:'No generated reports yet', rg_btn_regenerar:'Regenerate', rg_btn_eliminar:'Delete', rg_periodo:'Period',
     status_pending:'Pending', status_approved:'Approved', status_rejected:'Rejected',
     lbl_aprobo:'Approved by', lbl_rechazo:'Rejected by',
     greet_worker:'Worker', greet_manager:'Manager', greet_admin:'Administrator',
@@ -3172,6 +3323,27 @@ function applyLang() {
   setEl('adUmNombreLbl', t('auth_reg_nombre')); setEl('adUmApellidoLbl', t('auth_reg_apellido'));
   setEl('adUmEmailLbl', t('auth_email_lbl')); setEl('adUmTelLbl', t('auth_reg_telefono'));
   setEl('adUmSlabelContacto', t('adu_group_contacto'));
+  setEl('anSlabelResumen', t('an_resumen_periodo'));
+  setEl('anSlabelObjetos', t('rb_step_objetos'));
+  setEl('anSlabelMensual', t('an_detalle_mensual'));
+  setEl('anSlabelGenerados', t('an_informes_generados'));
+  setEl('anToggleGeneradosLbl', t('an_ver'));
+  var anCrearBtn = document.getElementById('anCrearInformeBtn');
+  if (anCrearBtn) anCrearBtn.innerHTML = '<i class="ti ti-file-plus" aria-hidden="true"></i> ' + t('rb_title');
+
+  setEl('rbTitle', t('rb_title'));
+  setEl('rbLblFormato', t('rb_step_formato'));
+  setEl('rbLblPeriodo', t('rb_step_periodo'));
+  setEl('rbLblObjetos', t('rb_step_objetos'));
+  setEl('rbLblPreview', t('rb_step_preview'));
+  setEl('rbLblPctMat', t('rb_pct_materiales'));
+  setEl('rbLblPctTrab', t('rb_pct_trabajo'));
+  setEl('rbLblRate', t('rb_precio_hora_override'));
+  setEl('rbBackBtn', t('rb_btn_atras'));
+  setEl('rbSuccessTitle', t('rb_success_title'));
+  setEl('rbSuccessSub', t('rb_success_sub'));
+  setEl('rbBtnVerArchivo', t('rb_btn_ver_archivo'));
+  setEl('rbBtnNuevoInforme', t('rb_btn_cerrar'));
   setEl('adUmRolLbl', t('auth_reg_rol'));
   setEl('adUmRoleOperarioTitle', t('auth_reg_rol_operario')); setEl('adUmRoleManagerTitle', t('auth_reg_rol_manager'));
   setEl('adUmRoleAdminTitle', t('adu_role_admin'));
@@ -6059,6 +6231,18 @@ function callDeleteUser(targetCodigo, onSuccess) {
   document.getElementById('confirmDeleteModal').classList.add('show');
 }
 
+// Mismo modal, tercer modo — borrar (soft-delete, ver deleteGeneratedReport
+// en Code_v5.gs) un informe estadístico generado desde el panel Análisis.
+function callDeleteGeneratedReport(id, onSuccess) {
+  _confirmDeleteId = id;
+  _confirmDeleteOnSuccess = onSuccess;
+  _confirmDeleteMode = 'report_generado';
+  setEl('confirmDeleteTitle', t('rg_btn_eliminar'));
+  setEl('confirmDeleteSub', t('confirm_eliminar'));
+  setEl('confirmDeleteYesBtn', t('swipe_eliminar'));
+  document.getElementById('confirmDeleteModal').classList.add('show');
+}
+
 function closeConfirmDeleteModal() {
   document.getElementById('confirmDeleteModal').classList.remove('show');
   _confirmDeleteId = null;
@@ -6074,6 +6258,8 @@ function confirmDeleteModalYes() {
   btn.disabled = true;
   var payload = mode === 'user'
     ? { action: 'adminDeleteUser', codigo: currentPin, targetCodigo: id }
+    : mode === 'report_generado'
+    ? { action: 'deleteGeneratedReport', codigo: currentPin, id: id }
     : { action: 'deleteRecord', codigo: currentPin, id: id };
   fetch(WEBAPP_URL, {
     method: 'POST',
@@ -7140,9 +7326,392 @@ function initAnalisis() {
     });
     fromSel.value = 1;
     toSel.value = 12;
+
+    // Resumen dinámico: por defecto el mes en curso (1 al día de hoy)
+    var y = now.getFullYear(), m = now.getMonth();
+    var firstOfMonth = new Date(y, m, 1);
+    document.getElementById('anDateFrom').value = fmtDateISO(firstOfMonth);
+    document.getElementById('anDateTo').value = fmtDateISO(now);
+
     anInitialized = true;
   }
   loadAnalisis();
+  loadAnalyticsDynamic();
+}
+
+function fmtDateISO(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+/* ── Resumen dinámico (trabajadores/materiales/trabajo/total) + desglose
+ * por objeto — pedido explícito, independiente de las tablas mes a mes
+ * de más abajo (que siguen usando getInforme + calcStats/calcByMonth sin
+ * cambios). Ambas peticiones son ligeras (solo agregados, no filas
+ * completas) así que se piden juntas cada vez que cambia el rango. */
+function loadAnalyticsDynamic() {
+  var desde = document.getElementById('anDateFrom').value;
+  var hasta = document.getElementById('anDateTo').value;
+  if (!desde || !hasta) return;
+
+  document.getElementById('anSummaryTiles').innerHTML = anTileSkeletons();
+  document.getElementById('anObjectsList').innerHTML = '<div class="mi-empty"><span class="spinner-inline"></span> Cargando...</div>';
+
+  var qs = '&codigo=' + encodeURIComponent(currentPin) + '&desde=' + encodeURIComponent(desde) + '&hasta=' + encodeURIComponent(hasta) + '&t=' + Date.now();
+  Promise.all([
+    fetch(WEBAPP_URL + '?action=getAnalyticsSummary' + qs).then(function(r){ return r.json(); }),
+    fetch(WEBAPP_URL + '?action=getObjectsBreakdown' + qs).then(function(r){ return r.json(); })
+  ]).then(function(results) {
+    var summary = results[0], breakdown = results[1];
+    if (summary && summary.status === 'ok') renderAnSummaryTiles(summary);
+    if (breakdown && breakdown.status === 'ok') renderAnObjectsList(breakdown);
+  }).catch(function() {
+    document.getElementById('anObjectsList').innerHTML = '<div class="mi-empty">' + t('auth_err_network') + '</div>';
+  });
+}
+
+function anTileSkeletons() {
+  return ['ti-users','ti-package','ti-tools','ti-sum'].map(function(){
+    return '<div class="card" style="margin:0;padding:14px"><div style="height:38px"></div></div>';
+  }).join('');
+}
+
+function renderAnSummaryTiles(s) {
+  var tiles = [
+    { icon:'ti-users', label:'Trabajadores', value: s.trabajadores, isMoney:false },
+    { icon:'ti-package', label:'Materiales', value: s.materiales, isMoney:true },
+    { icon:'ti-tools', label:'Trabajo', value: s.trabajo, isMoney:true },
+    { icon:'ti-sum', label:'Total', value: s.total, isMoney:true, accent:true }
+  ];
+  document.getElementById('anSummaryTiles').innerHTML = tiles.map(function(tl) {
+    var valStr = tl.isMoney ? (tl.value||0).toFixed(2) + ' €' : String(tl.value||0);
+    return '<div class="card" style="margin:0;padding:14px">' +
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><i class="ti ' + tl.icon + '" style="font-size:15px;color:#8e8e93"></i><span style="font-size:11px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:.3px">' + tl.label + '</span></div>' +
+      '<div style="font-size:20px;font-weight:700;letter-spacing:-.3px;color:' + (tl.accent ? '#0049c5' : '#000') + '">' + valStr + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+function renderAnObjectsList(b) {
+  var wrap = document.getElementById('anObjectsList');
+  if (!b.objetos || !b.objetos.length) { wrap.innerHTML = '<div class="mi-empty">—</div>'; return; }
+  var html = '<div class="card" style="margin:0">';
+  html += b.objetos.map(function(o, i) {
+    return '<div class="row" style="align-items:flex-start;padding-top:12px;padding-bottom:12px">' +
+      '<div class="rbadge"><i class="ti ti-building"></i></div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:14px;font-weight:700;color:#000;margin-bottom:2px">' + escapeHtml(o.obra) + '</div>' +
+        '<div style="font-size:11.5px;color:#8e8e93;margin-bottom:6px">' + escapeHtml(o.cliente) + '</div>' +
+        '<div style="display:flex;gap:14px;font-size:12px;color:#636366">' +
+          '<span>' + t('lbl_materiales') + ': <b style="color:#000">' + o.materiales.toFixed(2) + ' €</b></span>' +
+          '<span>' + t('lbl_trabajo') + ': <b style="color:#000">' + o.trabajo.toFixed(2) + ' €</b></span>' +
+        '</div>' +
+      '</div>' +
+      '<div style="font-size:15px;font-weight:700;color:#0049c5;flex-shrink:0">' + o.total.toFixed(2) + ' €</div>' +
+    '</div>';
+  }).join('');
+  html += '</div>';
+  html += '<div class="card" style="margin:10px 0 0;padding:14px;background:#0049c5">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center">' +
+    '<span style="font-size:12px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.3px">' + t('lbl_total_objetos') + '</span>' +
+    '<span style="font-size:18px;font-weight:800;color:#fff">' + b.grandTotal.total.toFixed(2) + ' €</span>' +
+    '</div></div>';
+  wrap.innerHTML = html;
+}
+
+/* ── Lista de informes estadísticos generados (Parte 6 del plan) —
+ * misma estructura que renderAdminUsers()/.adu-card/.swipe-wrap (lista +
+ * swipe-to-delete), solo que la fuente es listGeneratedReports() y
+ * "editar" reabre el mismo asistente (openReportBuilder) precargado con
+ * los valores de esa fila, ya que el archivo en sí no se puede editar
+ * una vez generado — solo regenerar con nuevos parámetros. */
+var rgReportsCache = [];
+var rgListLoaded = false;
+function toggleGeneratedReportsList() {
+  var wrap = document.getElementById('anGeneratedReportsWrap');
+  var isOpen = wrap.style.display !== 'none';
+  wrap.style.display = isOpen ? 'none' : 'block';
+  document.getElementById('anToggleGeneradosLbl').textContent = isOpen ? t('an_ver') : t('an_ocultar');
+  if (!isOpen && !rgListLoaded) loadGeneratedReports();
+}
+
+function loadGeneratedReports() {
+  document.getElementById('anGeneratedReportsList').innerHTML = '<div class="mi-empty"><span class="spinner-inline"></span> ' + t('loading') + '</div>';
+  fetch(WEBAPP_URL + '?action=listGeneratedReports&codigo=' + encodeURIComponent(currentPin) + '&t=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(result) {
+      rgListLoaded = true;
+      if (result && result.status === 'ok') { rgReportsCache = result.reports || []; renderGeneratedReportsList(); }
+      else document.getElementById('anGeneratedReportsList').innerHTML = '<div class="mi-empty">' + t('auth_err_generic') + '</div>';
+    })
+    .catch(function() {
+      rgListLoaded = true;
+      document.getElementById('anGeneratedReportsList').innerHTML = '<div class="mi-empty">' + t('auth_err_network') + '</div>';
+    });
+}
+
+function renderGeneratedReportsList() {
+  var wrap = document.getElementById('anGeneratedReportsList');
+  if (!rgReportsCache.length) { wrap.innerHTML = '<div class="adu-empty">' + t('rg_empty') + '</div>'; return; }
+  wrap.innerHTML = rgReportsCache.map(function(r) {
+    var safeId = escapeHtml(r.ID).replace(/'/g, "\\'");
+    var periodo = (r.PERIODO_DESDE || '') + ' — ' + (r.PERIODO_HASTA || '');
+    return '<div class="swipe-wrap" data-id="' + safeId + '">' +
+      '<button type="button" class="swipe-edit-action" onclick="event.stopPropagation();closeSwipeDelete();openReportBuilder(rgReportsCache.find(function(x){return x.ID===\'' + safeId + '\'}))"><span class="swipe-ic"><i class="ti ti-refresh"></i></span><span class="swipe-lbl">' + t('rg_btn_regenerar') + '</span></button>' +
+      '<button type="button" class="swipe-delete-action" onclick="event.stopPropagation();requestSwipeDeleteReport(\'' + safeId + '\')"><span class="swipe-ic"><i class="ti ti-trash"></i></span><span class="swipe-lbl">' + t('rg_btn_eliminar') + '</span></button>' +
+      '<div class="adu-card" data-id="' + safeId + '" onclick="window.open(\'' + (r.DRIVE_FILE_URL||'') + '\',\'_blank\')">' +
+      '<div class="adu-card-top"><span style="font-size:12px;color:#8e8e93;font-weight:600">' + escapeHtml(String(r.FORMATO||'').toUpperCase()) + '</span>' +
+      '<span class="ad-status-badge st-approved">' + escapeHtml(r.ID) + '</span></div>' +
+      '<div class="adu-name">' + escapeHtml(periodo) + '</div>' +
+      '<div class="adu-meta"><i class="ti ti-user"></i>' + escapeHtml(r.CREADO_POR||'') + '</div>' +
+      '</div></div>';
+  }).join('');
+}
+
+function requestSwipeDeleteReport(id) {
+  closeSwipeDelete();
+  callDeleteGeneratedReport(id, function() {
+    rgReportsCache = rgReportsCache.filter(function(r){ return r.ID !== id; });
+    renderGeneratedReportsList();
+  });
+}
+
+/* ════════ ASISTENTE "CREAR INFORME" (Parte 5 del plan) ════════
+ * 4 pasos con display toggled dentro de un único modal fullbleed
+ * (#reportBuilderModal) + un 5º paso de éxito. rbObjetosData guarda los
+ * pares {cliente,obra} con datos en el período (reutiliza
+ * getObjectsBreakdown, que ya los agrupa — no hace falta un endpoint
+ * dedicado solo para listar objetos). rbPreviewRaw guarda las filas SIN
+ * recargo/tarifa aplicados (tal y como las devuelve buildReportPreview
+ * con pct=0 y sin override) para poder recalcular en el cliente en cada
+ * tecla sin ir al servidor, con la MISMA fórmula que usa el backend
+ * (ver buildReportPreview en Code_v5.gs) — así lo que se ve en el
+ * preview coincide exactamente con lo que generará el archivo final. */
+var rbStep = 1;
+var rbTotalSteps = 4;
+var rbFormato = 'pdf';
+var rbSelectedObjetos = {};
+var rbObjetosData = [];
+var rbPreviewRaw = null;
+var rbGenerating = false;
+
+function openReportBuilder(prefill) {
+  rbStep = 1;
+  rbFormato = (prefill && prefill.FORMATO) || 'pdf';
+  rbSelectedObjetos = {};
+  if (prefill && prefill.OBJETOS) {
+    String(prefill.OBJETOS).split(',').forEach(function(k){ if (k.trim()) rbSelectedObjetos[k.trim()] = true; });
+  }
+  rbObjetosData = [];
+  rbPreviewRaw = null;
+
+  var desde = (prefill && prefill.PERIODO_DESDE) || document.getElementById('anDateFrom').value;
+  var hasta = (prefill && prefill.PERIODO_HASTA) || document.getElementById('anDateTo').value;
+  document.getElementById('rbDesde').value = desde || '';
+  document.getElementById('rbHasta').value = hasta || '';
+  document.getElementById('rbPctMateriales').value = (prefill && prefill.PCT_MATERIALES) || 0;
+  document.getElementById('rbPctTrabajo').value = (prefill && prefill.PCT_TRABAJO) || 0;
+  document.getElementById('rbRateOverride').value = (prefill && prefill.PRECIO_HORA_OVERRIDE) || '';
+
+  rbSetFormato(rbFormato);
+  rbRenderStep();
+  document.getElementById('reportBuilderModal').classList.add('show');
+}
+
+function closeReportBuilder() {
+  document.getElementById('reportBuilderModal').classList.remove('show');
+}
+
+function rbSetFormato(f) {
+  rbFormato = f;
+  document.getElementById('rbFormatoPdf').classList.toggle('active', f === 'pdf');
+  document.getElementById('rbFormatoExcel').classList.toggle('active', f === 'xlsx');
+}
+
+function rbRenderStep() {
+  ['rbStepFormato','rbStepPeriodo','rbStepObjetos','rbStepPreview','rbStepSuccess'].forEach(function(id, idx) {
+    document.getElementById(id).style.display = (idx + 1 === rbStep) ? 'block' : 'none';
+  });
+  document.getElementById('rbStepIndicator').textContent = (rbStep <= rbTotalSteps) ? (rbStep + '/' + rbTotalSteps) : '';
+  document.getElementById('rbBackBtn').style.visibility = (rbStep === 1) ? 'hidden' : 'visible';
+  document.getElementById('rbNextBtn').textContent = (rbStep === rbTotalSteps) ? t('rb_btn_crear') : t('rb_btn_siguiente');
+  document.getElementById('rbFooterSteps').style.display = (rbStep <= rbTotalSteps) ? 'flex' : 'none';
+  document.getElementById('rbFooterSuccess').style.display = (rbStep === 5) ? 'flex' : 'none';
+
+  if (rbStep === 3 && !rbObjetosData.length) rbLoadObjetos();
+  if (rbStep === 4) rbLoadPreview();
+}
+
+function rbBack() {
+  if (rbStep <= 1) return;
+  rbStep--;
+  rbRenderStep();
+}
+
+function rbNext() {
+  if (rbStep < rbTotalSteps) { rbStep++; rbRenderStep(); return; }
+  rbGenerate();
+}
+
+function rbOnPeriodoChange() {
+  rbObjetosData = []; // el rango cambió — la lista de objetos hay que recargarla
+  rbPreviewRaw = null;
+}
+
+function rbLoadObjetos() {
+  var desde = document.getElementById('rbDesde').value;
+  var hasta = document.getElementById('rbHasta').value;
+  var wrap = document.getElementById('rbObjetosList');
+  wrap.innerHTML = '<div style="padding:14px;text-align:center;font-size:12.5px;color:#8e8e93">' + t('loading') + '</div>';
+  fetch(WEBAPP_URL + '?action=getObjectsBreakdown&codigo=' + encodeURIComponent(currentPin) + '&desde=' + encodeURIComponent(desde) + '&hasta=' + encodeURIComponent(hasta) + '&t=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(result) {
+      if (!result || result.status !== 'ok') { wrap.innerHTML = '<div style="padding:14px;text-align:center;font-size:12.5px;color:#8e8e93">' + t('auth_err_generic') + '</div>'; return; }
+      rbObjetosData = result.objetos || [];
+      if (!rbObjetosData.length) { wrap.innerHTML = '<div style="padding:14px;text-align:center;font-size:12.5px;color:#8e8e93">' + t('rb_objetos_empty') + '</div>'; return; }
+      wrap.innerHTML = rbObjetosData.map(function(o) {
+        var key = o.cliente + '::' + o.obra;
+        var checked = rbSelectedObjetos[key] ? 'checked' : '';
+        return '<label class="adu-perm-obj top">' +
+          '<input type="checkbox" ' + checked + ' onchange="rbToggleObjeto(\'' + key.replace(/'/g, "\\'") + '\', this.checked)">' +
+          '<span>' + escapeHtml(o.obra) + ' <span style="color:#8e8e93;font-weight:400">· ' + escapeHtml(o.cliente) + '</span></span></label>';
+      }).join('');
+    })
+    .catch(function() { wrap.innerHTML = '<div style="padding:14px;text-align:center;font-size:12.5px;color:#8e8e93">' + t('auth_err_network') + '</div>'; });
+}
+
+function rbToggleObjeto(key, checked) {
+  if (checked) rbSelectedObjetos[key] = true; else delete rbSelectedObjetos[key];
+  rbPreviewRaw = null; // selección cambió — el preview hay que recalcularlo
+}
+
+function rbLoadPreview() {
+  var wrap = document.getElementById('rbPreviewTable');
+  if (rbPreviewRaw) { rbRecalc(); return; } // ya lo tenemos, solo re-pintar con los % actuales
+  wrap.innerHTML = '<div class="mi-empty"><span class="spinner-inline"></span> ' + t('loading') + '</div>';
+  var desde = document.getElementById('rbDesde').value;
+  var hasta = document.getElementById('rbHasta').value;
+  var objetos = Object.keys(rbSelectedObjetos).join(',');
+  fetch(WEBAPP_URL + '?action=buildReportPreview&codigo=' + encodeURIComponent(currentPin) +
+    '&desde=' + encodeURIComponent(desde) + '&hasta=' + encodeURIComponent(hasta) +
+    '&objetos=' + encodeURIComponent(objetos) + '&t=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(result) {
+      if (!result || result.status !== 'ok') { wrap.innerHTML = '<div class="mi-empty">' + t('auth_err_generic') + '</div>'; return; }
+      rbPreviewRaw = result.filas; // pct=0, sin override — base para recalcular en el cliente
+      rbRecalc();
+    })
+    .catch(function() { wrap.innerHTML = '<div class="mi-empty">' + t('auth_err_network') + '</div>'; });
+}
+
+// Misma fórmula que buildReportPreview() en Code_v5.gs — recalcula en el
+// cliente sin ir al servidor cada vez que cambia un % o la tarifa.
+function rbRecalc() {
+  if (!rbPreviewRaw) return;
+  var pctMat = parseFloat(document.getElementById('rbPctMateriales').value) || 0;
+  var pctTrab = parseFloat(document.getElementById('rbPctTrabajo').value) || 0;
+  var rateOverrideRaw = document.getElementById('rbRateOverride').value;
+  var rateOverride = (rateOverrideRaw !== '') ? parseFloat(rateOverrideRaw) : null;
+
+  var filas = rbPreviewRaw.map(function(f) {
+    var rate = (rateOverride !== null && !isNaN(rateOverride)) ? rateOverride : f.precioHoraOriginal;
+    var materiales = f.materialesOriginal * (1 + pctMat / 100);
+    var trabajo = f.horas * (rate || 0) * (1 + pctTrab / 100);
+    return { obra: f.obra, dias: f.dias, horas: f.horas, materiales: materiales, trabajo: trabajo, total: materiales + trabajo };
+  });
+  var totales = filas.reduce(function(acc, f) {
+    acc.dias += f.dias; acc.horas += f.horas; acc.materiales += f.materiales; acc.trabajo += f.trabajo; acc.total += f.total;
+    return acc;
+  }, { dias:0, horas:0, materiales:0, trabajo:0, total:0 });
+
+  document.getElementById('rbPreviewTable').innerHTML = rbBuildPreviewTableHtml(filas, totales);
+
+  // Подсказка с исходной ставкой — берём первую строку как referencia (todas
+  // las filas comparten el mismo período, la tarifa original puede variar
+  // fila a fila si se editó a mano en la hoja, así que mostramos un rango
+  // si difieren).
+  var rates = rbPreviewRaw.map(function(f){ return f.precioHoraOriginal; }).filter(function(v){ return v !== null && !isNaN(v); });
+  var hintEl = document.getElementById('rbRateHint');
+  if (rates.length) {
+    var minR = Math.min.apply(null, rates), maxR = Math.max.apply(null, rates);
+    hintEl.textContent = t('rb_valor_original') + ': ' + (minR === maxR ? (minR.toFixed(2) + ' €/h') : (minR.toFixed(2) + '–' + maxR.toFixed(2) + ' €/h'));
+  } else {
+    hintEl.textContent = '';
+  }
+}
+
+function rbBuildPreviewTableHtml(filas, totales) {
+  if (!filas.length) return '<div class="mi-empty">' + t('rb_objetos_empty') + '</div>';
+  var html = '<div style="overflow-x:auto;border-radius:14px;overflow:hidden;border:.5px solid #e5e5ea;box-shadow:0 2px 10px rgba(0,0,0,.07)">';
+  html += '<table style="width:100%;border-collapse:collapse;background:#fff;font-family:inherit">';
+  html += '<thead><tr style="background:#f2f2f7">';
+  [t('rb_col_obra'), t('rb_col_dias'), t('rb_col_horas'), t('rb_col_materiales'), t('rb_col_trabajo'), t('rb_col_total')].forEach(function(h, i) {
+    html += '<th style="padding:9px ' + (i===0?'10px':'8px') + ';text-align:' + (i===0?'left':'right') + ';font-size:10.5px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:.3px">' + h + '</th>';
+  });
+  html += '</tr></thead><tbody>';
+  filas.forEach(function(f, i) {
+    var bg = i % 2 === 0 ? 'transparent' : '#f9f9fb';
+    html += '<tr style="background:' + bg + '">';
+    html += '<td style="padding:8px 10px;font-size:13px;font-weight:600;color:#000">' + escapeHtml(f.obra) + '</td>';
+    html += '<td style="padding:8px;text-align:right;font-size:13px;color:#000">' + f.dias + '</td>';
+    html += '<td style="padding:8px;text-align:right;font-size:13px;color:#000">' + f.horas + '</td>';
+    html += '<td style="padding:8px;text-align:right;font-size:13px;color:#000">' + f.materiales.toFixed(2) + '</td>';
+    html += '<td style="padding:8px;text-align:right;font-size:13px;color:#000">' + f.trabajo.toFixed(2) + '</td>';
+    html += '<td style="padding:8px 10px;text-align:right;font-size:13px;font-weight:700;color:#000">' + f.total.toFixed(2) + '</td>';
+    html += '</tr>';
+  });
+  html += '<tr style="background:#e5f0ff;border-top:1.5px solid rgba(0,73,197,.2)">';
+  html += '<td style="padding:9px 10px;font-size:13px;font-weight:700;color:#000">' + t('rb_row_total') + '</td>';
+  html += '<td style="padding:9px 8px;text-align:right;font-size:13px;font-weight:700;color:#000">' + totales.dias + '</td>';
+  html += '<td style="padding:9px 8px;text-align:right;font-size:13px;font-weight:700;color:#000">' + totales.horas + '</td>';
+  html += '<td style="padding:9px 8px;text-align:right;font-size:13px;font-weight:700;color:#000">' + totales.materiales.toFixed(2) + '</td>';
+  html += '<td style="padding:9px 8px;text-align:right;font-size:13px;font-weight:700;color:#000">' + totales.trabajo.toFixed(2) + '</td>';
+  html += '<td style="padding:9px 10px;text-align:right;font-size:14px;font-weight:800;color:#0049c5">' + totales.total.toFixed(2) + '</td>';
+  html += '</tr></tbody></table></div>';
+  return html;
+}
+
+var rbLastGeneratedUrl = null;
+function rbGenerate() {
+  if (rbGenerating) return;
+  rbGenerating = true;
+  document.getElementById('rbNextBtn').disabled = true;
+  document.getElementById('rbNextBtn').textContent = t('rb_btn_generando');
+
+  var payload = {
+    action: 'generateStatReport', codigo: currentPin,
+    formato: rbFormato,
+    desde: document.getElementById('rbDesde').value,
+    hasta: document.getElementById('rbHasta').value,
+    objetos: Object.keys(rbSelectedObjetos).join(','),
+    pctMateriales: document.getElementById('rbPctMateriales').value || 0,
+    pctTrabajo: document.getElementById('rbPctTrabajo').value || 0,
+    precioHoraOverride: document.getElementById('rbRateOverride').value || ''
+  };
+  fetch(WEBAPP_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) })
+    .then(function(r){ return r.json(); })
+    .then(function(result) {
+      rbGenerating = false;
+      document.getElementById('rbNextBtn').disabled = false;
+      document.getElementById('rbNextBtn').textContent = t('rb_btn_crear');
+      if (result && result.status === 'ok') {
+        rbLastGeneratedUrl = result.url;
+        rgListLoaded = false; // fuerza recarga de la lista la próxima vez que se abra
+        rbStep = 5;
+        rbRenderStep();
+      } else {
+        showToast(result && result.message ? result.message : t('auth_err_generic'), true);
+      }
+    })
+    .catch(function() {
+      rbGenerating = false;
+      document.getElementById('rbNextBtn').disabled = false;
+      document.getElementById('rbNextBtn').textContent = t('rb_btn_crear');
+      showToast(t('auth_err_network'), true);
+    });
+}
+
+function rbOpenFile() {
+  if (rbLastGeneratedUrl) window.open(rbLastGeneratedUrl, '_blank');
 }
 
 function loadAnalisis() {
