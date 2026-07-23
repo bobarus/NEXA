@@ -693,7 +693,9 @@ body.pin-mode{overflow:hidden}
 .auth-divider{width:100%;max-width:360px;display:flex;align-items:center;gap:12px;color:#c7c7cc;font-size:11.5px;font-weight:600;margin:20px 0;flex-shrink:0}
 .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:#e5e5ea}
 
-.auth-google-wrap{width:100%;max-width:360px;margin-bottom:14px;display:flex;justify-content:center;flex-shrink:0}
+.auth-google-wrap{width:100%;max-width:360px;min-height:44px;margin-bottom:14px;display:flex;justify-content:center;flex-shrink:0}
+.auth-google-skel{width:100%;height:44px;border-radius:8px;background:linear-gradient(90deg,#eee 25%,#f5f5f5 37%,#eee 63%);background-size:400% 100%;animation:authGoogleSkelPulse 1.4s ease infinite}
+@keyframes authGoogleSkelPulse{0%{background-position:100% 50%}100%{background-position:0 50%}}
 .auth-google-btn{width:100%;height:50px;border-radius:14px;border:1.5px solid #e5e5ea;background:#fff;display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit;font-size:14.5px;font-weight:700;color:#000;cursor:pointer;touch-action:manipulation}
 .auth-google-btn img{width:18px;height:18px;flex-shrink:0}
 
@@ -987,11 +989,14 @@ body.pin-mode{overflow:hidden}
 .ad-flt-btn.st-unverified.active{background:#8e8e93;color:#fff}
 .ad-flt-btn.st-suspended{background:#f2f2f7;color:#636366}
 .ad-flt-btn.st-suspended.active{background:#636366;color:#fff}
+#adUsStatusFilters{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#adUsStatusFilters::-webkit-scrollbar{display:none}
+#adUsStatusFilters .ad-flt-btn{padding:4px 10px;font-size:11px;flex-shrink:0;white-space:nowrap}
 .ad-status-badge.st-unverified{background:#f2f2f7;color:#8e8e93}
 .ad-status-badge.st-suspended{background:#f2f2f7;color:#636366}
 
 /* ── Panel Usuarios (admin) ── */
-.adu-card{background:#fff;border-radius:16px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,.06);cursor:pointer;touch-action:manipulation}
+.adu-card{background:#fff;border:.5px solid #e5e5ea;border-radius:12px;padding:14px 14px;margin-bottom:8px;box-shadow:0 2px 10px rgba(0,0,0,.07);cursor:pointer;touch-action:manipulation}
 .adu-card-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
 .adu-name{font-size:14.5px;font-weight:700;color:#000}
 .adu-meta{font-size:12.5px;color:#8e8e93;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -1027,6 +1032,9 @@ body.pin-mode{overflow:hidden}
 .adu-perm-obj{display:flex;align-items:center;gap:10px;padding:9px 8px 9px 30px;font-size:13.5px;color:#000;border-bottom:.5px solid #ececef}
 .adu-perm-group:last-child .adu-perm-obj:last-child{border-bottom:none}
 .adu-perm-obj input{accent-color:#0049c5;width:17px;height:17px;flex-shrink:0}
+.adu-perm-obj.top{padding-left:8px;font-weight:700}
+.adu-perm-chip{display:inline-flex;flex-direction:column;background:#eaf1ff;color:#0049c5;border-radius:12px;padding:6px 10px;font-size:12.5px;font-weight:700}
+.adu-perm-chip small{font-size:10px;font-weight:600;color:#6f95d6;text-transform:uppercase;letter-spacing:.2px}
 .mi-seg{display:flex;gap:4px;background:#f4f4f7;border-radius:999px;padding:4px;margin:0 16px 14px}
 .mi-seg-btn{flex:1;padding:9px 0;border:none;border-radius:999px;background:transparent;font-family:inherit;font-size:13px;font-weight:700;color:#737687;cursor:pointer;touch-action:manipulation;transition:background .15s,color .15s}
 .mi-seg-btn.active{background:#0049c5;color:#fff;box-shadow:0 2px 6px rgba(0,73,197,.35)}
@@ -1034,6 +1042,8 @@ body.pin-mode{overflow:hidden}
 #adFilterToggle.has-filters i,#adFilterToggle.has-filters svg{color:#0049c5;stroke:#0049c5}
 #mgFilterToggle.has-filters{background:#e5f0ff;border-color:#0049c5}
 #mgFilterToggle.has-filters svg{stroke:#0049c5}
+#opFilterToggle.has-filters{background:#e5f0ff;border-color:#0049c5}
+#opFilterToggle.has-filters svg{stroke:#0049c5}
 
 /* DETAIL MODAL CONTENT — estilo "Soft Elevated" (referencias aprobadas) */
 .det-group{background:#fff;border-radius:20px;border:none;margin-bottom:12px;overflow:hidden;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,.06)}
@@ -1593,9 +1603,11 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
 <!-- ═══ MODAL: ADMIN — GESTIÓN DE UN USUARIO ═══ -->
 <div class="mg-modal-overlay fullbleed" id="adUserModal" onclick="if(event.target===this)closeAdUserModal()">
   <div class="mg-modal mg-modal-full" style="height:100%;max-height:100%;border-radius:0;overflow:hidden;display:flex;flex-direction:column;padding:0">
-    <div style="padding:calc(env(safe-area-inset-top,0px) + 14px) 18px 12px;border-bottom:.5px solid #f0f0f0;flex-shrink:0;display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
-      <div>
-        <div class="mg-modal-title" id="adUmName" style="margin-bottom:4px">—</div>
+    <div style="padding:calc(env(safe-area-inset-top,0px) + 14px) 18px 12px;border-bottom:.5px solid #f0f0f0;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div style="width:40px;flex-shrink:0"></div>
+      <div style="flex:1;min-width:0;text-align:center">
+        <div class="mg-modal-title" id="adUmName" style="margin-bottom:2px;font-size:19px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+        <div id="adUmRoleHeaderLbl" style="font-size:12.5px;font-weight:700;color:#0049c5;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px">—</div>
         <span class="ad-status-badge" id="adUmStatusBadge">—</span>
       </div>
       <button type="button" onclick="closeAdUserModal()" aria-label="Cerrar" style="flex-shrink:0;width:40px;height:40px;border-radius:50%;background:#f2f2f7;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation">
@@ -1606,21 +1618,21 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
     <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px">
       <div id="adUmPendingVerifNotice" style="display:none;background:#f2f2f7;border-radius:14px;padding:14px;font-size:13px;color:#8e8e93;margin-bottom:14px"></div>
 
+      <div id="adUmViewWrap" style="display:none"></div>
+
       <div id="adUmFieldsWrap">
         <div class="auth-field" style="max-width:none">
           <label id="adUmEmailLbl">Email</label>
-          <div class="adu-info-row" id="adUmEmailRow" onclick="tapAdUmField('email')">
+          <div class="auth-input-wrap">
             <i class="ti ti-mail"></i>
-            <span class="adu-info-value" id="adUmEmailValue">—</span>
-            <button type="button" class="adu-copy-btn" onclick="event.stopPropagation();copyAdUmField('adUmEmailValue', this)" aria-label="Copiar"><i class="ti ti-copy"></i></button>
+            <input type="email" id="adUmEmailInput" autocomplete="off">
           </div>
         </div>
         <div class="auth-field" style="max-width:none">
           <label id="adUmTelLbl">Teléfono</label>
-          <div class="adu-info-row" id="adUmTelRow" onclick="tapAdUmField('tel')">
+          <div class="auth-input-wrap">
             <i class="ti ti-phone"></i>
-            <span class="adu-info-value" id="adUmTelValue">—</span>
-            <button type="button" class="adu-copy-btn" onclick="event.stopPropagation();copyAdUmField('adUmTelValue', this)" aria-label="Copiar"><i class="ti ti-copy"></i></button>
+            <input type="tel" id="adUmTelInput" autocomplete="off">
           </div>
         </div>
 
@@ -1711,7 +1723,7 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
 
     <div class="auth-divider"><span id="alOrLbl">o bien</span></div>
 
-    <div id="googleBtnContainer" class="auth-google-wrap" style="display:none"></div>
+    <div id="googleBtnContainer" class="auth-google-wrap" style="display:none"><div class="auth-google-skel" id="googleBtnSkel"></div></div>
 
     <button class="auth-code-btn" onclick="showPinKeypadFromLogin()">
       <i class="ti ti-key"></i><span id="alQuickCodeLbl">Entrar con código rápido</span>
@@ -2175,6 +2187,74 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
 
   <!-- ── SUBPANTALLA: MIS INFORMES ── -->
   <div id="opPanelMine" style="display:none">
+    <!-- Búsqueda + filtros (mismo patrón que manager/admin, ver
+         #mgFilterPanel/applyMgFilters) — sin filtro de Operario (es su
+         propia lista) ni de Estado (el segmentado Esperando/Aprobados ya
+         cumple ese papel). -->
+    <div style="padding:10px 14px 6px">
+      <div style="display:flex;gap:8px;align-items:center">
+        <div style="flex:1;position:relative">
+          <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:#8e8e93;fill:none;stroke-width:2;stroke-linecap:round;pointer-events:none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="opSearch" placeholder="Buscar..." oninput="applyOpFilters()"
+            style="width:100%;padding:9px 12px 9px 33px;border-radius:12px;border:none;background:#f2f2f7;font-family:inherit;font-size:14px;color:#000;outline:none">
+        </div>
+        <button onclick="toggleOpFilters()" id="opFilterToggle"
+          style="width:40px;height:40px;border-radius:12px;border:none;background:#f2f2f7;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;touch-action:manipulation">
+          <svg style="width:18px;height:18px;stroke:#0049c5;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div id="opFilterPanel" style="display:none;margin-top:10px;background:#fff;border-radius:14px;border:.5px solid #e5e5ea;box-shadow:0 2px 10px rgba(0,0,0,.07);padding:12px">
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:5px"><span id="op-flt-lbl-cliente">Cliente</span></div>
+          <div class="mode-list-row" style="padding:0">
+            <select class="rselect" id="opFCliente" onchange="applyOpFilters()" style="padding:9px 38px 9px 14px;font-size:13px">
+              <option value="">Todos los clientes</option>
+            </select>
+            <span class="rchev" style="width:22px;height:22px;right:6px;top:50%"><svg viewBox="0 0 8 14"><polyline points="1,1 7,7 1,13"/></svg></span>
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:5px"><span id="op-flt-lbl-obra">Obra</span></div>
+          <div class="mode-list-row" style="padding:0">
+            <select class="rselect" id="opFObra" onchange="applyOpFilters()" style="padding:9px 38px 9px 14px;font-size:13px">
+              <option value="">Todas las obras</option>
+            </select>
+            <span class="rchev" style="width:22px;height:22px;right:6px;top:50%"><svg viewBox="0 0 8 14"><polyline points="1,1 7,7 1,13"/></svg></span>
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:5px"><span id="op-flt-lbl-tipo">Tipo de trabajo</span></div>
+          <div class="mode-list-row" style="padding:0">
+            <select class="rselect" id="opFTipo" onchange="applyOpFilters()" style="padding:9px 38px 9px 14px;font-size:13px">
+              <option value="">Todos los tipos</option>
+            </select>
+            <span class="rchev" style="width:22px;height:22px;right:6px;top:50%"><svg viewBox="0 0 8 14"><polyline points="1,1 7,7 1,13"/></svg></span>
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:5px"><span id="op-flt-lbl-compania">Compañía</span></div>
+          <div class="mode-list-row" style="padding:0">
+            <select class="rselect" id="opFCompania" onchange="applyOpFilters()" style="padding:9px 38px 9px 14px;font-size:13px">
+              <option value="">Todas las compañías</option>
+            </select>
+            <span class="rchev" style="width:22px;height:22px;right:6px;top:50%"><svg viewBox="0 0 8 14"><polyline points="1,1 7,7 1,13"/></svg></span>
+          </div>
+        </div>
+        <div style="margin-bottom:4px">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:5px"><span id="op-flt-lbl-periodo">Período</span></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="date" id="opFDateFrom" oninput="applyOpFilters()"
+              style="flex:1;padding:8px 10px;border-radius:10px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;color:#000;outline:none">
+            <span style="font-size:12px;color:#8e8e93;flex-shrink:0">—</span>
+            <input type="date" id="opFDateTo" oninput="applyOpFilters()"
+              style="flex:1;padding:8px 10px;border-radius:10px;border:none;background:#f2f2f7;font-family:inherit;font-size:13px;color:#000;outline:none">
+          </div>
+        </div>
+        <button onclick="resetOpFilters()" id="opFltReset" style="width:100%;margin-top:10px;padding:9px;border-radius:10px;border:none;background:rgba(255,59,48,.1);color:#ff3b30;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation">Resetear filtros</button>
+      </div>
+    </div>
+
     <div class="mi-seg">
       <button class="mi-seg-btn active" id="miSegPending" onclick="switchMiSubtab('pending')"></button>
       <button class="mi-seg-btn" id="miSegApproved" onclick="switchMiSubtab('approved')"></button>
@@ -2441,10 +2521,6 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
         <input type="text" id="adSearch" placeholder="Buscar..." oninput="applyAdminFilters()"
           style="width:100%;padding:9px 12px 9px 33px;border-radius:12px;border:none;background:#f2f2f7;font-family:inherit;font-size:14px;color:#000;outline:none">
       </div>
-      <button onclick="toggleAdNewOnly()" id="adNewBtn"
-        style="height:40px;padding:0 12px;border-radius:12px;border:none;background:#f2f2f7;font-family:inherit;font-size:11px;font-weight:800;color:#8e8e93;cursor:pointer;touch-action:manipulation;flex-shrink:0;letter-spacing:0.3px">
-        NUEVO
-      </button>
       <button onclick="toggleAdFilters()" id="adFilterToggle"
         style="width:40px;height:40px;border-radius:12px;border:none;background:#f2f2f7;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;touch-action:manipulation">
         <svg id="adFilterIcon" style="width:18px;height:18px;stroke:#0049c5;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
@@ -2568,7 +2644,7 @@ document.addEventListener('gestureend', function (e) { e.preventDefault(); });
         <input type="text" id="adUsSearch" oninput="renderAdminUsers()"
           style="width:100%;padding:9px 12px 9px 33px;border-radius:12px;border:none;background:#f2f2f7;font-family:inherit;font-size:14px;color:#000;outline:none">
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px" id="adUsStatusFilters">
+      <div style="display:flex;gap:6px;margin-top:10px" id="adUsStatusFilters">
         <button class="ad-flt-btn active" data-status="" onclick="setAdUsStatusFilter(this,'')" id="adUsF-all">Todos</button>
         <button class="ad-flt-btn st-pending" data-status="pending_approval" onclick="setAdUsStatusFilter(this,'pending_approval')" id="adUsF-pending">Pendientes</button>
         <button class="ad-flt-btn st-approved" data-status="active" onclick="setAdUsStatusFilter(this,'active')" id="adUsF-active">Activos</button>
@@ -2750,6 +2826,7 @@ var LANGS = {
     adu_toast_approved:'Usuario aprobado', adu_toast_rejected:'Solicitud rechazada',
     adu_toast_reactivated:'Cuenta reactivada', adu_toast_saved:'Cambios guardados',
     adu_toast_password_reset:'Nueva contraseña enviada por email',
+    adu_toast_password_reset_no_email:'Contraseña generada, pero este usuario no tiene email — no se ha podido enviar',
     adu_confirm_reset_password:'¿Restablecer la contraseña de este usuario? Se le enviará una nueva por email.',
     adu_filter_pending:'Pendientes', adu_filter_active:'Activos', adu_filter_rejected:'Rechazados', adu_filter_suspended:'Suspendidos',
     adu_via_google:'Registrado con Google', adu_via_password:'Registrado con contraseña',
@@ -2757,6 +2834,9 @@ var LANGS = {
     adu_tel_confirm_title:'Llamar por teléfono', adu_tel_confirm_btn:'Llamar',
     adu_copied:'Copiado', adu_confirm_delete_title:'Eliminar usuario',
     adu_confirm_delete_sub:'¿Eliminar esta cuenta? Esta acción no se puede deshacer.',
+    adu_group_perfil:'Perfil', adu_group_contacto:'Contacto',
+    adu_active_yes:'Activa', adu_active_no:'Suspendida',
+    adu_perm_clientes:'Clientes', adu_perm_objetos:'Objetos',
   },
   ru: {
     pin_title:'Введите код', pin_sub:'PIN из 4 цифр', pin_ok:'OK', pin_error:'Неверный код',
@@ -2845,6 +2925,7 @@ var LANGS = {
     adu_toast_approved:'Пользователь одобрен', adu_toast_rejected:'Заявка отклонена',
     adu_toast_reactivated:'Аккаунт восстановлен', adu_toast_saved:'Изменения сохранены',
     adu_toast_password_reset:'Новый пароль отправлен на почту',
+    adu_toast_password_reset_no_email:'Пароль создан, но у пользователя нет email — отправить не удалось',
     adu_confirm_reset_password:'Сбросить пароль этого пользователя? Новый пароль будет отправлен на почту.',
     adu_filter_pending:'На согласовании', adu_filter_active:'Активные', adu_filter_rejected:'Отклонённые', adu_filter_suspended:'Заблокированные',
     adu_via_google:'Регистрация через Google', adu_via_password:'Регистрация по паролю',
@@ -2852,6 +2933,9 @@ var LANGS = {
     adu_tel_confirm_title:'Позвонить по телефону', adu_tel_confirm_btn:'Позвонить',
     adu_copied:'Скопировано', adu_confirm_delete_title:'Удалить пользователя',
     adu_confirm_delete_sub:'Удалить этот аккаунт? Действие необратимо.',
+    adu_group_perfil:'Профиль', adu_group_contacto:'Контакты',
+    adu_active_yes:'Активен', adu_active_no:'Приостановлен',
+    adu_perm_clientes:'Клиенты', adu_perm_objetos:'Объекты',
   },
   en: {
     pin_title:'Enter your code', pin_sub:'4-digit PIN', pin_ok:'OK', pin_error:'Incorrect code',
@@ -2940,6 +3024,7 @@ var LANGS = {
     adu_toast_approved:'User approved', adu_toast_rejected:'Request rejected',
     adu_toast_reactivated:'Account reactivated', adu_toast_saved:'Changes saved',
     adu_toast_password_reset:'New password emailed',
+    adu_toast_password_reset_no_email:'Password generated, but this user has no email on file — could not be sent',
     adu_confirm_reset_password:"Reset this user's password? A new one will be emailed to them.",
     adu_filter_pending:'Pending', adu_filter_active:'Active', adu_filter_rejected:'Rejected', adu_filter_suspended:'Suspended',
     adu_via_google:'Signed up with Google', adu_via_password:'Signed up with password',
@@ -2947,6 +3032,9 @@ var LANGS = {
     adu_tel_confirm_title:'Call by phone', adu_tel_confirm_btn:'Call',
     adu_copied:'Copied', adu_confirm_delete_title:'Delete user',
     adu_confirm_delete_sub:'Delete this account? This action cannot be undone.',
+    adu_group_perfil:'Profile', adu_group_contacto:'Contact',
+    adu_active_yes:'Active', adu_active_no:'Suspended',
+    adu_perm_clientes:'Clients', adu_perm_objetos:'Sites',
   }
 };
 
@@ -3155,6 +3243,16 @@ function applyLang() {
   setEl('mg-flt-lbl-compania', t('lbl_compania'));
   setEl('mg-flt-lbl-periodo',  t('lbl_periodo'));
   setEl('mgFltReset', t('flt_resetear'));
+
+  // Operario search & filters (mismo patrón que manager/admin)
+  setPh('opSearch',      t('search_ph'));
+  if (typeof buildOpDatalistOptions === 'function') buildOpDatalistOptions();
+  setEl('op-flt-lbl-cliente',  t('lbl_cliente'));
+  setEl('op-flt-lbl-obra',     t('lbl_obra'));
+  setEl('op-flt-lbl-tipo',     t('lbl_tipo'));
+  setEl('op-flt-lbl-compania', t('lbl_compania'));
+  setEl('op-flt-lbl-periodo',  t('lbl_periodo'));
+  setEl('opFltReset', t('flt_resetear'));
 
   // Filter status pills
   var pills = document.querySelectorAll('.ad-flt-btn[data-val=""]');
@@ -3523,6 +3621,7 @@ function showAuthScreen(id) {
 }
 function showLoginScreen() {
   showAuthScreen('screenAuthLogin');
+  if (!googleSignInReady) initGoogleSignIn();
 }
 function showRegisterScreen(prefill) {
   showAuthScreen('screenRegister');
@@ -3857,14 +3956,22 @@ document.addEventListener('visibilitychange', function() {
 });
 
 /* ── LOGIN / REGISTRO CON GOOGLE ──
- * initGoogleSignIn() se llama una vez al arrancar la app (initApp) — si no
- * hay Client ID configurado, el botón se queda oculto (display:none de
- * fábrica en #googleBtnContainer) en vez de intentar inicializar un login
- * que fallaría. El SDK de Google (accounts.google.com/gsi/client) se carga
- * async/defer, así que puede no estar listo todavía en el primer intento
- * — se reintenta con un backoff corto en vez de fallar silenciosamente. */
+ * initGoogleSignIn() se llama al arrancar la app (initApp) y además cada vez
+ * que se vuelve a mostrar #screenAuthLogin (showLoginScreen()) mientras el
+ * botón no se haya renderizado con éxito — el SDK de Google
+ * (accounts.google.com/gsi/client) se carga async/defer y puede tardar más
+ * de la ventana de reintentos inicial (antes: 10×300ms y luego se rendía
+ * para el resto de la sesión, dejando el botón invisible aunque el usuario
+ * volviera a la pantalla de login más tarde). Mientras se resuelve se
+ * muestra un skeleton de altura fija (#googleBtnSkel) en vez de dejar el
+ * contenedor colapsado a 0 — evita el salto de layout ("parpadeo") cuando
+ * el botón real aparece de golpe. */
+var googleSignInReady = false;
 function initGoogleSignIn(retriesLeft) {
   if (!GOOGLE_CLIENT_ID) return;
+  if (googleSignInReady) return;
+  var container = document.getElementById('googleBtnContainer');
+  if (container) container.style.display = 'flex';
   if (!(window.google && window.google.accounts && window.google.accounts.id)) {
     if (retriesLeft === undefined) retriesLeft = 10;
     if (retriesLeft <= 0) return;
@@ -3873,12 +3980,13 @@ function initGoogleSignIn(retriesLeft) {
   }
   try {
     google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredential });
-    var container = document.getElementById('googleBtnContainer');
-    container.style.display = 'flex';
+    var skel = document.getElementById('googleBtnSkel');
+    if (skel) skel.remove();
     google.accounts.id.renderButton(container, {
       type: 'standard', theme: 'outline', size: 'large', shape: 'rectangular',
       text: 'continue_with', width: 340
     });
+    googleSignInReady = true;
   } catch (e) { console.log('[GoogleSignIn] init error:', e && e.message); }
 }
 
@@ -4842,7 +4950,7 @@ function buildMiGroupedHtml(list, groupPrefix, showRejectComment) {
           html += '<button type="button" class="swipe-delete-action" onclick="event.stopPropagation();requestSwipeDeleteMine(\''+r.ID+'\')"><span class="swipe-ic"><i class="ti ti-trash"></i></span><span class="swipe-lbl">'+t('swipe_eliminar')+'</span></button>';
         }
       }
-      var isNew = seen.indexOf(seenKey(r)) === -1;
+      var isNew = r.STATUS !== 'approved' && seen.indexOf(seenKey(r)) === -1;
       html += '<div class="mi-card st-'+r.STATUS+(isNew?' card-shadow-new':'')+'" data-id="'+r.ID+'" data-ts="'+(r.TIMESTAMP||'')+'" onclick="openReportDetail(\''+r.ID+'\')">';
       html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">';
       html += '<span style="font-size:11px;color:#8e8e93">'+fecha+'</span>';
@@ -4885,16 +4993,109 @@ function renderMyReports(reports) {
   // carga que ya mostró los mismos datos.
   lastMyReportsSig = reportsSignature(reports);
   myReportsCache = capReports(reports);
-  reports = myReportsCache;
+  buildOpDatalistOptions();
+  applyOpFilters();
+}
 
-  var pendingList = reports.filter(function(r){ return r.STATUS === 'pending' || r.STATUS === 'rejected'; });
-  var approvedList = reports.filter(function(r){ return r.STATUS === 'approved'; });
+/* Búsqueda + filtros de "Mis informes" (mismo patrón que applyMgFilters/
+ * applyAdminFilters) — separado de renderMyReports para que actualizar la
+ * caché (arriba) y pintar la vista filtrada (aquí) sean pasos distintos,
+ * igual que el manager: así escribir en el buscador nunca interfiere con
+ * lo que checkWorkerNotifications/scheduleOperarioAutoSeen leen de
+ * myReportsCache, que siempre queda completo sin filtrar. */
+var opFilterPanelOpen = false;
+
+function buildOpDatalistOptions() {
+  var maps = {
+    opFCliente:  { get: function(r){ return r.CLIENTE; }, key: 'flt_clientes' },
+    opFObra:     { get: function(r){ return r.OBRA; }, key: 'flt_obras' },
+    opFTipo:     { get: function(r){ return r['TIPO DE TRABAJO']; }, key: 'flt_tipos' },
+    opFCompania: { get: function(r){ return r['COMPAÑÍA']; }, key: 'flt_companias' }
+  };
+  Object.keys(maps).forEach(function(selId){
+    var sel = document.getElementById(selId);
+    if (!sel) return;
+    var current = sel.value;
+    var vals = [];
+    myReportsCache.forEach(function(r){
+      var v = maps[selId].get(r);
+      if (v && vals.indexOf(v) === -1) vals.push(v);
+    });
+    vals.sort();
+    sel.innerHTML = '<option value="">' + t(maps[selId].key) + '</option>' +
+      vals.map(function(v){ return '<option value="'+v+'">'+v+'</option>'; }).join('');
+    if (current && vals.indexOf(current) !== -1) sel.value = current;
+  });
+}
+
+function toggleOpFilters() {
+  opFilterPanelOpen = !opFilterPanelOpen;
+  document.getElementById('opFilterPanel').style.display = opFilterPanelOpen ? 'block' : 'none';
+  document.getElementById('opFilterToggle').classList.toggle('has-filters', opFilterPanelOpen || hasActiveOpFilters());
+}
+
+function hasActiveOpFilters() {
+  return !!(
+    document.getElementById('opSearch').value ||
+    document.getElementById('opFCliente').value ||
+    document.getElementById('opFObra').value ||
+    document.getElementById('opFTipo').value ||
+    document.getElementById('opFCompania').value ||
+    document.getElementById('opFDateFrom').value ||
+    document.getElementById('opFDateTo').value
+  );
+}
+
+function resetOpFilters() {
+  document.getElementById('opSearch').value = '';
+  document.getElementById('opFCliente').value = '';
+  document.getElementById('opFObra').value = '';
+  document.getElementById('opFTipo').value = '';
+  document.getElementById('opFCompania').value = '';
+  document.getElementById('opFDateFrom').value = '';
+  document.getElementById('opFDateTo').value = '';
+  document.getElementById('opFilterToggle').classList.remove('has-filters');
+  applyOpFilters();
+}
+
+function applyOpFilters() {
+  var q         = (document.getElementById('opSearch').value || '').trim().toLowerCase();
+  var fCliente  = (document.getElementById('opFCliente').value || '').trim().toLowerCase();
+  var fObra     = (document.getElementById('opFObra').value || '').trim().toLowerCase();
+  var fTipo     = (document.getElementById('opFTipo').value || '').trim().toLowerCase();
+  var fCompania = (document.getElementById('opFCompania').value || '').trim().toLowerCase();
+  var fFrom     = document.getElementById('opFDateFrom').value;
+  var fTo       = document.getElementById('opFDateTo').value;
+
+  function matches(r) {
+    if (fCliente && !(r.CLIENTE||'').toLowerCase().includes(fCliente)) return false;
+    if (fObra && !(r.OBRA||'').toLowerCase().includes(fObra)) return false;
+    if (fTipo && !((r['TIPO DE TRABAJO'])||'').toLowerCase().includes(fTipo)) return false;
+    if (fCompania && !((r['COMPAÑÍA'])||'').toLowerCase().includes(fCompania)) return false;
+    if (fFrom && r.FECHA && new Date(r.FECHA) < new Date(fFrom)) return false;
+    if (fTo && r.FECHA && new Date(r.FECHA) > new Date(fTo + 'T23:59:59')) return false;
+    if (q) {
+      var haystack = [
+        r.ID, r.CLIENTE, r.OBRA, r.AYUDANTE,
+        r['TIPO DE TRABAJO'], r['TRABAJOS REALIZADOS'],
+        r['MATERIALES UTILIZADOS'], r['COMPAÑÍA']
+      ].join(' ').toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  }
+
+  var filtered = myReportsCache.filter(matches);
+  var pendingList = filtered.filter(function(r){ return r.STATUS === 'pending' || r.STATUS === 'rejected'; });
+  var approvedList = filtered.filter(function(r){ return r.STATUS === 'approved'; });
 
   var listEl = document.getElementById('miList');
   var listApprovedEl = document.getElementById('miListApproved');
 
-  listEl.innerHTML = pendingList.length ? buildMiGroupedHtml(pendingList, 'p_', true) : '<div class="mi-empty">'+t('no_mine')+'</div>';
-  listApprovedEl.innerHTML = approvedList.length ? buildMiGroupedHtml(approvedList, 'a_', false) : '<div class="mi-empty">'+t('no_approved')+'</div>';
+  listEl.innerHTML = pendingList.length ? buildMiGroupedHtml(pendingList, 'p_', true) : '<div class="mi-empty">'+(hasActiveOpFilters() ? t('flt_sin_resultados') : t('no_mine'))+'</div>';
+  listApprovedEl.innerHTML = approvedList.length ? buildMiGroupedHtml(approvedList, 'a_', false) : '<div class="mi-empty">'+(hasActiveOpFilters() ? t('flt_sin_resultados') : t('no_approved'))+'</div>';
+
+  document.getElementById('opFilterToggle').classList.toggle('has-filters', hasActiveOpFilters());
   scheduleOperarioAutoSeen();
 }
 
@@ -6441,15 +6642,6 @@ function buildAdminDatalistOptions() {
 
 /* Переключатель видимости панели фильтров */
 var adFilterPanelOpen = false;
-var adShowNewOnly = false;
-
-function toggleAdNewOnly() {
-  adShowNewOnly = !adShowNewOnly;
-  var btn = document.getElementById('adNewBtn');
-  btn.style.background = adShowNewOnly ? 'rgba(255,59,48,.12)' : '#f2f2f7';
-  btn.style.color = adShowNewOnly ? '#ff3b30' : '#8e8e93';
-  applyAdminFilters();
-}
 
 function toggleAdFilters() {
   adFilterPanelOpen = !adFilterPanelOpen;
@@ -6532,11 +6724,6 @@ function applyAdminFilters() {
       ].join(' ').toLowerCase();
       if (!haystack.includes(q)) return false;
     }
-    // Фильтр NUEVO — только непросмотренные текущим пользователем
-    if (adShowNewOnly) {
-      var seen = getSeenIds();
-      if (seen.indexOf(seenKey(r)) !== -1) return false;
-    }
     return true;
   });
 
@@ -6547,7 +6734,7 @@ function applyAdminFilters() {
 function renderAdminJournal() {
   var listEl = document.getElementById('adList');
   if (!adFilteredRecords.length) {
-    listEl.innerHTML = '<div class="mi-empty">'+(adShowNewOnly ? 'No hay registros nuevos' : 'No hay registros')+'</div>';
+    listEl.innerHTML = '<div class="mi-empty">No hay registros</div>';
     return;
   }
 
@@ -6597,7 +6784,7 @@ function renderAdminJournal() {
     var g = groups[key];
     var isCurMonth = (g.year === curYear && g.month === curMonth);
     var isCollapsed = collapsed[key] !== undefined ? collapsed[key] : !isCurMonth;
-    var newCount = g.records.filter(function(r){ return seen.indexOf(seenKey(r)) === -1; }).length;
+    var newCount = g.records.filter(function(r){ return r.STATUS !== 'approved' && seen.indexOf(seenKey(r)) === -1; }).length;
 
     // Заголовок группы
     html += '<div class="ad-month-header" onclick="toggleAdMonth(\''+key+'\')" data-key="'+key+'">';
@@ -6614,7 +6801,7 @@ function renderAdminJournal() {
     g.records.forEach(function(r){
       var fecha = r.FECHA ? fmtDate(r.FECHA) : '';
       var st = r.STATUS || 'pending';
-      var isNew = seen.indexOf(seenKey(r)) === -1;
+      var isNew = st !== 'approved' && seen.indexOf(seenKey(r)) === -1;
       var shadowCls = isNew ? ' card-shadow-new' : '';
       var swipeable = st === 'pending';
       if (swipeable) {
@@ -7010,6 +7197,7 @@ var adClienteObraPairs = null;
 var adUmCurrentUser = null;
 var adUmSelectedRole = 'operario';
 var adUmSelectedObjs = {};
+var adUmMode = 'view';
 
 var AD_STATUS_LABEL_KEYS = {
   pending_verification: 'adu_status_unverified', pending_approval: 'status_pending',
@@ -7103,32 +7291,34 @@ function openAdUserModalByCodigo(codigo) {
 function openAdUserModal(user) {
   adUmCurrentUser = user;
   adUmSelectedObjs = {};
+  adUmOriginalSnapshot = null;
   clearAuthError('adUmError');
 
   setEl('adUmName', ((user.nombre || '') + ' ' + (user.apellido || '')).trim() || user.email || user.codigo);
+  setEl('adUmRoleHeaderLbl', t(AD_ROLE_LABEL_KEYS[user.rol] || 'greet_worker'));
   var badge = document.getElementById('adUmStatusBadge');
   badge.className = 'ad-status-badge ' + (AD_STATUS_CLASS[user.status] || 'st-suspended');
   badge.textContent = t(AD_STATUS_LABEL_KEYS[user.status] || 'adu_status_suspended');
 
-  setAdUmInfoRow('adUmEmailRow', 'adUmEmailValue', user.email);
-  setAdUmInfoRow('adUmTelRow', 'adUmTelValue', user.telefono);
+  document.getElementById('adUmEmailInput').value = user.email || '';
+  document.getElementById('adUmTelInput').value = user.telefono || '';
   document.getElementById('adUmCode').value = user.codigo || '';
 
   var chip = document.getElementById('adUmAuthMethodChip');
   if (user.viaGoogle) {
     chip.style.display = 'inline-flex';
     setEl('adUmAuthMethodText', t('adu_via_google'));
-    document.getElementById('adUmAuthMethodChip').querySelector('i').className = 'ti ti-brand-google';
+    chip.querySelector('i').className = 'ti ti-brand-google';
   } else if (user.hasPassword) {
     chip.style.display = 'inline-flex';
     setEl('adUmAuthMethodText', t('adu_via_password'));
-    document.getElementById('adUmAuthMethodChip').querySelector('i').className = 'ti ti-key';
+    chip.querySelector('i').className = 'ti ti-key';
   } else {
     chip.style.display = 'none';
   }
 
   var isUnverified = user.status === 'pending_verification';
-  document.getElementById('adUmFieldsWrap').style.display = isUnverified ? 'none' : 'block';
+  var isPendingApproval = user.status === 'pending_approval';
   var notice = document.getElementById('adUmPendingVerifNotice');
   notice.style.display = isUnverified ? 'block' : 'none';
   if (isUnverified) notice.textContent = t('adu_unverified_notice');
@@ -7153,25 +7343,106 @@ function openAdUserModal(user) {
     statusRow.style.display = 'none';
   }
 
+  // AUTH v2 pedido "просмотр/редактирование": una cuenta ya existente
+  // (active/rejected/suspended) abre en modo lectura, estilo ficha de
+  // informe (ver renderAdUmViewWrap) — "Editar" desbloquea los campos.
+  // pending_approval no tiene "vista" real (la cuenta aún no existe del
+  // todo) — se queda siempre en modo edición, como antes.
+  if (isUnverified) {
+    document.getElementById('adUmViewWrap').style.display = 'none';
+    document.getElementById('adUmFieldsWrap').style.display = 'none';
+  } else if (isPendingApproval) {
+    adUmMode = 'edit';
+    document.getElementById('adUmViewWrap').style.display = 'none';
+    document.getElementById('adUmFieldsWrap').style.display = 'block';
+  } else {
+    renderAdUmViewWrap(user);
+    adUmMode = 'view';
+    document.getElementById('adUmViewWrap').style.display = 'block';
+    document.getElementById('adUmFieldsWrap').style.display = 'none';
+  }
+
+  // Snapshot DESPUÉS de rellenar todo — el botón Guardar arranca
+  // deshabilitado hasta que se cambie algo de verdad (mismo patrón que
+  // erOriginalSnapshot/checkErDirty en el editor de informes).
+  adUmOriginalSnapshot = getAdUmFormValues();
+
   renderAdUmActions();
   document.getElementById('adUserModal').classList.add('show');
 }
 
 function closeAdUserModal() {
   document.getElementById('adUserModal').classList.remove('show');
+  adUmOriginalSnapshot = null;
 }
 
-function setAdUmInfoRow(rowId, valueId, value) {
-  var row = document.getElementById(rowId);
-  var val = String(value || '').trim();
-  document.getElementById(valueId).textContent = val || '—';
-  row.classList.toggle('empty', !val);
+/* Solo aplica a active/rejected/suspended (ver openAdUserModal) — cambia
+ * entre la ficha de solo lectura y el formulario editable, sin volver a
+ * pedir datos al servidor (ya están todos en memoria). */
+function setAdUmMode(mode) {
+  adUmMode = mode;
+  var isEdit = mode === 'edit';
+  document.getElementById('adUmViewWrap').style.display = isEdit ? 'none' : 'block';
+  document.getElementById('adUmFieldsWrap').style.display = isEdit ? 'block' : 'none';
+  renderAdUmActions();
 }
 
-/* Tocar la fila de email/teléfono abre un diálogo bonito (no el confirm()
- * nativo) preguntando si se quiere escribir/llamar — al confirmar, se usa
- * mailto:/tel: (el propio SO abre Correo/Teléfono; no enviamos nada desde
- * aquí, solo delegamos). Sin valor real → la fila es .empty, no hace nada. */
+/* Ficha de solo lectura — mismas clases que el detalle de un informe
+ * (.det-group/.rd-field/.rd-field-full, ver buildDetailHtml) para que la
+ * vista de un usuario tenga el mismo lenguaje visual que la de un informe. */
+function renderAdUmViewWrap(user) {
+  var roleLbl = t(AD_ROLE_LABEL_KEYS[user.rol] || 'greet_worker');
+  var codigo = escapeHtml(user.codigo || '—');
+  var html = '<div class="det-group">';
+  html += '<div class="det-group-title"><span class="det-group-icon"><i class="ti ti-id-badge-2"></i></span>' + t('adu_group_perfil') + '</div>';
+  html += '<div class="det-group-grid">';
+  html += '<div class="rd-field"><b>' + t('auth_reg_rol') + '</b><span>' + escapeHtml(roleLbl) + '</span></div>';
+  html += '<div class="rd-field"><b>' + t('adu_code_lbl') + '</b><span>' + codigo + '</span></div>';
+  html += '</div>';
+  if (user.status === 'active' || user.status === 'suspended') {
+    var isActive = user.status === 'active';
+    html += '<div class="rd-field-full" style="text-align:center"><b style="font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#8e8e93;display:block;margin-bottom:4px">' + t('adu_active_lbl') + '</b><span style="font-size:14px;font-weight:700;color:' + (isActive ? '#34c759' : '#ff3b30') + '">' + (isActive ? t('adu_active_yes') : t('adu_active_no')) + '</span></div>';
+  }
+  html += '</div>';
+
+  var email = (user.email || '').trim();
+  var tel = (user.telefono || '').trim();
+  var emailEsc = escapeHtml(email).replace(/'/g, "\\'");
+  var telEsc = escapeHtml(tel).replace(/'/g, "\\'");
+  html += '<div class="det-group">';
+  html += '<div class="det-group-title"><span class="det-group-icon"><i class="ti ti-address-book"></i></span>' + t('adu_group_contacto') + '</div>';
+  html += '<div class="adu-info-row' + (email ? '' : ' empty') + '" onclick="tapAdUmField(\'email\')"><i class="ti ti-mail"></i><span class="adu-info-value">' + escapeHtml(email || '—') + '</span>' +
+    (email ? '<button type="button" class="adu-copy-btn" onclick="event.stopPropagation();copyTextToClipboard(\'' + emailEsc + '\', this)" aria-label="Copiar"><i class="ti ti-copy"></i></button>' : '') + '</div>';
+  html += '<div class="adu-info-row' + (tel ? '' : ' empty') + '" style="margin-top:8px" onclick="tapAdUmField(\'tel\')"><i class="ti ti-phone"></i><span class="adu-info-value">' + escapeHtml(tel || '—') + '</span>' +
+    (tel ? '<button type="button" class="adu-copy-btn" onclick="event.stopPropagation();copyTextToClipboard(\'' + telEsc + '\', this)" aria-label="Copiar"><i class="ti ti-copy"></i></button>' : '') + '</div>';
+  html += '</div>';
+
+  html += '<div class="det-group">';
+  html += '<div class="det-group-title"><span class="det-group-icon"><i class="ti ti-lock-open"></i></span>' + t('adu_obj_lbl') + '</div>';
+  html += '<div id="adUmViewPermsBody"></div>';
+  html += '</div>';
+
+  document.getElementById('adUmViewWrap').innerHTML = html;
+  renderAdUmViewPermissions();
+}
+
+function renderAdUmViewPermissions() {
+  var body = document.getElementById('adUmViewPermsBody');
+  if (!body) return;
+  var allAccess = document.getElementById('adUmAllAccess').checked;
+  if (allAccess) { body.innerHTML = '<div style="padding:4px;text-align:center;font-size:12.5px;color:#8e8e93">' + t('adu_all_access_note') + '</div>'; return; }
+  var keys = Object.keys(adUmSelectedObjs);
+  if (!keys.length) { body.innerHTML = '<div style="padding:4px;text-align:center;font-size:12.5px;color:#8e8e93">—</div>'; return; }
+  body.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px">' + keys.map(function(k) {
+    var parts = k.split('::');
+    return '<span class="adu-perm-chip">' + escapeHtml(parts[1]) + '<small>' + escapeHtml(parts[0]) + '</small></span>';
+  }).join('') + '</div>';
+}
+
+/* Tocar la fila de email/teléfono (modo Ver) abre un diálogo bonito (no el
+ * confirm() nativo) preguntando si se quiere escribir/llamar — al
+ * confirmar, se usa mailto:/tel: (el propio SO abre Correo/Teléfono; no
+ * enviamos nada desde aquí, solo delegamos). Sin valor real → no hace nada. */
 function tapAdUmField(kind) {
   if (!adUmCurrentUser) return;
   if (kind === 'email') {
@@ -7193,8 +7464,7 @@ function tapAdUmField(kind) {
   }
 }
 
-function copyAdUmField(valueId, btn) {
-  var text = document.getElementById(valueId).textContent;
+function copyTextToClipboard(text, btn) {
   if (!text || text === '—') return;
   var done = function() {
     var icon = btn.querySelector('i');
@@ -7237,10 +7507,16 @@ function setAdUmRole(role) {
   document.getElementById('adUmRoleOperario').classList.toggle('active', role === 'operario');
   document.getElementById('adUmRoleManager').classList.toggle('active', role === 'manager');
   document.getElementById('adUmRoleAdmin').classList.toggle('active', role === 'admin');
+  checkAdUmDirty();
 }
 
-function onAdUmAllAccessChange() { renderAdUmObjList(); }
+function onAdUmAllAccessChange() { renderAdUmObjList(); checkAdUmDirty(); }
 
+/* Два раздела con los mismos pares cliente:obra (ver getClienteObraPairs)
+ * — "Clientes" es un atajo que marca/desmarca TODOS los objetos de ese
+ * cliente de golpe, "Objetos" permite acceso puntual a uno solo. No son
+ * permisos distintos: el string final (buildAdUmObrasString) sigue siendo
+ * la misma lista plana de pares cliente:obra en ambos casos. */
 function renderAdUmObjList() {
   var allAccess = document.getElementById('adUmAllAccess').checked;
   var wrap = document.getElementById('adUmObjList');
@@ -7252,16 +7528,20 @@ function renderAdUmObjList() {
   ensureClienteObraPairs().then(function(pairs) {
     if (document.getElementById('adUmAllAccess').checked) return; // pudo cambiar mientras cargaba
     if (!pairs.length) { wrap.innerHTML = '<div style="padding:14px;text-align:center;font-size:12.5px;color:#8e8e93">—</div>'; return; }
-    // Agrupado por cliente (2 niveles: CLIENTE arriba, sus OBJETOS debajo)
-    // en vez de una lista plana "cliente — obra" — así nunca se puede
-    // marcar una combinación cliente/objeto que no exista de verdad.
     var order = [];
     var byClient = {};
     pairs.forEach(function(p) {
       if (!byClient[p.cliente]) { byClient[p.cliente] = []; order.push(p.cliente); }
       byClient[p.cliente].push(p.obra);
     });
-    wrap.innerHTML = order.map(function(cliente) {
+    var clientesHtml = order.map(function(cliente) {
+      var objs = byClient[cliente];
+      var allChecked = objs.every(function(o){ return adUmSelectedObjs[cliente + '::' + o]; });
+      return '<label class="adu-perm-obj top">' +
+        '<input type="checkbox" ' + (allChecked ? 'checked' : '') + ' onchange="toggleAdUmClient(\'' + cliente.replace(/'/g, "\\'") + '\', this.checked)">' +
+        '<span>' + escapeHtml(cliente) + '</span></label>';
+    }).join('');
+    var objetosHtml = order.map(function(cliente) {
       var objRows = byClient[cliente].map(function(obra) {
         var key = cliente + '::' + obra;
         var checked = adUmSelectedObjs[key] ? 'checked' : '';
@@ -7271,25 +7551,71 @@ function renderAdUmObjList() {
       }).join('');
       return '<div class="adu-perm-group"><div class="adu-perm-client"><i class="ti ti-building"></i>' + escapeHtml(cliente) + '</div>' + objRows + '</div>';
     }).join('');
+    wrap.innerHTML =
+      '<div class="adu-section-lbl" style="margin:2px 0 4px 4px">' + t('adu_perm_clientes') + '</div>' +
+      clientesHtml +
+      '<div class="adu-section-lbl" style="margin:14px 0 4px 4px">' + t('adu_perm_objetos') + '</div>' +
+      objetosHtml;
   });
+}
+
+function toggleAdUmClient(cliente, checked) {
+  (adClienteObraPairs || []).filter(function(p){ return p.cliente === cliente; }).forEach(function(p) {
+    var key = cliente + '::' + p.obra;
+    if (checked) adUmSelectedObjs[key] = true; else delete adUmSelectedObjs[key];
+  });
+  renderAdUmObjList();
+  checkAdUmDirty();
 }
 
 function toggleAdUmObj(key, checked) {
   if (checked) adUmSelectedObjs[key] = true; else delete adUmSelectedObjs[key];
+  renderAdUmObjList();
+  checkAdUmDirty();
 }
 
 function generateAdUmCode() {
   var code = '';
   for (var i = 0; i < 4; i++) code += Math.floor(Math.random() * 10);
   document.getElementById('adUmCode').value = code;
+  checkAdUmDirty();
 }
 
-function onAdUmActiveToggle() {} // se lee directamente al guardar
+function onAdUmActiveToggle() { checkAdUmDirty(); }
 
 function buildAdUmObrasString() {
   if (document.getElementById('adUmAllAccess').checked) return '*';
   return Object.keys(adUmSelectedObjs).map(function(k){ return k.replace('::', ':'); }).join(',');
 }
+
+/* Snapshot del formulario editable, usado para el botón "Guardar" gris
+ * hasta que algo cambie de verdad — mismo patrón que getErFormValues/
+ * checkErDirty del editor de informes (ver erOriginalSnapshot). */
+var adUmOriginalSnapshot = null;
+function getAdUmFormValues() {
+  var hasStatusToggle = document.getElementById('adUmStatusRow').style.display !== 'none';
+  return {
+    email: document.getElementById('adUmEmailInput').value.trim(),
+    tel: document.getElementById('adUmTelInput').value.trim(),
+    rol: adUmSelectedRole,
+    codigo: document.getElementById('adUmCode').value.trim(),
+    obras: buildAdUmObrasString(),
+    active: hasStatusToggle ? (document.getElementById('adUmActiveToggle').checked ? '1' : '0') : ''
+  };
+}
+function checkAdUmDirty() {
+  var btn = document.getElementById('adUmSaveBtn');
+  if (!btn || !adUmOriginalSnapshot) return;
+  var now = getAdUmFormValues();
+  var dirty = Object.keys(adUmOriginalSnapshot).some(function(k){ return String(adUmOriginalSnapshot[k]||'') !== String(now[k]||''); });
+  btn.disabled = !dirty;
+}
+(function setupAdUmDirtyWatcher() {
+  var container = document.getElementById('adUmFieldsWrap');
+  if (!container) return;
+  container.addEventListener('input', checkAdUmDirty);
+  container.addEventListener('change', checkAdUmDirty);
+})();
 
 function renderAdUmActions() {
   var wrap = document.getElementById('adUmActions');
@@ -7302,14 +7628,20 @@ function renderAdUmActions() {
       '<button class="mg-modal-confirm" style="' + btnStyle + '" onclick="rejectAdUser()">' + t('adu_reject') + '</button>';
     return;
   }
-  if (status === 'rejected' || status === 'suspended') {
-    wrap.innerHTML = '<button class="mg-modal-confirm positive" style="' + btnStyle + '" onclick="reactivateAdUser()">' + t('adu_reactivate') + '</button>';
+  if (adUmMode === 'view') {
+    var html = '';
+    if (status === 'rejected' || status === 'suspended') {
+      html += '<button class="mg-modal-confirm positive" style="' + btnStyle + '" onclick="reactivateAdUser()">' + t('adu_reactivate') + '</button>';
+    }
+    html += '<button class="mg-modal-confirm" style="' + btnStyle + ';background:#0049c5;box-shadow:0 10px 20px -8px rgba(0,73,197,.5)" onclick="setAdUmMode(\'edit\')">' + t('swipe_editar') + '</button>';
+    wrap.innerHTML = html;
     return;
   }
   var resetBtnHtml = adUmCurrentUser.hasPassword
     ? '<button class="mg-modal-cancel" style="' + btnStyle + '" onclick="resetAdUserPassword()">' + t('adu_reset_password') + '</button>' : '';
   wrap.innerHTML =
-    '<button class="mg-modal-confirm positive" style="' + btnStyle + '" onclick="saveAdUserChanges()">' + t('adu_save') + '</button>' + resetBtnHtml;
+    '<button class="mg-modal-confirm positive" style="' + btnStyle + '" id="adUmSaveBtn" disabled onclick="saveAdUserChanges()">' + t('adu_save') + '</button>' + resetBtnHtml;
+  checkAdUmDirty();
 }
 
 function adUmPostAction(action, extra, onSuccess) {
@@ -7352,11 +7684,19 @@ function reactivateAdUser() {
 
 function saveAdUserChanges() {
   var newCodigo = document.getElementById('adUmCode').value.trim();
-  var isActive = document.getElementById('adUmActiveToggle').checked;
-  adUmPostAction('adminUpdateUser', {
-    rol: adUmSelectedRole, obras: buildAdUmObrasString(),
-    status: isActive ? 'active' : 'suspended', newCodigo: newCodigo
-  }, function() {
+  var payload = {
+    rol: adUmSelectedRole, obras: buildAdUmObrasString(), newCodigo: newCodigo,
+    email: document.getElementById('adUmEmailInput').value.trim(),
+    telefono: document.getElementById('adUmTelInput').value.trim()
+  };
+  // El toggle de cuenta activa solo existe (y solo es fiable) cuando el
+  // usuario ya era active/suspended al abrir la ficha — para rejected no
+  // se muestra, y leer su .checked igualmente mandaría 'suspended' sin
+  // querer sobre una cuenta rechazada que no se está tocando.
+  if (document.getElementById('adUmStatusRow').style.display !== 'none') {
+    payload.status = document.getElementById('adUmActiveToggle').checked ? 'active' : 'suspended';
+  }
+  adUmPostAction('adminUpdateUser', payload, function() {
     showToast(t('adu_toast_saved'));
     closeAdUserModal();
     loadAdminUsers();
@@ -7368,8 +7708,9 @@ function resetAdUserPassword() {
     icon: 'ti-key', title: t('adu_reset_password'), sub: t('adu_confirm_reset_password'),
     confirmLabel: t('adu_reset_password'),
     onConfirm: function() {
-      adUmPostAction('adminResetPassword', {}, function() {
-        showToast(t('adu_toast_password_reset'));
+      adUmPostAction('adminResetPassword', {}, function(result) {
+        if (result && result.emailed === false) showToast(t('adu_toast_password_reset_no_email'), true);
+        else showToast(t('adu_toast_password_reset'));
       });
     }
   });
